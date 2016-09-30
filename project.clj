@@ -7,7 +7,8 @@
                  [http-kit "2.1.18"]
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
-                 [cheshire "5.6.3"]]
+                 [cheshire "5.6.3"]
+                 [jarohen/nomad "0.7.2"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
