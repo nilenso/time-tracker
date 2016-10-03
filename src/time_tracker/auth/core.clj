@@ -1,37 +1,52 @@
 (ns time-tracker.auth.core
-  (:gen-class)
   (:require [ring.util.response :as res]
             [org.httpkit.client :as http]
-            [cheshire.core :as cheshire]))
+            [cheshire.core :as json]
 
-(defn is-valid?
-  "Validates a JWT token by calling Google's API and by checking the client ID."
+            [time-tracker.config :as config]))
+
+(defn- snake-case->hyphenated-kw
+  "In: \"key_string\"
+  Out: :key-string"
+  [key-string]
+  (keyword (clojure.string/replace key-string #"_" "-")))
+
+(defn- call-google-tokeninfo-api
+  [token]
+  (let [{body :body :as response} @(http/get config/google-tokeninfo-url
+                                             {:as :text
+                                              :query-params {"id_token" token}})]
+    (assoc response :body (json/parse-string body snake-case->hyphenated-kw))))
+
+(defn token->credentials
+  "Validates a JWT by calling Google's API and by checking the client ID."
   [client-ids token]
-  (let [url (str "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token="
-                 token)
-        response (http/get url {:as :text})]
-    (if (= 200 (:status @response))
-      (let [response-data (cheshire/parse-string (:body @response)
-                                                 #(keyword (clojure.string/replace % #"_" "-")))]
-        (and (some #{(:aud response-data)} client-ids)
-             response-data)))))
+  (let [{:keys [status body]} (call-google-tokeninfo-api token)]
+    (if (and (= 200 status)
+             (some #{(:aud body)} client-ids))
+      body)))
 
-(defn authenticated?
-  "Is the request Google authenticated? Performs a GET request.
-  There must be a header of the form Authorization: Bearer <token>
-  The token must then be verified using Google's verification endpoint."
+(defn token-from-headers
+  "Extracts the token from a Ring header map, if present.
+  See: https://jwt.io/introduction/"
+  [ring-headers]
+  (if-let [header-value (get ring-headers "authorization")]
+    (let [[scheme token] (clojure.string/split header-value #" ")]
+      (if (= "Bearer" scheme)
+        token))))
+
+(defn auth-credentials
+  "Gets a map of credentials from a Ring request.
+  A list of client-ids is needed to validate the JWT."
   [client-ids request]
-  (if-let [token (-> (get-in request [:headers "authorization"])
-                     (clojure.string/split #" ")
-                     (#(and (= "Bearer" (first %))
-                            (second %))))]
-    (is-valid? token)))
+  (if-let [token (token-from-headers (:headers request))]
+    (token->credentials client-ids token)))
 
 (defn wrap-google-authenticated
   "Middleware to verify Google authentication"
   [client-ids handler]
   (fn [request]
-    (if-let [user-information (authenticated? client-ids request)]
+    (if-let [user-information (auth-credentials client-ids request)]
       (handler (assoc request :credentials user-information))
       (-> (res/response "Access Denied")
           (res/status 403)))))
