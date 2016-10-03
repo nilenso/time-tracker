@@ -1,9 +1,1 @@
-{:google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"
- 
- :nomad/environments
- {"dev"
-  {}
-  "prod"
-  {}
-  "test"
-  {}}}
+{:google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"}
