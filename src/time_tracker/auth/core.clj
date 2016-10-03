@@ -5,7 +5,7 @@
 
             [time-tracker.config :as config]))
 
-(defn- munge-keyword
+(defn- snake-case->hyphenated-kw
   "In: \"key_string\"
   Out: :key-string"
   [key-string]
@@ -16,7 +16,7 @@
   (let [{body :body :as response} @(http/get config/google-tokeninfo-url
                                              {:as :text
                                               :query-params {"id_token" token}})]
-    (assoc response :body (json/parse-string body munge-keyword))))
+    (assoc response :body (json/parse-string body snake-case->hyphenated-kw))))
 
 (defn token->credentials
   "Validates a JWT by calling Google's API and by checking the client ID."
@@ -28,7 +28,7 @@
 
 (defn token-from-headers
   "Extracts the token from a Ring header map, if present.
-  See: https://tools.ietf.org/html/rfc6750#section-2.1"
+  See: https://jwt.io/introduction/"
   [ring-headers]
   (if-let [header-value (get ring-headers "authorization")]
     (let [[scheme token] (clojure.string/split header-value #" ")]
