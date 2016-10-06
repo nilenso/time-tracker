@@ -8,7 +8,13 @@
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
                  [cheshire "5.6.3"]
-                 [jarohen/nomad "0.7.2"]]
+                 [jarohen/nomad "0.7.2"]
+                 [honeysql "0.8.1"]
+                 [ragtime "0.6.3"]
+                 [postgresql "9.3-1102.jdbc41"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}}
+
+  :aliases {"migrate"  ["run" "-m" "time-tracker.migration/migrate-db"]
+            "rollback" ["run" "-m" "time-tracker.migration/rollback-db"]})
