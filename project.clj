@@ -11,7 +11,8 @@
                  [jarohen/nomad "0.7.2"]
                  [honeysql "0.8.1"]
                  [ragtime "0.6.3"]
-                 [postgresql "9.3-1102.jdbc41"]]
+                 [postgresql "9.3-1102.jdbc41"]
+                 [ring/ring-json "0.4.0"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
