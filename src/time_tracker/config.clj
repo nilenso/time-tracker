@@ -11,4 +11,4 @@
   {:datastore  (ragtime.jdbc/sql-database {:connection-uri (:db-connection-string (app-config))})
    :migrations (ragtime.jdbc/load-resources (:migrations-resource-dir (app-config)))})
 
-
+(def client-ids (:client-ids (app-config)))
