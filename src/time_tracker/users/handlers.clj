@@ -5,7 +5,7 @@
             [time-tracker.auth.core :refer [wrap-google-authenticated]]))
 
 (def user-details
-  (wrap-google-authenticated config/client-ids
-   (fn [request]
-     (res/response (:credentials request)))))
+  (-> (fn [request]
+        (res/response (:credentials request)))
+      (wrap-google-authenticated config/client-ids)))
 

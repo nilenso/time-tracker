@@ -44,7 +44,7 @@
 
 (defn wrap-google-authenticated
   "Middleware to verify Google authentication"
-  [client-ids handler]
+  [handler client-ids]
   (fn [request]
     (if-let [user-information (auth-credentials client-ids request)]
       (handler (assoc request :credentials user-information))
