@@ -1,4 +1,0 @@
-{:google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"
- :db-connection-string #nomad/env-var "DB_CONNECTION_STRING"
- :migrations-resource-dir "migrations"
- :client-ids [#nomad/env-var "GOOGLE_CLIENT_ID"]}

@@ -1,16 +1,16 @@
 (ns time-tracker.config
   (:require [clojure.java.io :as io]
-            [nomad :refer [defconfig]]
+            [environ.core :refer [env]]
             [ragtime.jdbc]))
 
-(defconfig app-config (io/file "config/backend-config.edn"))
+(def google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo")
+(def migrations-resource-dir "migrations")
 
-(def google-tokeninfo-url (:google-tokeninfo-url (app-config)))
 
-(def jdbc-uri (:db-connection-string (app-config)))
+(def jdbc-uri (env :db-connection-string))
 
 (def migration-config
   {:datastore  (ragtime.jdbc/sql-database {:connection-uri jdbc-uri})
-   :migrations (ragtime.jdbc/load-resources (:migrations-resource-dir (app-config)))})
+   :migrations (ragtime.jdbc/load-resources migrations-resource-dir)})
 
-(def client-ids (:client-ids (app-config)))
+(def client-ids [(env :google-client-id)])
