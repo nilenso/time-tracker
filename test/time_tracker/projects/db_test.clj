@@ -5,7 +5,8 @@
             [time-tracker.db :as db]
             [time-tracker.projects.db :as projects.db]
             [time-tracker.fixtures :as fixtures]
-            [time-tracker.projects.test-helpers :as helpers]))
+            [time-tracker.projects.test-helpers :as helpers]
+            [time-tracker.users.test-helpers :as users.helpers]))
 
 (use-fixtures :once fixtures/migrate-test-db)
 (use-fixtures :each fixtures/isolate-db)
@@ -90,14 +91,9 @@
 
 
 (deftest create-project-if-authorized
-  (jdbc/execute! (db/connection)
-                 [(str "INSERT INTO app_user "
-                       "(name, google_id, role) "
-                       "VALUES (?, ?, ?::user_role);")
-                  ["Sai Abdul" "gid1" "admin"]
-                  ["Paul Graham" "gid2" "user"]]
-                 {:multi? true})
-    
+  (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
+                               ["Paul Graham" "gid2" "user"])
+      
   (testing "Authorized user"
     (let [created-project (projects.db/create-project-if-authorized!
                            {:name "foo"}
