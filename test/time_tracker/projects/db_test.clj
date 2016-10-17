@@ -13,7 +13,7 @@
 
 (deftest retrieve-project-if-authorized
   (let [gen-projects (helpers/populate-data! {"gid1" ["foo"]
-                                      "gid2" ["goo"]})]
+                                              "gid2" ["goo"]})]
     (testing "Authorized project"
       (let [project (projects.db/retrieve-project-if-authorized
                      (get gen-projects "foo")
@@ -56,7 +56,7 @@
 
 (deftest delete-project-if-authorized
   (let [gen-projects (helpers/populate-data! {"gid1" ["foo"]
-                                      "gid2" ["goo"]})]
+                                              "gid2" ["goo"]})]
     (testing "Authorized project"
       (let [project-id (get gen-projects "foo")
             deleted-bool (projects.db/delete-project-if-authorized! project-id "gid1")
@@ -75,7 +75,7 @@
 
 (deftest retrieve-authorized-projects
   (let [gen-projects (helpers/populate-data! {"gid1" ["foo" "goo"]
-                                      "gid2" ["bar" "baz"]})]
+                                              "gid2" ["bar" "baz"]})]
     (testing "The first user"
       (let [projects (projects.db/retrieve-authorized-projects "gid1")
             project-names (map :name projects)]
