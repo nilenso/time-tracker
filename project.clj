@@ -14,7 +14,8 @@
                  [postgresql "9.3-1102.jdbc41"]
                  [ring/ring-json "0.4.0"]
                  [com.mchange/c3p0 "0.9.5.2"]
-                 [environ "1.1.0"]]
+                 [environ "1.1.0"]
+                 [ring/ring-defaults "0.2.1"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
