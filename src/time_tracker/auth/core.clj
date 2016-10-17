@@ -2,21 +2,15 @@
   (:require [ring.util.response :as res]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
-
-            [time-tracker.config :as config]))
-
-(defn- snake-case->hyphenated-kw
-  "In: \"key_string\"
-  Out: :key-string"
-  [key-string]
-  (keyword (clojure.string/replace key-string #"_" "-")))
+            [time-tracker.config :as config]
+            [time-tracker.util :as util]))
 
 (defn- call-google-tokeninfo-api
   [token]
   (let [{body :body :as response} @(http/get config/google-tokeninfo-url
                                              {:as :text
                                               :query-params {"id_token" token}})]
-    (assoc response :body (json/parse-string body snake-case->hyphenated-kw))))
+    (assoc response :body (json/parse-string body util/snake-case->hyphenated-kw))))
 
 (defn token->credentials
   "Validates a JWT by calling Google's API and by checking the client ID."
@@ -48,5 +42,4 @@
   (fn [request]
     (if-let [user-information (auth-credentials client-ids request)]
       (handler (assoc request :credentials user-information))
-      (-> (res/response "Access Denied")
-          (res/status 403)))))
+      util/forbidden-response)))
