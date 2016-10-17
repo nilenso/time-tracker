@@ -4,40 +4,15 @@
             
             [time-tracker.db :as db]
             [time-tracker.projects.db :as projects.db]
-            [time-tracker.fixtures :as fixtures]))
+            [time-tracker.fixtures :as fixtures]
+            [time-tracker.projects.test-helpers :as helpers]))
 
 (use-fixtures :once fixtures/migrate-test-db)
 (use-fixtures :each fixtures/isolate-db)
 
 
-(defn populate-data!
-  "In: {google-id [list of owned projects]}
-  Out: {project-name project-id} 
-  Fills out the database with the given test data."
-  [test-data]
-  (jdbc/with-db-transaction [conn (db/connection)]
-    (reduce (fn [project-name-ids [google-id project-names]]
-              (let [{user-id :id} (first (jdbc/insert! conn "app_user"
-                                                       {"google_id" google-id
-                                                        "name" "Agent Smith"}))]
-                (merge project-name-ids
-                       (->> (for [project-name project-names]
-                              (let [{project-id :id} (first (jdbc/insert! conn "project"
-                                                                          {"name" project-name}))]
-                                (jdbc/execute! conn
-                                               [(str "INSERT INTO project_permission "
-                                                     "(project_id, app_user_id, permissions) "
-                                                     "VALUES (?, ?, ARRAY['admin']::permission[]);")
-                                                project-id user-id]
-                                               {:multi? false})
-                                [project-name project-id]))
-                            (into {})))))
-            {}
-            test-data)))
-
-
 (deftest retrieve-project-if-authorized
-  (let [gen-projects (populate-data! {"gid1" ["foo"]
+  (let [gen-projects (helpers/populate-data! {"gid1" ["foo"]
                                       "gid2" ["goo"]})]
     (testing "Authorized project"
       (let [project (projects.db/retrieve-project-if-authorized
@@ -54,8 +29,8 @@
 
 
 (deftest update-project-if-authorized
-  (let [gen-projects (populate-data! {"gid1" ["foo"]
-                                      "gid2" ["goo"]})]
+  (let [gen-projects (helpers/populate-data! {"gid1" ["foo"]
+                                              "gid2" ["goo"]})]
     (testing "Authorized project"
       (let [project-id (get gen-projects "foo")
             updated-project (projects.db/update-project-if-authorized!
@@ -80,7 +55,7 @@
 
 
 (deftest delete-project-if-authorized
-  (let [gen-projects (populate-data! {"gid1" ["foo"]
+  (let [gen-projects (helpers/populate-data! {"gid1" ["foo"]
                                       "gid2" ["goo"]})]
     (testing "Authorized project"
       (let [project-id (get gen-projects "foo")
@@ -99,7 +74,7 @@
 
 
 (deftest retrieve-authorized-projects
-  (let [gen-projects (populate-data! {"gid1" ["foo" "goo"]
+  (let [gen-projects (helpers/populate-data! {"gid1" ["foo" "goo"]
                                       "gid2" ["bar" "baz"]})]
     (testing "The first user"
       (let [projects (projects.db/retrieve-authorized-projects "gid1")
