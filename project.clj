@@ -9,7 +9,7 @@
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
                  [cheshire "5.6.3"]
-                 [honeysql "0.8.1"]
+                 [yesql "0.5.3"]
                  [ragtime "0.6.3"]
                  [postgresql "9.3-1102.jdbc41"]
                  [ring/ring-json "0.4.0"]
