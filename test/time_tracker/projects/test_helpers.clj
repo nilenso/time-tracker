@@ -1,6 +1,9 @@
 (ns time-tracker.projects.test-helpers
   (:require [clojure.java.jdbc :as jdbc]
-            [time-tracker.db :as db]))
+            [time-tracker.db :as db]
+            [yesql.core :refer [defqueries]]))
+
+(defqueries "time_tracker/projects/sql/db.sql")
 
 (defn populate-data!
   "In: {google-id [list of owned projects]}
@@ -16,12 +19,9 @@
                        (->> (for [project-name project-names]
                               (let [{project-id :id} (first (jdbc/insert! conn "project"
                                                                           {"name" project-name}))]
-                                (jdbc/execute! conn
-                                               [(str "INSERT INTO project_permission "
-                                                     "(project_id, app_user_id, permissions) "
-                                                     "VALUES (?, ?, ARRAY['admin']::permission[]);")
-                                                project-id user-id]
-                                               {:multi? false})
+                                (create-admin-permission-query! {:project_id project-id
+                                                                 :user_id    user-id}
+                                                                {:connection conn})
                                 [project-name project-id]))
                             (into {})))))
             {}
