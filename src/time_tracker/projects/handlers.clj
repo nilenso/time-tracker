@@ -36,7 +36,7 @@
 (defmethod projects-single-rest-raw :delete
   [{:keys [route-params credentials]}]
   (if (projects.db/delete-if-authorized! (Integer/parseInt (:id route-params))
-                                                 (:sub credentials))
+                                         (:sub credentials))
     (-> (res/response nil)
         (res/status 204))
     util/forbidden-response))
