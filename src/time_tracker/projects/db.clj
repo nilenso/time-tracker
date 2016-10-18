@@ -1,9 +1,8 @@
 (ns time-tracker.projects.db
   (:require [clojure.java.jdbc :as jdbc]
-
             [time-tracker.db :as db]))
 
-(defn retrieve-project-if-authorized
+(defn retrieve-if-authorized
   "Retrieves one specific project if authorized."
   [project-id google-id]
   (let [query (str "SELECT project.* FROM project "
@@ -15,7 +14,7 @@
         connection (db/connection)]
     (first (jdbc/query connection [query google-id "admin" project-id]))))
 
-(defn update-project-if-authorized!
+(defn update-if-authorized!
   "Updates a project if authorized and returns the updated project."
   [project-id contents google-id]
   (let [update-query (str "UPDATE project "
@@ -34,7 +33,7 @@
                                            "admin" google-id project-id])))
         (jdbc/get-by-id connection "project" project-id)))))
 
-(defn delete-project-if-authorized!
+(defn delete-if-authorized!
   "Deletes a project and returns true if authorized."
   [project-id google-id]
   (let [query (str "DELETE FROM project "
@@ -66,7 +65,7 @@
         authorized-query-result (first (jdbc/query connection [authorized-query google-id "admin"]))]
     (< 0 (:count authorized-query-result))))
 
-(defn create-project-if-authorized!
+(defn create-if-authorized!
   [contents google-id]
   (jdbc/with-db-transaction [connection (db/connection)]
     (when (admin? connection google-id)

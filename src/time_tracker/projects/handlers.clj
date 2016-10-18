@@ -17,7 +17,7 @@
 
 (defmethod projects-single-rest-raw :get
   [{:keys [route-params credentials]}]
-  (if-let [project (projects.db/retrieve-project-if-authorized
+  (if-let [project (projects.db/retrieve-if-authorized
                     (Integer/parseInt (:id route-params))
                     (:sub credentials))]
     (res/response project )
@@ -26,7 +26,7 @@
 (defmethod projects-single-rest-raw :put
   [{:keys [route-params body credentials]}]
   ;; TODO: Validate input JSON
-  (if-let [updated-project (projects.db/update-project-if-authorized!
+  (if-let [updated-project (projects.db/update-if-authorized!
                             (Integer/parseInt (:id route-params))
                             body
                             (:sub credentials))]
@@ -35,7 +35,7 @@
 
 (defmethod projects-single-rest-raw :delete
   [{:keys [route-params credentials]}]
-  (if (projects.db/delete-project-if-authorized! (Integer/parseInt (:id route-params))
+  (if (projects.db/delete-if-authorized! (Integer/parseInt (:id route-params))
                                                  (:sub credentials))
     (-> (res/response nil)
         (res/status 204))
@@ -63,7 +63,7 @@
 (defmethod projects-list-rest-raw :post
   [{:keys [credentials body]}]
   ;; TODO: Validate input JSON
-  (if-let [created-project (projects.db/create-project-if-authorized!
+  (if-let [created-project (projects.db/create-if-authorized!
                             body
                             (:sub credentials))]
     (-> (res/response created-project)
