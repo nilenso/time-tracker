@@ -58,24 +58,28 @@
                    "AND ?::permission = ANY (project_permission.permissions);")]
     (jdbc/query (db/connection) [query google-id "admin"])))
 
-(defn create-project-if-authorized!
-  [contents google-id]
+(defn- admin?
+  [connection google-id]
   (let [authorized-query (str "SELECT COUNT(*) FROM app_user "
                               "WHERE google_id = ? "
-                              "AND role = ?::user_role")]
-    (jdbc/with-db-transaction [connection (db/connection)]
-      (if (< 0 ((comp :count first)
-                (jdbc/query connection [authorized-query google-id "admin"])))
-        (let [{project-id :id :as created-project}
-              (first (jdbc/insert! connection "project"
-                                   {"name" (:name contents)}))
+                              "AND role = ?::user_role")
+        authorized-query-result (first (jdbc/query connection [authorized-query google-id "admin"]))]
+    (< 0 (:count authorized-query-result))))
 
-              {user-id :id}
-              (first (jdbc/find-by-keys connection "app_user"
-                                        {"google_id" google-id}))]
-          (jdbc/execute! connection
-                         [(str "INSERT INTO project_permission "
-                               "(project_id, app_user_id, permissions) "
-                               "VALUES (?, ?, ARRAY['admin']::permission[]);")
-                          project-id user-id])
-          created-project)))))
+(defn create-project-if-authorized!
+  [contents google-id]
+  (jdbc/with-db-transaction [connection (db/connection)]
+    (when (admin? connection google-id)
+      (let [{project-id :id :as created-project}
+            (first (jdbc/insert! connection "project"
+                                 {"name" (:name contents)}))
+
+            {user-id :id}
+            (first (jdbc/find-by-keys connection "app_user"
+                                      {"google_id" google-id}))]
+        (jdbc/execute! connection
+                       [(str "INSERT INTO project_permission "
+                             "(project_id, app_user_id, permissions) "
+                             "VALUES (?, ?, ARRAY['admin']::permission[]);")
+                        project-id user-id])
+        created-project))))
