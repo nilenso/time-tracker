@@ -1,5 +1,4 @@
 (ns time-tracker.core
-  (:gen-class)
   (:require [bidi.ring :refer [make-handler]]
             [ring.middleware.json :refer [wrap-json-response
                                           wrap-json-body]]
