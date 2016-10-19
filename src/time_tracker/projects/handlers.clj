@@ -6,16 +6,9 @@
             [time-tracker.util :as util]))
 
 ;; Single project endpoint --------------------------------------------------
+;; /projects/<id>/
 
-(defmulti projects-single-rest-raw
-  "Read, update and delete operations on a single project"
-  :request-method)
-
-(defmethod projects-single-rest-raw :default
-  [request]
-  util/disallowed-method-response)
-
-(defmethod projects-single-rest-raw :get
+(defn retrieve
   [{:keys [route-params credentials]}]
   (if-let [project (projects.db/retrieve-if-authorized
                     (Integer/parseInt (:id route-params))
@@ -23,7 +16,9 @@
     (res/response project )
     util/forbidden-response))
 
-(defmethod projects-single-rest-raw :put
+;; Calling this handler 'update' would shadow
+;; clojure.core/update
+(defn modify
   [{:keys [route-params body credentials]}]
   ;; TODO: Validate input JSON
   (if-let [updated-project (projects.db/update-if-authorized!
@@ -33,7 +28,7 @@
     (res/response updated-project)
     util/forbidden-response))
 
-(defmethod projects-single-rest-raw :delete
+(defn delete
   [{:keys [route-params credentials]}]
   (if (projects.db/delete-if-authorized! (Integer/parseInt (:id route-params))
                                          (:sub credentials))
@@ -41,26 +36,16 @@
         (res/status 204))
     util/forbidden-response))
 
-(def projects-single-rest
-  (-> projects-single-rest-raw
-      (wrap-google-authenticated config/client-ids)))
-
 ;; List endpoint -----------------------------------------------------------
+;; /projects/
 
-(defmulti projects-list-rest-raw
-  "List and create operations on multiple projects"
-  :request-method)
-
-(defmethod projects-list-rest-raw :default
-  [request]
-  util/disallowed-method-response)
-
-(defmethod projects-list-rest-raw :get
+;; list would shadow clojure.core/list
+(defn list-all
   [{:keys [credentials]}]
   (res/response (projects.db/retrieve-authorized-projects
                  (:sub credentials))))
 
-(defmethod projects-list-rest-raw :post
+(defn create
   [{:keys [credentials body]}]
   ;; TODO: Validate input JSON
   (if-let [created-project (projects.db/create-if-authorized!
@@ -70,6 +55,3 @@
         (res/status 201))
     util/forbidden-response))
 
-(def projects-list-rest
-  (-> projects-list-rest-raw
-      (wrap-google-authenticated config/client-ids)))
