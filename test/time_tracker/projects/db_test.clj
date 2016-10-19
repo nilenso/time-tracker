@@ -7,7 +7,7 @@
             [time-tracker.projects.test-helpers :as projects.helpers]
             [time-tracker.users.test-helpers :as users.helpers]))
 
-(use-fixtures :once fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init-db! fixtures/migrate-test-db)
 (use-fixtures :each fixtures/isolate-db)
 
 

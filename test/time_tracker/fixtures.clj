@@ -7,6 +7,10 @@
             [time-tracker.auth.test-helpers :refer [fake-token->credentials]])
   (:use org.httpkit.server))
 
+(defn init-db! [f]
+  (db/init-db!)
+  (f))
+
 (defn migrate-test-db [f]
   (migrate-db)
   (f))

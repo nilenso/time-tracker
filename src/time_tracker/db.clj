@@ -12,6 +12,9 @@
                      (.setMaxIdleTime (* 3 60 60)))]
     {:datasource datasource}))
 
-(def pooled-db (delay (pool)))
+(defonce pooled-db (atom nil))
+
+(defn init-db! []
+  (reset! pooled-db (pool)))
 
 (defn connection [] @pooled-db)

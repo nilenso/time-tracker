@@ -9,7 +9,7 @@
             [time-tracker.auth.core :as auth]
             [time-tracker.test-helpers :as helpers]))
 
-(use-fixtures :once fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init-db! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 
