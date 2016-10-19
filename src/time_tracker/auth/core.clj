@@ -43,3 +43,6 @@
     (if-let [user-information (auth-credentials client-ids request)]
       (handler (assoc request :credentials user-information))
       util/forbidden-response)))
+
+(def wrap-auth
+  #(wrap-google-authenticated % config/client-ids))
