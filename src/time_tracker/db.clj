@@ -6,10 +6,8 @@
   (let [datasource (doto (ComboPooledDataSource.)
                      (.setDriverClass "org.postgresql.Driver")
                      (.setJdbcUrl config/jdbc-uri)
-                     ;; expire excess connections after 30 minutes of inactivity:
-                     (.setMaxIdleTimeExcessConnections (* 30 60))
-                     ;; expire connections after 3 hours of inactivity:
-                     (.setMaxIdleTime (* 3 60 60)))]
+                     (.setMaxIdleTimeExcessConnections config/cp-max-idle-time-excess-connections)
+                     (.setMaxIdleTime config/cp-max-idle-time))]
     {:datasource datasource}))
 
 (defonce pooled-db (atom nil))
