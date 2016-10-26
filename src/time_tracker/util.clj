@@ -18,3 +18,6 @@
   [key-string]
   (keyword (clojure.string/replace key-string #"_" "-")))
 
+(defn statement-success?
+  [result]
+  (< 0 result))

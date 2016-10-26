@@ -1,13 +1,10 @@
 (ns time-tracker.projects.db
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
-            [yesql.core :refer [defqueries]]))
+            [yesql.core :refer [defqueries]]
+            [time-tracker.util :refer [statement-success?]]))
 
 (defqueries "time_tracker/projects/sql/db.sql")
-
-(defn- statement-success?
-  [result]
-  (< 0 result))
 
 (defn retrieve-if-authorized
   "Retrieves one specific project if authorized."
