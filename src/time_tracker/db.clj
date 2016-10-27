@@ -10,7 +10,7 @@
                      (.setMaxIdleTime config/cp-max-idle-time))]
     {:datasource datasource}))
 
-(defonce pooled-db (atom nil))
+(defonce ^:private pooled-db (atom nil))
 
 (defn init-db! []
   (reset! pooled-db (pool)))
