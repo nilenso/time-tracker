@@ -59,7 +59,7 @@
 (deftest wrap-google-authenticated
   (let [handler (fn [request]
                   (res/response "Here is your response. Share it with all your friends."))
-        wrapped-handler (auth/wrap-google-authenticated ["test" "test2"] handler)
+        wrapped-handler (auth/wrap-google-authenticated handler ["test" "test2"])
         user-creds {:aud "test"
                     :username "sandy"}]
     
