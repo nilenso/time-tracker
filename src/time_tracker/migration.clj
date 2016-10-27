@@ -1,6 +1,5 @@
 (ns time-tracker.migration
   (:require [ragtime.repl]
-
             [time-tracker.config :refer [migration-config]]))
 
 (defn migrate-db []
