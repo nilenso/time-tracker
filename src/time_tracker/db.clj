@@ -2,7 +2,7 @@
   (:require [time-tracker.config :as config])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
-(defn pool []
+(defn- pool []
   (let [datasource (doto (ComboPooledDataSource.)
                      (.setDriverClass "org.postgresql.Driver")
                      (.setJdbcUrl config/jdbc-uri)
