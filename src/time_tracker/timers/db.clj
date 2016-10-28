@@ -4,7 +4,25 @@
             [time-tracker.util :refer [statement-success?]]
             [yesql.core :refer [defqueries]]
             ;; For protocol extensions
-            [clj-time.jdbc]))
+            [clj-time.jdbc])
+  (:import org.postgresql.util.PGInterval))
+
+(defrecord TimePeriod [hours minutes seconds]
+  jdbc/ISQLParameter
+  (set-parameter [value statement index]
+    (.setObject statement
+                index
+                (PGInterval. 0 0 0
+                             (:hours   value)
+                             (:minutes value)
+                             (:seconds value)))))
+
+(extend-protocol jdbc/IResultSetReadColumn
+  PGInterval
+  (result-set-read-column [^PGInterval interval _ _]
+    (TimePeriod. (.getHours   interval)
+                 (.getMinutes interval)
+                 (.getSeconds interval))))
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
@@ -25,24 +43,52 @@
                              :project_id project-id}
                             {:connection connection}))))
 
-(defn update-if-authorized!
+(defn update-duration-if-authorized!
   "Set the elapsed duration of the timer."
-  [timer-id duration google-id])
+  [timer-id duration google-id]
+  (statement-success? (update-timer-duration-query! {:duration  duration
+                                                     :timer_id  timer-id
+                                                     :google_id google-id})))
 
 (defn delete-if-authorized!
   "Deletes a timer and returns true if authorized."
-  [timer-id google-id])
+  [timer-id google-id]
+  (statement-success?
+   (delete-if-authorized-query! {:google_id google-id
+                                 :timer_id  timer-id}
+                                {:connection (db/connection)})))
 
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."
-  [google-id])
+  [google-id]
+  (->> (retrieve-authorized-timers-query {:google_id google-id}
+                                         {:connection (db/connection)})
+       (map #(select-keys % [:id :project_id :started_time :duration :time_created]))))
 
 (defn start-if-authorized!
   "Starts a timer if authorized and if the timer is not already started.
-  Returns {:keys [start-time duration]} or nil."
-  [timer-id google-id])
+  Returns {:keys [start_time duration]} or nil."
+  [timer-id google-id]
+  (jdbc/with-db-transaction [connection (db/connection)]
+    (when (statement-success? (start-timer-query! {:timer_id  timer-id
+                                                   :google_id google-id}
+                                                  {:connection connection}))
+      (-> (retrieve-timer-query {:timer_id  timer-id
+                                 :google_id google-id}
+                                {:connection connection})
+          (first)
+          (select-keys [:start_time :duration])))))
 
 (defn stop-if-authorized!
   "Stops a timer if authorized and if the timer is not already stopped.
   Returns {:keys [duration]} or nil."
-  [timer-id google-id])
+  [timer-id google-id]
+  (jdbc/with-db-transaction [connection (db/connection)]
+    (when (statement-success? (stop-timer-query! {:timer_id  timer-id
+                                                  :google_id google-id}
+                                                 {:connection connection}))
+      (-> (retrieve-timer-query {:timer_id  timer-id
+                                 :google_id google-id}
+                                {:connection connection})
+          (first)
+          (select-keys [:duration])))))

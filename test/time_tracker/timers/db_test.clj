@@ -39,3 +39,26 @@
                                                     {"project_id" project-id}))]
         (is (nil? created-timer))
         (is (nil? actual-timer))))))
+
+
+(deftest delete-if-authorized
+  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
+                                                       "gid2" ["goo"]})
+        timer1       (timers.db/create-if-authorized! (get gen-projects "foo")
+                                                      "gid1")
+        timer2       (timers.db/create-if-authorized! (get gen-projects "goo")
+                                                      "gid2")]
+
+    (testing "Owned timer"
+      (let [timer-id     (:id timer1)
+            deleted-bool (timers.db/delete-if-authorized! timer-id "gid1")
+            actual-timer (jdbc/get-by-id (db/connection) "timer" timer-id)]
+        (is deleted-bool)
+        (is (nil? actual-timer))))
+
+    (testing "Unowned timer"
+      (let [timer-id     (:id timer2)
+            deleted-bool (timers.db/delete-if-authorized! timer-id "gid1")
+            actual-timer (jdbc/get-by-id (db/connection) "timer" timer-id)]
+        (is (not deleted-bool))
+        (is (not (nil? actual-timer)))))))
