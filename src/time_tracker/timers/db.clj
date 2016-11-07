@@ -45,10 +45,18 @@
 
 (defn update-duration-if-authorized!
   "Set the elapsed duration of the timer."
-  [timer-id duration google-id]
-  (statement-success? (update-timer-duration-query! {:duration  duration
-                                                     :timer_id  timer-id
-                                                     :google_id google-id})))
+  [timer-id duration current-time google-id]
+  (jdbc/with-db-transaction [connection (db/connection)]
+    (when (statement-success? (update-timer-duration-query! {:duration     duration
+                                                             :timer_id     timer-id
+                                                             :current_time current-time
+                                                             :google_id    google-id}
+                                                            {:connection connection}))
+      (-> (retrieve-timer-query {:timer_id timer-id
+                                 :google_id google-id}
+                                {:connection connection})
+          (first)
+          (select-keys [:started_time :duration])))))
 
 (defn delete-if-authorized!
   "Deletes a timer and returns true if authorized."
@@ -68,24 +76,26 @@
 (defn start-if-authorized!
   "Starts a timer if authorized and if the timer is not already started.
   Returns {:keys [start_time duration]} or nil."
-  [timer-id google-id]
+  [timer-id current-time google-id]
   (jdbc/with-db-transaction [connection (db/connection)]
-    (when (statement-success? (start-timer-query! {:timer_id  timer-id
-                                                   :google_id google-id}
+    (when (statement-success? (start-timer-query! {:timer_id     timer-id
+                                                   :current_time current-time
+                                                   :google_id    google-id}
                                                   {:connection connection}))
       (-> (retrieve-timer-query {:timer_id  timer-id
                                  :google_id google-id}
                                 {:connection connection})
           (first)
-          (select-keys [:start_time :duration])))))
+          (select-keys [:started_time :duration])))))
 
 (defn stop-if-authorized!
   "Stops a timer if authorized and if the timer is not already stopped.
   Returns {:keys [duration]} or nil."
-  [timer-id google-id]
+  [timer-id current-time google-id]
   (jdbc/with-db-transaction [connection (db/connection)]
-    (when (statement-success? (stop-timer-query! {:timer_id  timer-id
-                                                  :google_id google-id}
+    (when (statement-success? (stop-timer-query! {:timer_id     timer-id
+                                                  :current_time current-time
+                                                  :google_id    google-id}
                                                  {:connection connection}))
       (-> (retrieve-timer-query {:timer_id  timer-id
                                  :google_id google-id}

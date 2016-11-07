@@ -1,5 +1,7 @@
 (ns time-tracker.util
-  (:require [ring.util.response :as res]))
+  (:require [ring.util.response :as res]
+            [clj-time.core :as time]
+            [clj-time.coerce]))
 
 (defn error-response
   [status msg]
@@ -21,3 +23,10 @@
 (defn statement-success?
   [result]
   (< 0 result))
+
+(defn to-epoch-seconds
+  [time-obj]
+  (/ (clj-time.coerce/to-long time-obj) 1000.0))
+
+(defn current-epoch-seconds []
+  (to-epoch-seconds (time/now)))
