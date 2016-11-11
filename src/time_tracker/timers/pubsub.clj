@@ -1,7 +1,10 @@
 (ns time-tracker.timers.pubsub
   (:require [org.httpkit.server :refer [send!]]
             [cheshire.core :as json]
-            [time-tracker.timers.db :as timers.db]))
+            [time-tracker.timers.db :as timers.db]
+            [time-tracker.util :as util]
+            [clojure.spec :as s]
+            [time-tracker.timers.spec]))
 
 ;; A map of google-ids to sets of channels.
 (defonce active-connections (atom {}))
@@ -14,8 +17,29 @@
     #{value}
     (conj the-set value)))
 
+(defn broadcast-to!
+  "Serializes data and sends it to all connections belonging to
+  google-id."
+  [google-id data]
+  (let [str-data (json/encode data)]
+    (doseq [channel (get @active-connections google-id)]
+      (send! channel str-data))))
+
+(defn start-timer-command!
+  [channel google-id {:keys [timer-id started-time] :as args}]
+  (if-not (s/valid? :timers.pubsub/start-timer-args args)
+    (send! channel (json/encode {:error "Invalid args"}))
+    (if-let [{started-time :started_time duration :duration}
+             (timers.db/start-if-authorized! timer-id started-time google-id)]
+      (broadcast-to! google-id
+                     {:timer-id     timer-id
+                      :started-time (util/to-epoch-seconds started-time)
+                      :duration     duration})
+      (send! channel (json/encode
+                      {:error "Could not start timer"})))))
+
 (def command-map
-  {})
+  {"start-timer" start-timer-command!})
 
 (defn add-channel!
   "Adds a channel to the map of active connections."
@@ -31,29 +55,10 @@
 (defn dispatch-command!
   "Calls the appropriate timer command."
   [channel google-id command-data]
-  (if-let [command-fn (command-map (get command-data "command"))]
-    (command-fn channel google-id (dissoc command-data "command"))
+  (if-let [command-fn (command-map (get command-data :command))]
+    (command-fn channel google-id (dissoc command-data :command))
     ;; TODO: Add error logging/better error response
     (send! channel (json/encode
                     {:error "Invalid command"}))))
 
-(defn broadcast-to!
-  "Serializes data and sends it to all connections belonging to
-  google-id."
-  [google-id data]
-  (let [str-data (json/encode data)]
-    (doseq [channel (get @active-connections google-id)]
-      (send! channel str-data))))
 
-(defn start-timer-command!
-  [channel google-id {:keys [timer-id start-time] :as kwargs}]
-  ;; TODO: Validate command arguments
-  (if-let [{started-time :started_time duration :duration}
-           (timers.db/start-if-authorized! timer-id start-time google-id)]
-    (broadcast-to! google-id
-                   {:timer-id     timer-id
-                    :started-time started-time
-                    :duration     duration})
-    ;; TODO: Add better error handling
-    (send! channel (json/encode
-                    {:error "Could not start timer"}))))
