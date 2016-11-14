@@ -10,5 +10,5 @@
       (pubsub/add-channel! channel google-id)
       (http-kit/on-close channel (partial pubsub/on-close! channel google-id))
       (http-kit/on-receive channel (fn [data]
-                                     (pubsub/dispatch-command! channel google-id
-                                                               (json/decode data keyword)))))))
+                                     (pubsub/run-command! channel google-id
+                                                          (json/decode data keyword)))))))
