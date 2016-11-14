@@ -1,7 +1,8 @@
 (ns time-tracker.util
   (:require [ring.util.response :as res]
             [clj-time.core :as time]
-            [clj-time.coerce]))
+            [clj-time.coerce]
+            [environ.core :as environ]))
 
 (defn error-response
   [status msg]
@@ -30,3 +31,9 @@
 
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))
+
+(defn from-config
+  [config-var]
+  (if-let [result (environ/env config-var)]
+    result
+    (throw (ex-info "Config var not defined" {:var config-var}))))
