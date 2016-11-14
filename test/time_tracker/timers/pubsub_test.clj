@@ -1,5 +1,6 @@
 (ns time-tracker.timers.pubsub-test
   (:require [clojure.test :refer :all]
+            [clojure.core.async :refer [<!! put! chan]]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers.db]
@@ -59,23 +60,46 @@
   (let [gen-projects     (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id       (get gen-projects "foo")
         {timer-id :id}   (timers.db/create-if-authorized! (db/connection) project-id "gid1")
-        command-response (promise)
+        response-chan    (chan 1)
         socket           (ws/connect connect-url
                                      :headers    (auth.test/fake-login-headers "gid1")
-                                     :on-receive #(deliver command-response (json/decode % keyword)))]
+                                     :on-receive #(put! response-chan (json/decode % keyword)))]
     (try
       (testing "Timer exists"
         (ws/send-msg socket (json/encode
                              {:command   "delete-timer"
                               :timer-id  timer-id}))
-        (is (:delete? @command-response))
-        (is (= timer-id
-               (:timer-id @command-response))))
+        (let [command-response (<!! response-chan)]
+          (is (:delete? command-response))
+          (is (= timer-id
+                 (:timer-id command-response)))))
 
-      #_(testing "Timer does not exist"
+      (testing "Timer does not exist"
         (ws/send-msg socket (json/encode
                              {:command  "delete-timer"
                               :timer-id (+ 5 timer-id)}))
-        (is (:error @command-response))
-        (println  @command-response))
+        (let [command-response (<!! response-chan)]
+          (is (:error command-response))))
+      (finally (ws/close socket)))))
+
+(deftest create-and-start-timer-command
+  (let [gen-projects     (projects.helpers/populate-data! {"gid1" ["foo"]})
+        project-id       (get gen-projects "foo")
+        current-time     (util/current-epoch-seconds)
+        response-chan    (chan 1)
+        socket           (ws/connect connect-url
+                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :on-receive #(put! response-chan (json/decode % keyword)))]
+    (try
+      (testing "Timer does not exist"
+        (ws/send-msg socket (json/encode
+                             {:command      "create-and-start-timer"
+                              :project-id   project-id
+                              :started-time current-time}))
+        (let [command-response (<!! response-chan)]
+          (is (= project-id
+                 (:project-id command-response)))
+          (is (:create? command-response))
+          (is (= current-time
+                 (:started-time command-response)))))
       (finally (ws/close socket)))))

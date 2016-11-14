@@ -13,6 +13,7 @@
   (s/keys :req-un [::hours ::minutes ::seconds]))
 
 (s/def ::timer-id ::id)
+(s/def ::project-id ::id)
 (s/def ::started-time ::epoch)
 (s/def ::stop-time ::epoch)
 
@@ -24,3 +25,6 @@
 
 (s/def :timers.pubsub/delete-timer-args
   (s/keys :req-un [::timer-id]))
+
+(s/def :timers.pubsub/create-and-start-timer-args
+  (s/keys :req-un [::project-id ::started-time]))

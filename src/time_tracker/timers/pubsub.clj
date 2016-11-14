@@ -118,3 +118,17 @@
                     :delete?  true})
     (send-error! channel "Could not delete timer")))
 
+(defmethod run-command! "create-and-start-timer"
+  [channel google-id connection {:keys [project-id started-time] :as args}]
+  (validate :timers.pubsub/create-and-start-timer-args args)
+  (if-let [{timer-id :id} (timers.db/create-if-authorized! connection project-id google-id)]
+    ;; If you created the timer, you can log time against it
+    (let [{started-time :started_time duration :duration}
+          (timers.db/start-if-authorized! connection timer-id started-time google-id)]
+      (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :project-id   project-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration
+                    :create?      true}))
+    (send-error! channel "Could not create timer")))
