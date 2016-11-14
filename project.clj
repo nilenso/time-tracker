@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
-                 [http-kit "2.1.18"]
+                 [http-kit "2.2.0"]
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
                  [cheshire "5.6.3"]
