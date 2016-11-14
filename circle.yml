@@ -2,3 +2,4 @@ machine:
   environment:
     DB_CONNECTION_STRING: jdbc:postgresql://localhost/circle_test?user=ubuntu
     TEST_DB_USERNAME: ubuntu
+    GOOGLE_CLIENT_ID: 128416141127-mp9b2fsq6e8bt1r3lva6cot1kdqnlof9.apps.googleusercontent.com
