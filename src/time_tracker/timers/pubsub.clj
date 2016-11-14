@@ -1,6 +1,7 @@
 (ns time-tracker.timers.pubsub
   (:require [org.httpkit.server :refer [send!]]
             [cheshire.core :as json]
+            [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers.db]
             [time-tracker.util :as util]
@@ -47,48 +48,73 @@
   (send-error! channel "Invalid args"))
 
 (defn command-dispatch-fn
-  [channel google-id command-data]
+  [channel google-id connection command-data]
   (:command command-data))
+
+(defn- validate
+  [spec args]
+  (when-not (s/valid? spec args)
+    (throw (ex-info "Invalid args"
+                    {:error "Invalid args"}))))
 
 (defmulti run-command! command-dispatch-fn)
 
+(defn- wrap-validator
+  [func]
+  (fn [channel google-id args]
+    (try
+      (func channel google-id args)
+      (catch Exception e
+        (if-let [{:keys [error]} (ex-data e)]
+          ;; TODO: Add logging
+          (send-invalid-args! channel)
+          (throw e))))))
+
+(defn- wrap-transaction
+  [func]
+  (fn [channel google-id args]
+    (jdbc/with-db-transaction [connection (db/connection)]
+      (func channel google-id connection args))))
+
+(def dispatch-command!
+  (-> run-command!
+      (wrap-transaction)
+      (wrap-validator)))
+
 (defmethod run-command! :default
-  [channel _ _]
+  [channel _ _ _]
   (send! channel (json/encode
                   {:error "Invalid command"})))
 
 (defmethod run-command! "start-timer"
-  [channel google-id {:keys [timer-id started-time] :as args}]
-  (if-not (s/valid? :timers.pubsub/start-timer-args args)
-    (send-invalid-args! channel)
-    (if-let [{started-time :started_time duration :duration}
-             (timers.db/start-if-authorized! (db/connection) timer-id started-time google-id)]
-      (broadcast-to! google-id
-                     {:timer-id     timer-id
-                      :started-time (util/to-epoch-seconds started-time)
-                      :duration     duration})
-      (send-error! channel "Could not start timer"))))
-
+  [channel google-id connection {:keys [timer-id started-time] :as args}]
+  (validate :timers.pubsub/start-timer-args args)
+  (if-let [{started-time :started_time duration :duration}
+           (timers.db/start-if-authorized! connection timer-id started-time google-id)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration})
+    (send-error! channel "Could not start timer")))
+ 
 (defmethod run-command! "stop-timer"
-  [channel google-id {:keys [timer-id stop-time] :as args}]
-  (if-not (s/valid? :timers.pubsub/stop-timer-args args)
-    (send-invalid-args! channel)
-    (if-let [{:keys [duration]} (timers.db/stop-if-authorized!
-                                 (db/connection) timer-id stop-time google-id)]
-      (broadcast-to! google-id
-                     {:timer-id     timer-id
-                      :started-time nil
-                      :duration     duration})
-      (send-error! channel "Could not stop timer"))))
+  [channel google-id connection {:keys [timer-id stop-time] :as args}]
+  (validate :timers.pubsub/stop-timer-args args)
+  (if-let [{:keys [duration]} (timers.db/stop-if-authorized!
+                               connection timer-id stop-time google-id)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time nil
+                    :duration     duration})
+    (send-error! channel "Could not stop timer")))
 
 (defmethod run-command! "delete-timer"
-  [channel google-id {:keys [timer-id] :as args}]
-  (if-not (s/valid? :timers.pubsub/delete-timer-args args)
-    (send-invalid-args! channel)
-    (if (timers.db/delete-if-authorized!
-         (db/connection) timer-id google-id)
-      (broadcast-to! google-id
-                     {:timer-id timer-id
-                      :delete?  true})
-      (send-error! channel "Could not delete timer"))))
+  [channel google-id connection {:keys [timer-id] :as args}]
+  (validate :timers.pubsub/delete-timer-args args)
+  (if (timers.db/delete-if-authorized!
+       connection timer-id google-id)
+    (broadcast-to! google-id
+                   {:timer-id timer-id
+                    :delete?  true})
+    (send-error! channel "Could not delete timer")))
 
