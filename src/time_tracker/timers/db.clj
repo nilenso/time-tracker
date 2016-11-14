@@ -36,8 +36,8 @@
 
 (defn create-if-authorized!
   "Creates and returns a timer if authorized."
-  [project-id google-id]
-  (jdbc/with-db-transaction [connection (db/connection)]
+  [conn project-id google-id]
+  (jdbc/with-db-transaction [connection conn]
     (when (has-timing-access? connection google-id project-id)
       (create-timer-query<! {:google_id  google-id
                              :project_id project-id}
@@ -45,8 +45,8 @@
 
 (defn update-duration-if-authorized!
   "Set the elapsed duration of the timer."
-  [timer-id duration current-time google-id]
-  (jdbc/with-db-transaction [connection (db/connection)]
+  [conn timer-id duration current-time google-id]
+  (jdbc/with-db-transaction [connection conn]
     (when (statement-success? (update-timer-duration-query! {:duration     duration
                                                              :timer_id     timer-id
                                                              :current_time current-time
@@ -60,24 +60,24 @@
 
 (defn delete-if-authorized!
   "Deletes a timer and returns true if authorized."
-  [timer-id google-id]
+  [connection timer-id google-id]
   (statement-success?
    (delete-if-authorized-query! {:google_id google-id
                                  :timer_id  timer-id}
-                                {:connection (db/connection)})))
+                                {:connection connection})))
 
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."
-  [google-id]
+  [connection google-id]
   (->> (retrieve-authorized-timers-query {:google_id google-id}
-                                         {:connection (db/connection)})
+                                         {:connection connection})
        (map #(select-keys % [:id :project_id :started_time :duration :time_created]))))
 
 (defn start-if-authorized!
   "Starts a timer if authorized and if the timer is not already started.
   Returns {:keys [start_time duration]} or nil."
-  [timer-id current-time google-id]
-  (jdbc/with-db-transaction [connection (db/connection)]
+  [conn timer-id current-time google-id]
+  (jdbc/with-db-transaction [connection conn]
     (when (statement-success? (start-timer-query! {:timer_id     timer-id
                                                    :current_time current-time
                                                    :google_id    google-id}
@@ -91,8 +91,8 @@
 (defn stop-if-authorized!
   "Stops a timer if authorized and if the timer is not already stopped.
   Returns {:keys [duration]} or nil."
-  [timer-id current-time google-id]
-  (jdbc/with-db-transaction [connection (db/connection)]
+  [conn timer-id current-time google-id]
+  (jdbc/with-db-transaction [connection conn]
     (when (statement-success? (stop-timer-query! {:timer_id     timer-id
                                                   :current_time current-time
                                                   :google_id    google-id}

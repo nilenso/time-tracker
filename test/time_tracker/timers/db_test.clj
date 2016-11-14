@@ -26,7 +26,8 @@
 
     (testing "Authorized project"
       (let [project-id    (get gen-projects "foo")
-            created-timer (timers.db/create-if-authorized! project-id
+            created-timer (timers.db/create-if-authorized! (db/connection)
+                                                           project-id
                                                            "gid1")
             actual-timer  (first (jdbc/find-by-keys (db/connection) "timer"
                                                     {"project_id" project-id}))]
@@ -36,7 +37,8 @@
 
     (testing "Unauthorized project"
       (let [project-id    (get gen-projects "goo")
-            created-timer (timers.db/create-if-authorized! project-id
+            created-timer (timers.db/create-if-authorized! (db/connection)
+                                                           project-id
                                                            "gid1")
             actual-timer  (first (jdbc/find-by-keys (db/connection) "timer"
                                                     {"project_id" project-id}))]
@@ -47,17 +49,21 @@
 (deftest update-duration-if-authorized
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
-        timer1       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer1       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")
-        timer2       (timers.db/create-if-authorized! (get gen-projects "goo")
+        timer2       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "goo")
                                                       "gid2")
-        timer3       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer3       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")]
     (testing "Owned timer"
       (testing "Not started"
         (let [timer-id        (:id timer1)
               current-time    (util/current-epoch-seconds)
               updated-project (timers.db/update-duration-if-authorized!
+                               (db/connection)
                                timer-id
                                (TimePeriod. 0 7 0.0)
                                current-time
@@ -69,11 +75,13 @@
       (testing "Started"
         (let [timer-id        (:id timer3)
               start-result    (timers.db/start-if-authorized!
+                               (db/connection)
                                timer-id
                                (util/current-epoch-seconds)
                                "gid1")
               current-time    (util/current-epoch-seconds)
               updated-project (timers.db/update-duration-if-authorized!
+                               (db/connection)
                                timer-id
                                (TimePeriod. 0 9 0.0)
                                current-time
@@ -89,6 +97,7 @@
       (let [timer-id        (:id timer2)
             current-time    (util/current-epoch-seconds)
             updated-project (timers.db/update-duration-if-authorized!
+                             (db/connection)
                              timer-id
                              (TimePeriod. 0 5 0.0)
                              current-time
@@ -98,10 +107,11 @@
 
 (defn- create-timers!
   "Creates n timers for each project and returns a set of their ids."
-  [google-id gen-projects project-names n]
+  [connection google-id gen-projects project-names n]
   (set (for [project-id (map gen-projects project-names)
              _          (range n)]
          (:id (timers.db/create-if-authorized!
+               connection
                project-id
                google-id)))))
 
@@ -109,12 +119,12 @@
 (deftest retrieve-authorized-timers
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})
-        expected1    (create-timers! "gid1" gen-projects ["foo" "goo"] 2)
-        expected2    (create-timers! "gid2" gen-projects ["bar" "baz"] 2)
-        actual1      (->> (timers.db/retrieve-authorized-timers "gid1")
+        expected1    (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 2)
+        expected2    (create-timers! (db/connection) "gid2" gen-projects ["bar" "baz"] 2)
+        actual1      (->> (timers.db/retrieve-authorized-timers (db/connection) "gid1")
                           (map :id)
                           (set))
-        actual2      (->> (timers.db/retrieve-authorized-timers "gid2")
+        actual2      (->> (timers.db/retrieve-authorized-timers (db/connection) "gid2")
                           (map :id)
                           (set))]
     (is (= expected1 actual1))
@@ -124,21 +134,23 @@
 (deftest delete-if-authorized
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
-        timer1       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer1       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")
-        timer2       (timers.db/create-if-authorized! (get gen-projects "goo")
+        timer2       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "goo")
                                                       "gid2")]
 
     (testing "Owned timer"
       (let [timer-id     (:id timer1)
-            deleted-bool (timers.db/delete-if-authorized! timer-id "gid1")
+            deleted-bool (timers.db/delete-if-authorized! (db/connection) timer-id "gid1")
             actual-timer (jdbc/get-by-id (db/connection) "timer" timer-id)]
         (is deleted-bool)
         (is (nil? actual-timer))))
 
     (testing "Unowned timer"
       (let [timer-id     (:id timer2)
-            deleted-bool (timers.db/delete-if-authorized! timer-id "gid1")
+            deleted-bool (timers.db/delete-if-authorized! (db/connection) timer-id "gid1")
             actual-timer (jdbc/get-by-id (db/connection) "timer" timer-id)]
         (is (not deleted-bool))
         (is (not (nil? actual-timer)))))))
@@ -147,17 +159,21 @@
 (deftest start-if-authorized
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
-        timer1       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer1       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")
-        timer2       (timers.db/create-if-authorized! (get gen-projects "goo")
+        timer2       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "goo")
                                                       "gid2")
-        timer3       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer3       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")]
     (testing "Owned timer"
       (testing "Not started"
         (let [timer-id     (:id timer1)
               current-time (util/current-epoch-seconds)
               start-result (timers.db/start-if-authorized!
+                            (db/connection)
                             timer-id
                             current-time
                             "gid1")]
@@ -166,10 +182,12 @@
       (testing "Started"
         (let [timer-id      (:id timer2)
               first-result  (timers.db/start-if-authorized!
+                             (db/connection)
                              timer-id
                              (util/current-epoch-seconds)
                              "gid2")
               second-result (timers.db/start-if-authorized!
+                             (db/connection)
                              timer-id
                              (util/current-epoch-seconds)
                              "gid2")]
@@ -179,6 +197,7 @@
     (testing "Unowned timer"
       (let [timer-id     (:id timer3)
             start-result (timers.db/start-if-authorized!
+                          (db/connection)
                           timer-id
                           (util/current-epoch-seconds)
                           "gid2")]
@@ -188,21 +207,25 @@
 (deftest stop-if-authorized
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
-        timer1       (timers.db/create-if-authorized! (get gen-projects "foo")
+        timer1       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "foo")
                                                       "gid1")
-        timer2       (timers.db/create-if-authorized! (get gen-projects "goo")
+        timer2       (timers.db/create-if-authorized! (db/connection)
+                                                      (get gen-projects "goo")
                                                       "gid2")]
     (testing "Owned timer"
       (testing "Started"
         (let [timer-id           (:id timer1)
               current-time       (util/current-epoch-seconds)
               _                  (timers.db/start-if-authorized!
+                                  (db/connection)
                                   timer-id
                                   current-time
                                   "gid1")
               ;; Stop the timer 10 seconds later.
               stop-time          (+ current-time 10.0)
               {:keys [duration]} (timers.db/stop-if-authorized!
+                                  (db/connection)
                                   timer-id
                                   stop-time
                                   "gid1")]
@@ -211,6 +234,7 @@
       (testing "Not started"
         (let [timer-id    (:id timer1)
               stop-result (timers.db/stop-if-authorized!
+                           (db/connection)
                            timer-id
                            (util/current-epoch-seconds)
                            "gid1")]
@@ -219,6 +243,7 @@
     (testing "Unowned timer"
       (let [timer-id    (:id timer2)
             stop-result (timers.db/stop-if-authorized!
+                         (db/connection)
                          timer-id
                          (util/current-epoch-seconds)
                          "gid1")]
