@@ -132,3 +132,18 @@
                     :duration     duration
                     :create?      true}))
     (send-error! channel "Could not create timer")))
+
+(defmethod run-command! "change-timer-duration"
+  [channel google-id connection {:keys [timer-id duration current-time] :as args}]
+  (validate :timers.pubsub/change-timer-duration-args args)
+  (if-let [{started-time :started_time duration :duration}
+           (timers.db/update-duration-if-authorized! connection
+                                                     timer-id
+                                                     (timers.db/map->TimePeriod duration)
+                                                     current-time
+                                                     google-id)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration})
+    (send-error! channel "Could not update duration")))
