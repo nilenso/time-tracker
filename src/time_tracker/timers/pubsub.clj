@@ -6,7 +6,10 @@
             [time-tracker.timers.db :as timers.db]
             [time-tracker.util :as util]
             [clojure.spec :as s]
-            [time-tracker.timers.spec]))
+            [time-tracker.timers.spec]
+            [clojure.algo.generic.functor :refer [fmap]]))
+
+;; Connection management -------
 
 ;; A map of google-ids to sets of channels.
 (defonce active-connections (atom {}))
@@ -30,6 +33,8 @@
   ;; TODO: Use status in logging
   (swap! active-connections update google-id disj channel))
 
+;; Utils ----------------------
+
 (defn broadcast-to!
   "Serializes data and sends it to all connections belonging to
   google-id."
@@ -47,17 +52,74 @@
   [channel]
   (send-error! channel "Invalid args"))
 
-(defn command-dispatch-fn
-  [channel google-id connection command-data]
-  (:command command-data))
-
 (defn- validate
   [spec args]
   (when-not (s/valid? spec args)
     (throw (ex-info "Invalid args"
                     {:error "Invalid args"}))))
 
-(defmulti run-command! command-dispatch-fn)
+;; Commands -----
+
+(defn start-timer-command!
+  [channel google-id connection {:keys [timer-id started-time] :as args}]
+  (validate :timers.pubsub/start-timer-args args)
+  (if-let [{started-time :started_time duration :duration}
+           (timers.db/start! connection timer-id started-time)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration})
+    (send-error! channel "Could not start timer")))
+
+(defn stop-timer-command!
+  [channel google-id connection {:keys [timer-id stop-time] :as args}]
+  (validate :timers.pubsub/stop-timer-args args)
+  (if-let [{:keys [duration]} (timers.db/stop!
+                               connection timer-id stop-time)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time nil
+                    :duration     duration})
+    (send-error! channel "Could not stop timer")))
+
+(defn delete-timer-command!
+  [channel google-id connection {:keys [timer-id] :as args}]
+  (validate :timers.pubsub/delete-timer-args args)
+  (if (timers.db/delete!
+       connection timer-id)
+    (broadcast-to! google-id
+                   {:timer-id timer-id
+                    :delete?  true})
+    (send-error! channel "Could not delete timer")))
+
+(defn create-and-start-timer-command!
+  [channel google-id connection {:keys [project-id started-time] :as args}]
+  (validate :timers.pubsub/create-and-start-timer-args args)
+  (let [{timer-id :id} (timers.db/create! connection project-id google-id)
+        {started-time :started_time duration :duration}
+        (timers.db/start! connection timer-id started-time)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :project-id   project-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration
+                    :create?      true})))
+
+(defn change-timer-duration-command!
+  [channel google-id connection {:keys [timer-id duration current-time] :as args}]
+  (validate :timers.pubsub/change-timer-duration-args args)
+  (if-let [{started-time :started_time duration :duration}
+           (timers.db/update-duration! connection
+                                       timer-id
+                                       (timers.db/map->TimePeriod duration)
+                                       current-time)]
+    (broadcast-to! google-id
+                   {:timer-id     timer-id
+                    :started-time (util/to-epoch-seconds started-time)
+                    :duration     duration})
+    (send-error! channel "Could not update duration")))
+
+;; Middleware ----
 
 (defn- wrap-validator
   [func]
@@ -76,74 +138,51 @@
     (jdbc/with-db-transaction [connection (db/connection)]
       (func channel google-id connection args))))
 
-(def dispatch-command!
-  (-> run-command!
-      (wrap-transaction)
-      (wrap-validator)))
+(defn- wrap-owns-timer
+  [func]
+  (fn [channel google-id connection args]
+    (if-let [timer-id (:timer-id args)] ;; Necessary b/c validation hasn't happened yet
+      (if (timers.db/owns? connection google-id timer-id)
+        (func channel google-id connection args)
+        (send-error! channel "Unauthorized"))
+      (send-invalid-args! channel))))
 
-(defmethod run-command! :default
-  [channel _ _ _]
-  (send! channel (json/encode
-                  {:error "Invalid command"})))
+(defn- wrap-can-create-timer
+  [func]
+  (fn [channel google-id connection args]
+    (if-let [project-id (:project-id args)]
+      (if (timers.db/has-timing-access? connection google-id project-id)
+        (func channel google-id connection args)
+        (send-error! channel "Unauthorized"))
+      (send-invalid-args! channel))))
 
-(defmethod run-command! "start-timer"
-  [channel google-id connection {:keys [timer-id started-time] :as args}]
-  (validate :timers.pubsub/start-timer-args args)
-  (if-let [{started-time :started_time duration :duration}
-           (timers.db/start-if-authorized! connection timer-id started-time google-id)]
-    (broadcast-to! google-id
-                   {:timer-id     timer-id
-                    :started-time (util/to-epoch-seconds started-time)
-                    :duration     duration})
-    (send-error! channel "Could not start timer")))
- 
-(defmethod run-command! "stop-timer"
-  [channel google-id connection {:keys [timer-id stop-time] :as args}]
-  (validate :timers.pubsub/stop-timer-args args)
-  (if-let [{:keys [duration]} (timers.db/stop-if-authorized!
-                               connection timer-id stop-time google-id)]
-    (broadcast-to! google-id
-                   {:timer-id     timer-id
-                    :started-time nil
-                    :duration     duration})
-    (send-error! channel "Could not stop timer")))
+;; Routes --
 
-(defmethod run-command! "delete-timer"
-  [channel google-id connection {:keys [timer-id] :as args}]
-  (validate :timers.pubsub/delete-timer-args args)
-  (if (timers.db/delete-if-authorized!
-       connection timer-id google-id)
-    (broadcast-to! google-id
-                   {:timer-id timer-id
-                    :delete?  true})
-    (send-error! channel "Could not delete timer")))
+(defn- wrap-middlewares
+  "Wraps commands in a command map with the give set of middleware.
+  The first middleware is the 'outermost'."
+  [middlewares command-map]
+  (fmap (apply comp middlewares) command-map))
 
-(defmethod run-command! "create-and-start-timer"
-  [channel google-id connection {:keys [project-id started-time] :as args}]
-  (validate :timers.pubsub/create-and-start-timer-args args)
-  (if-let [{timer-id :id} (timers.db/create-if-authorized! connection project-id google-id)]
-    ;; If you created the timer, you can log time against it
-    (let [{started-time :started_time duration :duration}
-          (timers.db/start-if-authorized! connection timer-id started-time google-id)]
-      (broadcast-to! google-id
-                   {:timer-id     timer-id
-                    :project-id   project-id
-                    :started-time (util/to-epoch-seconds started-time)
-                    :duration     duration
-                    :create?      true}))
-    (send-error! channel "Could not create timer")))
+(def command-map
+  (wrap-middlewares
+   [wrap-validator wrap-transaction]
+   (merge {"create-and-start-timer" (wrap-can-create-timer
+                                     create-and-start-timer-command!)}
+          (wrap-middlewares
+           [wrap-owns-timer]
+           {"start-timer"            start-timer-command!
+            "stop-timer"             stop-timer-command!
+            "delete-timer"           delete-timer-command!
+            "change-timer-duration"  change-timer-duration-command!}))))
 
-(defmethod run-command! "change-timer-duration"
-  [channel google-id connection {:keys [timer-id duration current-time] :as args}]
-  (validate :timers.pubsub/change-timer-duration-args args)
-  (if-let [{started-time :started_time duration :duration}
-           (timers.db/update-duration-if-authorized! connection
-                                                     timer-id
-                                                     (timers.db/map->TimePeriod duration)
-                                                     current-time
-                                                     google-id)]
-    (broadcast-to! google-id
-                   {:timer-id     timer-id
-                    :started-time (util/to-epoch-seconds started-time)
-                    :duration     duration})
-    (send-error! channel "Could not update duration")))
+;; -------
+
+(defn dispatch-command!
+  "Calls the appropriate timer command."
+  [channel google-id command-data]
+  (if-let [command-fn (command-map (get command-data :command))]
+    (command-fn channel google-id (dissoc command-data :command))
+    ;; TODO: Add error logging
+    (send! channel (json/encode
+                    {:error "Invalid command"}))))
