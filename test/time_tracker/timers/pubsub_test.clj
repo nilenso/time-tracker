@@ -1,6 +1,6 @@
 (ns time-tracker.timers.pubsub-test
   (:require [clojure.test :refer :all]
-            [clojure.core.async :refer [<!! put! chan]]
+            [clojure.core.async :refer [chan alt!! put!] :as async]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers.db]
@@ -17,6 +17,18 @@
 
 (def connect-url "ws://localhost:8000/timers/ws-connect/")
 
+(defn- try-take!!
+  [channel]
+  (alt!!
+    channel              ([value] value)
+    (async/timeout 1000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
+
+(defn- try-deref
+  [a-promise]
+  (let [result (deref a-promise 1000 ::deref-timeout)]
+    (if (= result ::deref-timeout)
+      (throw (ex-info "Deref promise timed out" {:promise a-promise}))
+      result)))
 
 (deftest start-timer-command
   (let [gen-projects  (projects.helpers/populate-data! {"gid1" ["foo"]
@@ -37,7 +49,7 @@
                              {:command      "start-timer"
                               :timer-id     (:id timer1)
                               :started-time current-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (= (:id timer1) (:timer-id command-response)))
           (is (= current-time (:started-time command-response)))))
 
@@ -46,7 +58,7 @@
                              {:command      "start-timer"
                               :timer-id     (:id timer2)
                               :started-time current-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
 
       (finally (ws/close socket)))))
@@ -75,7 +87,7 @@
                              {:command   "stop-timer"
                               :timer-id  (:id timer1)
                               :stop-time stop-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (s/valid? :timers.db/duration (:duration command-response)))
           (is (= 7.0
                  (get-in command-response [:duration :seconds])))))
@@ -85,7 +97,7 @@
                              {:command   "stop-timer"
                               :timer-id  (:id timer2)
                               :stop-time stop-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
       (finally (ws/close socket)))))
 
@@ -108,7 +120,7 @@
           (ws/send-msg socket (json/encode
                                {:command   "delete-timer"
                                 :timer-id  (:id timer1)}))
-          (let [command-response (<!! response-chan)]
+          (let [command-response (try-take!! response-chan)]
             (is (:delete? command-response))
             (is (= (:id timer1)
                    (:timer-id command-response)))))
@@ -117,14 +129,14 @@
           (ws/send-msg socket (json/encode
                                {:command  "delete-timer"
                                 :timer-id (+ 5 (:id timer1))}))
-          (let [command-response (<!! response-chan)]
+          (let [command-response (try-take!! response-chan)]
             (is (:error command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode
                              {:command   "delete-timer"
                               :timer-id  (:id timer2)}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
       
       (finally (ws/close socket)))))
@@ -143,7 +155,7 @@
                              {:command      "create-and-start-timer"
                               :project-id   (get gen-projects "foo")
                               :started-time current-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (= (get gen-projects "foo")
                  (:project-id command-response)))
           (is (:create? command-response))
@@ -155,7 +167,7 @@
                              {:command      "create-and-start-timer"
                               :project-id   (get gen-projects "goo")
                               :started-time current-time}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
       
       (finally (ws/close socket)))))
@@ -186,7 +198,7 @@
                               :duration     {:hours   0
                                              :minutes 0
                                              :seconds 37}}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (= (:id timer1) (:timer-id command-response)))
           (is (= update-time (:started-time command-response)))
           (is (= {:hours   0
@@ -204,7 +216,7 @@
                               :duration     {:hours   0
                                              :minutes 0
                                              :seconds 37}}))
-        (let [command-response (<!! response-chan)]
+        (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
 
       (finally (ws/close socket)))))
@@ -234,15 +246,17 @@
                             {:command      "start-timer"
                              :timer-id     timer-id
                              :started-time current-time}))
-      (is (= timer-id (get @response1 :timer-id)))
-      (is (= current-time (get @response1 :started-time)))
+      (let [result1 (try-deref response1)
+            result2 (try-deref response2)]
+        (is (= timer-id (:timer-id result1)))
+        (is (= current-time (:started-time result2)))
 
-      (testing "All clients with the same gid receive the broadcast"
-        (is (= @response1 @response2)))
+        (testing "All clients with the same gid receive the broadcast"
+          (is (= result1 result2))))
 
       (testing "Some other gid should not receive the broadcast"
-        (is (= :not-received
-               (deref response3 100 :not-received))))
+        (is (= ::not-received
+               (deref response3 100 ::not-received))))
       
       (finally
         (ws/close socket1)
