@@ -7,7 +7,8 @@
             [time-tracker.util :as util]
             [clojure.spec :as s]
             [time-tracker.timers.spec]
-            [clojure.algo.generic.functor :refer [fmap]]))
+            [clojure.algo.generic.functor :refer [fmap]]
+            [time-tracker.logging :as log]))
 
 ;; Connection management -------
 
@@ -25,13 +26,19 @@
 (defn add-channel!
   "Adds a channel to the map of active connections."
   [channel google-id]
-  (swap! active-connections update google-id conj-to-set channel))
+  (swap! active-connections update google-id conj-to-set channel)
+  (log/info {:event     ::added-websockets-connection
+             :google-id google-id}))
 
 (defn on-close!
   "Called when a channel is closed."
   [channel google-id status]
-  ;; TODO: Use status in logging
-  (swap! active-connections update google-id disj channel))
+  ;; See https://github.com/http-kit/http-kit/blob/protocol-api/src/org/httpkit/server.clj#L61
+  ;; for the possible values of status
+  (swap! active-connections update google-id disj channel)
+  (log/info {:event     ::removed-websockets-connection
+             :google-id google-id
+             :status    status}))
 
 ;; Utils ----------------------
 
@@ -56,7 +63,7 @@
   [spec args]
   (when-not (s/valid? spec args)
     (throw (ex-info "Invalid args"
-                    {:error "Invalid args"}))))
+                    {::validation-error "Invalid args"}))))
 
 ;; Commands -----
 
@@ -121,14 +128,23 @@
 
 ;; Middleware ----
 
+(defn- wrap-exception
+  [func]
+  (fn [channel google-id args]
+    (try
+      (func channel google-id args)
+      (catch Exception ex
+        (log/error ex {:event     ::message-handler-failed
+                       :google-id google-id
+                       :args      args})))))
+
 (defn- wrap-validator
   [func]
   (fn [channel google-id args]
     (try
       (func channel google-id args)
       (catch Exception e
-        (if-let [{:keys [error]} (ex-data e)]
-          ;; TODO: Add logging
+        (if-let [error (::validation-error (ex-data e))]
           (send-invalid-args! channel)
           (throw e))))))
 
@@ -144,7 +160,11 @@
     (if-let [timer-id (:timer-id args)] ;; Necessary b/c validation hasn't happened yet
       (if (timers.db/owns? connection google-id timer-id)
         (func channel google-id connection args)
-        (send-error! channel "Unauthorized"))
+        (do
+          (log/warn {:event     ::unauthorized-timer-action
+                     :google-id google-id
+                     :timer-id  timer-id})
+          (send-error! channel "Unauthorized")))
       (send-invalid-args! channel))))
 
 (defn- wrap-can-create-timer
@@ -153,7 +173,11 @@
     (if-let [project-id (:project-id args)]
       (if (timers.db/has-timing-access? connection google-id project-id)
         (func channel google-id connection args)
-        (send-error! channel "Unauthorized"))
+        (do
+          (log/warn {:event      ::unauthorized-timer-creation
+                     :google-id  google-id
+                     :project-id project-id})
+          (send-error! channel "Unauthorized")))
       (send-invalid-args! channel))))
 
 ;; Routes --
@@ -166,7 +190,7 @@
 
 (def command-map
   (wrap-middlewares
-   [wrap-validator wrap-transaction]
+   [wrap-exception wrap-validator wrap-transaction]
    (merge {"create-and-start-timer" (wrap-can-create-timer
                                      create-and-start-timer-command!)}
           (wrap-middlewares
@@ -183,6 +207,5 @@
   [channel google-id command-data]
   (if-let [command-fn (command-map (get command-data :command))]
     (command-fn channel google-id (dissoc command-data :command))
-    ;; TODO: Add error logging
     (send! channel (json/encode
                     {:error "Invalid command"}))))
