@@ -11,7 +11,7 @@
             [clj-time.coerce :as time.coerce])
   (:import time_tracker.timers.db.TimePeriod))
 
-(use-fixtures :once fixtures/init-db! fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init! fixtures/migrate-test-db)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn- contains-map?

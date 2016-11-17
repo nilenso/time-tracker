@@ -12,7 +12,7 @@
             [clojure.spec :as s]
             [time-tracker.timers.spec]))
 
-(use-fixtures :once fixtures/init-db! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (def connect-url "ws://localhost:8000/timers/ws-connect/")

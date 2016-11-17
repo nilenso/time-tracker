@@ -9,8 +9,8 @@
             [time-tracker.config :as config])
   (:use org.httpkit.server))
 
-(defn init-db! [f]
-  (db/init-db!)
+(defn init! [f]
+  (time-tracker.core/init!)
   (f))
 
 (defn destroy-db []
