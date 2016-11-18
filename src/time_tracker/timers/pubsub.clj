@@ -26,19 +26,14 @@
 (defn add-channel!
   "Adds a channel to the map of active connections."
   [channel google-id]
-  (swap! active-connections update google-id conj-to-set channel)
-  (log/info {:event     ::added-websockets-connection
-             :google-id google-id}))
+  (swap! active-connections update google-id conj-to-set channel))
 
 (defn on-close!
   "Called when a channel is closed."
   [channel google-id status]
   ;; See https://github.com/http-kit/http-kit/blob/protocol-api/src/org/httpkit/server.clj#L61
   ;; for the possible values of status
-  (swap! active-connections update google-id disj channel)
-  (log/info {:event     ::removed-websockets-connection
-             :google-id google-id
-             :status    status}))
+  (swap! active-connections update google-id disj channel))
 
 ;; Utils ----------------------
 
