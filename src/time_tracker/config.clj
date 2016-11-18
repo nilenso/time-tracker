@@ -60,12 +60,15 @@
   [appender]
   (.addAppender (Logger/getRootLogger) appender))
 
-(defn configure-logging! []
-  (set-root-logger-level! "info")
-  (set-logger-level! "time_tracker" (from-config :app-log-level))
-  (add-root-logger-appender! (ConsoleAppender. (PatternLayout. "%-5p %c: %m%n")))
-  (if-let [logstash-host (environ/env :logstash-host)]
-    (if-let [logstash-port (environ/env :logstash-port)]
-      (add-root-logger-appender! (SocketAppender. logstash-host
-                                                  (Integer/parseInt logstash-port))))))
+(defn configure-logging!
+  ([]
+   (configure-logging! (from-config :app-log-level)))
+  ([level]
+   (set-root-logger-level! "error")
+   (set-logger-level! "time-tracker" level)
+   (add-root-logger-appender! (ConsoleAppender. (PatternLayout. "%-5p %c: %m%n")))
+   (if-let [logstash-host (environ/env :logstash-host)]
+     (if-let [logstash-port (environ/env :logstash-port)]
+       (add-root-logger-appender! (SocketAppender. logstash-host
+                                                   (Integer/parseInt logstash-port)))))))
 

@@ -27,6 +27,6 @@
   :plugins [[lein-environ "1.1.0"]]
   :profiles {:uberjar {:aot :all}}
 
-  :aliases {"migrate"  ["run" "-m" "time-tracker.migration/migrate-db"]
-            "rollback" ["run" "-m" "time-tracker.migration/rollback-db"]})
+  :aliases {"migrate"  ["run" "-m" "time-tracker.migration/lein-migrate-db"]
+            "rollback" ["run" "-m" "time-tracker.migration/lein-rollback-db"]})
 
