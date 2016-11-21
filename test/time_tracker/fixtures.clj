@@ -14,7 +14,9 @@
   (f))
 
 (defn destroy-db []
-  (jdbc/execute! config/db-spec [(str "DROP OWNED BY " (environ/env :test-db-username))]))
+  (jdbc/with-db-transaction [conn (db/connection)]
+    (jdbc/execute! conn "DROP SCHEMA IF EXISTS public CASCADE;")
+    (jdbc/execute! conn "CREATE SCHEMA IF NOT EXISTS public;")))
 
 (defn migrate-test-db [f]
   (migrate-db)

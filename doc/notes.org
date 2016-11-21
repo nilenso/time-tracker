@@ -1,0 +1,17 @@
+* 2016-11-18
+** Things to fix, potentially
+- consider moving core -> web/service, and routes into web/routes
+- probably don't rewrite all logging macros just to add json/encode. Look at ns-resolve.
+- move config `def`s out of code, and into config file
+- try to move integer/parseInt higher up; biz logic shouldn't do param parsing
+- move addition of duration into applicaiton layer. more generally, move biz logic into application layer.
+- make request-response a db transaction
+
+** standard web service stack
+- authentication
+- authorization
+- validation
+- coercion
+- midldeware
+- logging
+- monitoring
