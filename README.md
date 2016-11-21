@@ -4,6 +4,9 @@ Be nilenso's time tracking tool.
 
 ## Installation
 
+- setup config file: Please see `profiles.clj.sample` for a sample `profiles.clj`.
+Change the settings as needed. Rename it to `profiles.clj`.xs
+
 - setup postgres databases:
 	``` shell
 	initdb db

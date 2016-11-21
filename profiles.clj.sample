@@ -1,0 +1,17 @@
+{:dev
+ {:env
+  {:google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"
+   :cp-max-idle-time-excess-connections "1800"
+   :cp-max-idle-time "10800"
+   :db-connection-string "jdbc:postgresql://localhost/time_tracker"
+   :google-client-id "128416141127-mp9b2fsq6e8bt1r3lva6cot1kdqnlof9.apps.googleusercontent.com"
+   :app-log-level "debug"
+   
+   ;; These two settings are optional, you don't need logstash
+   :logstash-host "0.0.0.0"
+   :logstash-port "15000"}}
+ 
+ :test
+ {:env
+  {:db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
+   :app-log-level "error"}}}
