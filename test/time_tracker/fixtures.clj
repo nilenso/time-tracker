@@ -2,7 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.migration :refer [migrate-db]]
             [time-tracker.db :as db]
-            [time-tracker.core :refer [app]]
+            [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
             [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
             [environ.core :as environ]
@@ -10,7 +10,7 @@
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (time-tracker.core/init!)
+  (time-tracker.web.service/init!)
   (f))
 
 (defn destroy-db []
