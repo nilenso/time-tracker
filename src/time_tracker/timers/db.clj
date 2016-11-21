@@ -44,24 +44,22 @@
 
 (defn create!
   "Creates and returns a timer if authorized."
-  [conn project-id google-id]
-  (jdbc/with-db-transaction [connection conn]
-    (create-timer-query<! {:google_id  google-id
-                           :project_id project-id}
-                          {:connection connection})))
+  [connection project-id google-id]
+  (create-timer-query<! {:google_id  google-id
+                         :project_id project-id}
+                        {:connection connection}))
 
 (defn update-duration!
   "Set the elapsed duration of the timer."
-  [conn timer-id duration current-time]
-  (jdbc/with-db-transaction [connection conn]
-    (when (statement-success? (update-timer-duration-query! {:duration     duration
-                                                             :timer_id     timer-id
-                                                             :current_time current-time}
-                                                            {:connection connection}))
-      (-> (retrieve-timer-query {:timer_id timer-id}
-                                {:connection connection})
-          (first)
-          (select-keys [:started_time :duration])))))
+  [connection timer-id duration current-time]
+  (when (statement-success? (update-timer-duration-query! {:duration     duration
+                                                           :timer_id     timer-id
+                                                           :current_time current-time}
+                                                          {:connection connection}))
+    (-> (retrieve-timer-query {:timer_id timer-id}
+                              {:connection connection})
+        (first)
+        (select-keys [:started_time :duration]))))
 
 (defn delete!
   "Deletes a timer. Returns false if the timer doesn't exist."
@@ -80,26 +78,24 @@
 (defn start!
   "Starts a timer if the timer is not already started.
   Returns {:keys [start_time duration]} or nil."
-  [conn timer-id current-time]
-  (jdbc/with-db-transaction [connection conn]
-    (when (statement-success? (start-timer-query! {:timer_id     timer-id
-                                                   :current_time current-time}
-                                                  {:connection connection}))
-      (-> (retrieve-timer-query {:timer_id  timer-id}
-                                {:connection connection})
-          (first)
-          (select-keys [:started_time :duration])))))
+  [connection timer-id current-time]
+  (when (statement-success? (start-timer-query! {:timer_id     timer-id
+                                                 :current_time current-time}
+                                                {:connection connection}))
+    (-> (retrieve-timer-query {:timer_id  timer-id}
+                              {:connection connection})
+        (first)
+        (select-keys [:started_time :duration]))))
 
 (defn stop!
   "Stops a timer if the timer is not already stopped.
   Returns {:keys [duration]} or nil."
-  [conn timer-id current-time]
-  (jdbc/with-db-transaction [connection conn]
-    (when (statement-success? (stop-timer-query! {:timer_id     timer-id
-                                                  :current_time current-time}
-                                                 {:connection connection}))
-      (-> (retrieve-timer-query {:timer_id  timer-id}
-                                {:connection connection})
-          (first)
-          (select-keys [:duration])))))
+  [connection timer-id current-time]
+  (when (statement-success? (stop-timer-query! {:timer_id     timer-id
+                                                :current_time current-time}
+                                               {:connection connection}))
+    (-> (retrieve-timer-query {:timer_id  timer-id}
+                              {:connection connection})
+        (first)
+        (select-keys [:duration]))))
 
