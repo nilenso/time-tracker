@@ -9,19 +9,21 @@
 ;; /projects/<id>/
 
 (defn retrieve
-  [{:keys [route-params credentials]}]
+  [{:keys [route-params credentials]} connection]
   (if-let [project (projects.db/retrieve-if-authorized
+                    connection
                     (Integer/parseInt (:id route-params))
                     (:sub credentials))]
-    (res/response project )
+    (res/response project)
     util/forbidden-response))
 
 ;; Calling this handler 'update' would shadow
 ;; clojure.core/update
 (defn modify
-  [{:keys [route-params body credentials]}]
+  [{:keys [route-params body credentials]} connection]
   ;; TODO: Validate input JSON
   (if-let [updated-project (projects.db/update-if-authorized!
+                            connection
                             (Integer/parseInt (:id route-params))
                             body
                             (:sub credentials))]
@@ -29,8 +31,9 @@
     util/forbidden-response))
 
 (defn delete
-  [{:keys [route-params credentials]}]
-  (if (projects.db/delete-if-authorized! (Integer/parseInt (:id route-params))
+  [{:keys [route-params credentials]} connection]
+  (if (projects.db/delete-if-authorized! connection
+                                         (Integer/parseInt (:id route-params))
                                          (:sub credentials))
     (-> (res/response nil)
         (res/status 204))
@@ -41,14 +44,16 @@
 
 ;; list would shadow clojure.core/list
 (defn list-all
-  [{:keys [credentials]}]
+  [{:keys [credentials]} connection]
   (res/response (projects.db/retrieve-authorized-projects
+                 connection
                  (:sub credentials))))
 
 (defn create
-  [{:keys [credentials body]}]
+  [{:keys [credentials body]} connection]
   ;; TODO: Validate input JSON
   (if-let [created-project (projects.db/create-if-authorized!
+                            connection
                             body
                             (:sub credentials))]
     (-> (res/response created-project)

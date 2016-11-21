@@ -17,6 +17,7 @@
 
     (testing "Authorized project"
       (let [project          (projects.db/retrieve-if-authorized
+                              (db/connection)
                               (get gen-projects "foo")
                               "gid1")
             expected-project {:id (get gen-projects "foo") :name "foo"}]
@@ -24,6 +25,7 @@
 
     (testing "Unauthorized project"
       (let [project (projects.db/retrieve-if-authorized
+                     (db/connection)
                      (get gen-projects "foo")
                      "gid2")]
         (is (nil? project))))))
@@ -36,6 +38,7 @@
     (testing "Authorized project"
       (let [project-id       (get gen-projects "foo")
             updated-project  (projects.db/update-if-authorized!
+                              (db/connection)
                               project-id
                               {:name "Dondochakka"}
                               "gid1")
@@ -47,6 +50,7 @@
     (testing "Unauthorized project"
       (let [project-id        (get gen-projects "goo")
             updated-project   (projects.db/update-if-authorized!
+                               (db/connection)
                                project-id
                                {:name "Chappy the rabbit"}
                                "gid1")
@@ -62,14 +66,16 @@
 
     (testing "Authorized project"
       (let [project-id     (get gen-projects "foo")
-            deleted-bool   (projects.db/delete-if-authorized! project-id "gid1")
+            deleted-bool   (projects.db/delete-if-authorized!
+                            (db/connection) project-id "gid1")
             actual-project (jdbc/get-by-id (db/connection) "project" project-id)]
         (is deleted-bool)
         (is (nil? actual-project))))
 
     (testing "Unauthorized project"
       (let [project-id       (get gen-projects "goo")
-            deleted-bool     (projects.db/delete-if-authorized! project-id "gid1")
+            deleted-bool     (projects.db/delete-if-authorized!
+                              (db/connection) project-id "gid1")
             actual-project   (jdbc/get-by-id (db/connection) "project" project-id)
             expected-project {:id project-id :name "goo"}]
         (is (not deleted-bool))
@@ -81,13 +87,15 @@
                                                        "gid2" ["bar" "baz"]})]
 
     (testing "The first user"
-      (let [projects      (projects.db/retrieve-authorized-projects "gid1")
+      (let [projects      (projects.db/retrieve-authorized-projects
+                           (db/connection) "gid1")
             project-names (map :name projects)]
         (is (= (sort ["foo" "goo"])
                (sort project-names)))))
 
     (testing "The second user"
-      (let [projects      (projects.db/retrieve-authorized-projects "gid2")
+      (let [projects      (projects.db/retrieve-authorized-projects
+                           (db/connection) "gid2")
             project-names (map :name projects)]
         (is (= (sort ["bar" "baz"])
                (sort project-names)))))))
@@ -99,6 +107,7 @@
   
   (testing "Authorized user"
     (let [created-project (projects.db/create-if-authorized!
+                           (db/connection)
                            {:name "foo"}
                            "gid1")
           actual-project  (first (jdbc/find-by-keys (db/connection) "project"
@@ -110,6 +119,7 @@
 
   (testing "Unauthorized user"
     (let [created-project (projects.db/create-if-authorized!
+                           (db/connection)
                            {:name "goo"}
                            "gid2")
           actual-project  (first (jdbc/find-by-keys (db/connection) "project"

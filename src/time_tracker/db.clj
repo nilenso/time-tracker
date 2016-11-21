@@ -1,5 +1,6 @@
 (ns time-tracker.db
-  (:require [time-tracker.config :as config])
+  (:require [time-tracker.config :as config]
+            [clojure.java.jdbc :as jdbc])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
 (defn- pool []
@@ -16,3 +17,9 @@
   (reset! pooled-db (pool)))
 
 (defn connection [] @pooled-db)
+
+(defn wrap-transaction
+  [handler]
+  (fn [request]
+    (jdbc/with-db-transaction [conn (connection)]
+      (handler request conn))))
