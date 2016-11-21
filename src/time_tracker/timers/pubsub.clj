@@ -54,17 +54,12 @@
   [channel]
   (send-error! channel "Invalid args"))
 
-(defn- validate
-  [spec args]
-  (when-not (s/valid? spec args)
-    (throw (ex-info "Invalid args"
-                    {::validation-error "Invalid args"}))))
+
 
 ;; Commands -----
 
 (defn start-timer-command!
   [channel google-id connection {:keys [timer-id started-time] :as args}]
-  (validate :timers.pubsub/start-timer-args args)
   (if-let [{started-time :started_time duration :duration}
            (timers.db/start! connection timer-id started-time)]
     (broadcast-to! google-id
@@ -75,7 +70,6 @@
 
 (defn stop-timer-command!
   [channel google-id connection {:keys [timer-id stop-time] :as args}]
-  (validate :timers.pubsub/stop-timer-args args)
   (if-let [{:keys [duration]} (timers.db/stop!
                                connection timer-id stop-time)]
     (broadcast-to! google-id
@@ -86,7 +80,6 @@
 
 (defn delete-timer-command!
   [channel google-id connection {:keys [timer-id] :as args}]
-  (validate :timers.pubsub/delete-timer-args args)
   (if (timers.db/delete!
        connection timer-id)
     (broadcast-to! google-id
@@ -96,7 +89,6 @@
 
 (defn create-and-start-timer-command!
   [channel google-id connection {:keys [project-id started-time] :as args}]
-  (validate :timers.pubsub/create-and-start-timer-args args)
   (let [{timer-id :id} (timers.db/create! connection project-id google-id)
         {started-time :started_time duration :duration}
         (timers.db/start! connection timer-id started-time)]
@@ -109,7 +101,6 @@
 
 (defn change-timer-duration-command!
   [channel google-id connection {:keys [timer-id duration current-time] :as args}]
-  (validate :timers.pubsub/change-timer-duration-args args)
   (if-let [{started-time :started_time duration :duration}
            (timers.db/update-duration! connection
                                        timer-id
@@ -134,14 +125,11 @@
                        :args      args})))))
 
 (defn- wrap-validator
-  [func]
-  (fn [channel google-id args]
-    (try
-      (func channel google-id args)
-      (catch Exception e
-        (if-let [error (::validation-error (ex-data e))]
-          (send-invalid-args! channel)
-          (throw e))))))
+  [func spec]
+  (fn [channel google-id connection args]
+    (if (s/valid? spec args)
+      (func channel google-id connection args)
+      (send-invalid-args! channel))))
 
 (defn- wrap-transaction
   [func]
@@ -151,29 +139,25 @@
 
 (defn- wrap-owns-timer
   [func]
-  (fn [channel google-id connection args]
-    (if-let [timer-id (:timer-id args)] ;; Necessary b/c validation hasn't happened yet
-      (if (timers.db/owns? connection google-id timer-id)
-        (func channel google-id connection args)
-        (do
-          (log/warn {:event     ::unauthorized-timer-action
-                     :google-id google-id
-                     :timer-id  timer-id})
-          (send-error! channel "Unauthorized")))
-      (send-invalid-args! channel))))
+  (fn [channel google-id connection {:keys [timer-id] :as args}]
+    (if (timers.db/owns? connection google-id timer-id)
+      (func channel google-id connection args)
+      (do
+        (log/warn {:event     ::unauthorized-timer-action
+                   :google-id google-id
+                   :timer-id  timer-id})
+        (send-error! channel "Unauthorized")))))
 
 (defn- wrap-can-create-timer
   [func]
-  (fn [channel google-id connection args]
-    (if-let [project-id (:project-id args)]
-      (if (timers.db/has-timing-access? connection google-id project-id)
-        (func channel google-id connection args)
-        (do
-          (log/warn {:event      ::unauthorized-timer-creation
-                     :google-id  google-id
-                     :project-id project-id})
-          (send-error! channel "Unauthorized")))
-      (send-invalid-args! channel))))
+  (fn [channel google-id connection {:keys [project-id] :as args}]
+    (if (timers.db/has-timing-access? connection google-id project-id)
+      (func channel google-id connection args)
+      (do
+        (log/warn {:event      ::unauthorized-timer-creation
+                   :google-id  google-id
+                   :project-id project-id})
+        (send-error! channel "Unauthorized")))))
 
 ;; Routes --
 
@@ -185,15 +169,25 @@
 
 (def command-map
   (wrap-middlewares
-   [wrap-exception wrap-validator wrap-transaction]
-   (merge {"create-and-start-timer" (wrap-can-create-timer
-                                     create-and-start-timer-command!)}
-          (wrap-middlewares
-           [wrap-owns-timer]
-           {"start-timer"            start-timer-command!
-            "stop-timer"             stop-timer-command!
-            "delete-timer"           delete-timer-command!
-            "change-timer-duration"  change-timer-duration-command!}))))
+   [wrap-exception wrap-transaction]
+   (merge {"create-and-start-timer" (-> create-and-start-timer-command!
+                                        (wrap-can-create-timer)
+                                        (wrap-validator
+                                         :timers.pubsub/create-and-start-timer-args))}
+
+          {"start-timer"            (-> start-timer-command!
+                                        (wrap-owns-timer)
+                                        (wrap-validator :timers.pubsub/start-timer-args))
+           "stop-timer"             (-> stop-timer-command!
+                                        (wrap-owns-timer)
+                                        (wrap-validator :timers.pubsub/stop-timer-args))
+           "delete-timer"           (-> delete-timer-command!
+                                        (wrap-owns-timer)
+                                        (wrap-validator :timers.pubsub/delete-timer-args))
+           "change-timer-duration"  (-> change-timer-duration-command!
+                                        (wrap-owns-timer)
+                                        (wrap-validator
+                                         :timers.pubsub/change-timer-duration-args))})))
 
 ;; -------
 
