@@ -6,7 +6,6 @@
             [ring.middleware.defaults :refer :all]
             [time-tracker.web.routes :refer [routes]]
             [time-tracker.db :as db]
-            [time-tracker.config :as config]
             [time-tracker.util :as util]
             [cheshire.generate :refer [add-encoder encode-str]])
   (:import org.httpkit.server.AsyncChannel))

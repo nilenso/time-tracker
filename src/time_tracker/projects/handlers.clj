@@ -1,6 +1,5 @@
 (ns time-tracker.projects.handlers
   (:require [ring.util.response :as res]
-            [time-tracker.config :as config]
             [time-tracker.auth.core :refer [wrap-google-authenticated]]
             [time-tracker.projects.db :as projects.db]
             [time-tracker.util :as util]))

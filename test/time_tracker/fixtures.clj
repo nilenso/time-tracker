@@ -4,9 +4,7 @@
             [time-tracker.db :as db]
             [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
-            [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
-            [environ.core :as environ]
-            [time-tracker.config :as config])
+            [time-tracker.auth.test-helpers :refer [fake-token->credentials]])
   (:use org.httpkit.server))
 
 (defn init! [f]

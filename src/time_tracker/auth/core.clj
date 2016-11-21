@@ -2,12 +2,11 @@
   (:require [ring.util.response :as res]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
-            [time-tracker.config :as config]
-            [time-tracker.util :as util]))
+            [time-tracker.util :refer [from-config] :as util]))
 
 (defn- call-google-tokeninfo-api
   [token]
-  (let [{body :body :as response} @(http/get config/google-tokeninfo-url
+  (let [{body :body :as response} @(http/get (from-config :google-tokeninfo-url)
                                              {:as :text
                                               :query-params {"id_token" token}})]
     (assoc response :body (json/parse-string body util/snake-case->hyphenated-kw))))
@@ -45,4 +44,4 @@
       util/forbidden-response)))
 
 (def wrap-auth
-  #(wrap-google-authenticated % config/client-ids))
+  #(wrap-google-authenticated % [(from-config :google-client-id)]))

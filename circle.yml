@@ -1,6 +1,9 @@
 machine:
   environment:
+    GOOGLE_TOKENINFO_URL https://www.googleapis.com/oauth2/v3/tokeninfo
     DB_CONNECTION_STRING: jdbc:postgresql://localhost/circle_test?user=ubuntu
+    CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS 1800
+    CP_MAX_IDLE_TIME 10800
     TEST_DB_USERNAME: ubuntu
     GOOGLE_CLIENT_ID: 128416141127-mp9b2fsq6e8bt1r3lva6cot1kdqnlof9.apps.googleusercontent.com
     APP_LOG_LEVEL: error

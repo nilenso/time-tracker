@@ -1,7 +1,14 @@
 (ns time-tracker.migration
   (:require [ragtime.repl]
-            [time-tracker.config :refer [migration-config] :as config]
+            [ragtime.jdbc]
+            [time-tracker.util :refer [from-config]]
             [time-tracker.logging :as log]))
+
+(def ^:private db-spec {:connection-uri (from-config :db-connection-string)})
+
+(def migration-config
+  {:datastore  (ragtime.jdbc/sql-database db-spec)
+   :migrations (ragtime.jdbc/load-resources "migrations")})
 
 (defn migrate-db []
   (try
