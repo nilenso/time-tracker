@@ -12,8 +12,6 @@
 
 (def handler (make-handler routes))
 
-
-
 (defn- wrap-error-logging
   [handler]
   (fn [request]
@@ -37,7 +35,7 @@
       (wrap-error-logging)))
 
 (defn init! []
-  (config/configure-logging!)
+  (log/configure-logging!)
   (db/init-db!))
 
 (defn -main

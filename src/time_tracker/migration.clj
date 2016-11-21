@@ -24,9 +24,9 @@
 ;; These are called by `lein migrate` and `lein rollback`.
 
 (defn lein-migrate-db []
-  (config/configure-logging! "info")
+  (log/configure-logging! "info")
   (migrate-db))
 
 (defn lein-rollback-db []
-  (config/configure-logging! "info")
+  (log/configure-logging! "info")
   (rollback-db))
