@@ -21,7 +21,7 @@
   [channel]
   (alt!!
     channel              ([value] value)
-    (async/timeout 1000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
+    (async/timeout 10000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
 
 (defn- try-deref
   [a-promise]
