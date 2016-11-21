@@ -7,9 +7,31 @@
             [time-tracker.web.routes :refer [routes]]
             [time-tracker.db :as db]
             [time-tracker.config :as config]
-            [time-tracker.util :as util]))
+            [time-tracker.util :as util]
+            [cheshire.generate :refer [add-encoder encode-str]])
+  (:import org.httpkit.server.AsyncChannel))
 
 (def handler (make-handler routes))
+
+;; This is neccessary because http-kit adds some AsyncChannel
+;; to the request map if it is a websockets connection upgrade,
+;; which can't be JSON serialized.
+(def standard-ring-request-keys
+  [:server-port :server-name :remote-addr :uri :query-string :scheme
+   :headers :request-method :body])
+
+;; Define a custom JSON encoder for the AsyncChannel
+(add-encoder AsyncChannel encode-str)
+
+(defn- wrap-log-request-response
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (log/debug {:event    ::request-response
+                  :request  (select-keys request
+                                         standard-ring-request-keys)
+                  :response response})
+      response)))
 
 (defn- wrap-error-logging
   [handler]
@@ -28,6 +50,7 @@
 
 (def app
   (-> handler
+      (wrap-log-request-response)
       (wrap-json-body {:keywords? true})
       (wrap-json-response)
       (wrap-defaults api-defaults)
