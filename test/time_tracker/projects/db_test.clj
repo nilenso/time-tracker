@@ -11,75 +11,40 @@
 (use-fixtures :each fixtures/isolate-db)
 
 
-(deftest retrieve-if-authorized
+(deftest retrieve
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
 
-    (testing "Authorized project"
-      (let [project          (projects.db/retrieve-if-authorized
-                              (db/connection)
-                              (get gen-projects "foo")
-                              "gid1")
-            expected-project {:id (get gen-projects "foo") :name "foo"}]
-        (is (= expected-project project))))
-
-    (testing "Unauthorized project"
-      (let [project (projects.db/retrieve-if-authorized
-                     (db/connection)
-                     (get gen-projects "foo")
-                     "gid2")]
-        (is (nil? project))))))
+    (let [project          (projects.db/retrieve
+                            (db/connection)
+                            (get gen-projects "foo"))
+          expected-project {:id (get gen-projects "foo") :name "foo"}]
+      (is (= expected-project project)))))
 
 
-(deftest update-if-authorized
+(deftest update
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
-
-    (testing "Authorized project"
-      (let [project-id       (get gen-projects "foo")
-            updated-project  (projects.db/update-if-authorized!
-                              (db/connection)
-                              project-id
-                              {:name "Dondochakka"}
-                              "gid1")
-            expected-project {:id project-id :name "Dondochakka"}
-            actual-project   (jdbc/get-by-id (db/connection) "project" project-id)]
-        (is (= expected-project updated-project))
-        (is (= actual-project updated-project))))
-
-    (testing "Unauthorized project"
-      (let [project-id        (get gen-projects "goo")
-            updated-project   (projects.db/update-if-authorized!
-                               (db/connection)
-                               project-id
-                               {:name "Chappy the rabbit"}
-                               "gid1")
-            unchanged-project {:id project-id :name "goo"}
-            actual-project    (jdbc/get-by-id (db/connection) "project" project-id)]
-        (is (nil? updated-project))
-        (is (= unchanged-project actual-project))))))
+    (let [project-id       (get gen-projects "foo")
+          updated-project  (projects.db/update!
+                            (db/connection)
+                            project-id
+                            {:name "Dondochakka"})
+          expected-project {:id project-id :name "Dondochakka"}
+          actual-project   (jdbc/get-by-id (db/connection) "project" project-id)]
+      (is (= expected-project updated-project))
+      (is (= actual-project updated-project)))))
 
 
-(deftest delete-if-authorized
+(deftest delete
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
-
-    (testing "Authorized project"
-      (let [project-id     (get gen-projects "foo")
-            deleted-bool   (projects.db/delete-if-authorized!
-                            (db/connection) project-id "gid1")
-            actual-project (jdbc/get-by-id (db/connection) "project" project-id)]
-        (is deleted-bool)
-        (is (nil? actual-project))))
-
-    (testing "Unauthorized project"
-      (let [project-id       (get gen-projects "goo")
-            deleted-bool     (projects.db/delete-if-authorized!
-                              (db/connection) project-id "gid1")
-            actual-project   (jdbc/get-by-id (db/connection) "project" project-id)
-            expected-project {:id project-id :name "goo"}]
-        (is (not deleted-bool))
-        (is (= expected-project actual-project))))))
+    (let [project-id     (get gen-projects "foo")
+          deleted-bool   (projects.db/delete!
+                          (db/connection) project-id)
+          actual-project (jdbc/get-by-id (db/connection) "project" project-id)]
+      (is deleted-bool)
+      (is (nil? actual-project)))))
 
 
 (deftest retrieve-authorized-projects
@@ -101,28 +66,15 @@
                (sort project-names)))))))
 
 
-(deftest create-if-authorized
+(deftest create
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
                                ["Paul Graham" "gid2" "user"])
-  
-  (testing "Authorized user"
-    (let [created-project (projects.db/create-if-authorized!
-                           (db/connection)
-                           {:name "foo"}
-                           "gid1")
-          actual-project  (first (jdbc/find-by-keys (db/connection) "project"
-                                                    {"name" "foo"}))]
-      (is (some? created-project))
-      (is (some? actual-project))
-      (is (= actual-project created-project))
-      (is (= "foo" (:name created-project)))))
-
-  (testing "Unauthorized user"
-    (let [created-project (projects.db/create-if-authorized!
-                           (db/connection)
-                           {:name "goo"}
-                           "gid2")
-          actual-project  (first (jdbc/find-by-keys (db/connection) "project"
-                                                    {"name" "goo"}))]
-      (is (nil? created-project))
-      (is (nil? actual-project)))))
+  (let [created-project (projects.db/create!
+                         (db/connection)
+                         {:name "foo"})
+        actual-project  (first (jdbc/find-by-keys (db/connection) "project"
+                                                  {"name" "foo"}))]
+    (is (some? created-project))
+    (is (some? actual-project))
+    (is (= actual-project created-project))
+    (is (= "foo" (:name created-project)))))
