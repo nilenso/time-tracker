@@ -11,7 +11,7 @@
                :body credentials}))
 
 
-(deftest token->credentials
+(deftest token->credentials-test
   (testing "Valid token"
     (with-redefs [auth/call-google-tokeninfo-api
                   (good-google-api-call {:aud "test"})]
@@ -27,7 +27,7 @@
       (is (nil? (auth/token->credentials ["foo" "goo"] "token"))))))
 
 
-(deftest token-from-headers
+(deftest token-from-headers-test
   (testing "Header absent"
     (is (nil? (auth/token-from-headers {"content-type" "application/json"}))))
 
@@ -39,7 +39,7 @@
            (auth/token-from-headers {"authorization" "Bearer token"})))))
 
 
-(deftest auth-credentials
+(deftest auth-credentials-test
   (testing "Properly authenticated request"
     (with-redefs [auth/call-google-tokeninfo-api
                   (good-google-api-call {:aud "test"
@@ -56,7 +56,7 @@
         (is (nil? (auth/auth-credentials ["test" "test2"] invalid-request)))))))
 
 
-(deftest wrap-google-authenticated
+(deftest wrap-google-authenticated-test
   (let [handler (fn [request]
                   (res/response "Here is your response. Share it with all your friends."))
         wrapped-handler (auth/wrap-google-authenticated handler ["test" "test2"])

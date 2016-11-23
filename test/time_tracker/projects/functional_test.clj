@@ -13,7 +13,7 @@
 (use-fixtures :each fixtures/isolate-db)
 
 
-(deftest retrieve-single-project
+(deftest retrieve-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id   (get gen-projects "foo")
         url          (format "http://localhost:8000/projects/%s/" project-id)]
@@ -29,7 +29,7 @@
         (is (= status 403))))))
 
 
-(deftest update-single-project
+(deftest update-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id   (get gen-projects "foo")
         url          (format "http://localhost:8000/projects/%s/" project-id)] 
@@ -45,7 +45,7 @@
         (is (= status 403))))))
 
 
-(deftest delete-single-project
+(deftest delete-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]})
         format-url   "http://localhost:8000/projects/%s/"]
 
@@ -62,7 +62,7 @@
         (is (= 403 status))))))
 
 
-(deftest retrieve-all-authorized-projects
+(deftest retrieve-all-authorized-projects-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                               "gid2" ["bar" "baz"]})
         url          "http://localhost:8000/projects/"]
@@ -82,7 +82,7 @@
                (sort project-names)))))))
 
 
-(deftest create-project
+(deftest create-project-test
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
                                ["Paul Graham" "gid2" "user"])
   (let [url "http://localhost:8000/projects/"]

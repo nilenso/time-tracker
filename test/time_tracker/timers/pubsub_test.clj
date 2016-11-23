@@ -30,7 +30,7 @@
       (throw (ex-info "Deref promise timed out" {:promise a-promise}))
       result)))
 
-(deftest start-timer-command
+(deftest start-timer-command-test
   (let [gen-projects  (projects.helpers/populate-data! {"gid1" ["foo"]
                                                         "gid2" ["goo"]})
         project-id    (get gen-projects "foo")
@@ -63,7 +63,7 @@
 
       (finally (ws/close socket)))))
 
-(deftest stop-timer-command
+(deftest stop-timer-command-test
   (let [gen-projects   (projects.helpers/populate-data! {"gid1" ["foo"]
                                                          "gid2" ["goo"]})
         timer1        (timers.db/create! (db/connection)
@@ -101,7 +101,7 @@
           (is (:error command-response))))
       (finally (ws/close socket)))))
 
-(deftest delete-timer-command
+(deftest delete-timer-command-test
   (let [gen-projects     (projects.helpers/populate-data! {"gid1" ["foo"]
                                                            "gid2" ["goo"]})
         timer1           (timers.db/create! (db/connection)
@@ -141,7 +141,7 @@
       
       (finally (ws/close socket)))))
 
-(deftest create-and-start-timer-command
+(deftest create-and-start-timer-command-test
   (let [gen-projects     (projects.helpers/populate-data! {"gid1" ["foo"]
                                                            "gid2" ["goo"]})
         current-time     (util/current-epoch-seconds)
@@ -172,7 +172,7 @@
       
       (finally (ws/close socket)))))
 
-(deftest change-timer-duration-command
+(deftest change-timer-duration-command-test
   (let [gen-projects     (projects.helpers/populate-data! {"gid1" ["foo"]
                                                            "gid2" ["goo"]})
         timer1           (timers.db/create! (db/connection)

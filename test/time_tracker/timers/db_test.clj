@@ -20,7 +20,7 @@
   (= m2 (select-keys m1 (keys m2))))
 
 
-(deftest create
+(deftest create-test
   (let [gen-projects  (projects.helpers/populate-data! {"gid1" ["foo"]
                                                         "gid2" ["goo"]})
         project-id    (get gen-projects "foo")
@@ -34,7 +34,7 @@
     (is (contains-map? actual-timer created-timer))))
 
 
-(deftest has-timing-access?
+(deftest has-timing-access?-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
     (testing "You can time a project if you have admin access"
@@ -54,7 +54,7 @@
                                              (get gen-projects "goo")))))))
 
 
-(deftest owns?
+(deftest owns?-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1 (timers.db/create! (db/connection)
@@ -79,7 +79,7 @@
                                 "gid2"
                                 (:id timer1)))))))
 
-(deftest update-duration-if-authorized
+(deftest update-duration-if-authorized-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers.db/create! (db/connection)
@@ -131,7 +131,7 @@
                google-id)))))
 
 
-(deftest retrieve-authorized-timers
+(deftest retrieve-authorized-timers-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})
         expected1    (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 2)
@@ -146,7 +146,7 @@
     (is (= expected2 actual2))))
 
 
-(deftest delete
+(deftest delete-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers.db/create! (db/connection)
@@ -164,7 +164,7 @@
         (is (nil? actual-timer))))))
 
 
-(deftest start
+(deftest start-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers.db/create! (db/connection)
@@ -199,7 +199,7 @@
         (is (nil? second-result))))))
 
 
-(deftest stop
+(deftest stop-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers.db/create! (db/connection)

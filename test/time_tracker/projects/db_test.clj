@@ -11,7 +11,7 @@
 (use-fixtures :each fixtures/isolate-db)
 
 
-(deftest retrieve
+(deftest retrieve-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
 
@@ -22,7 +22,7 @@
       (is (= expected-project project)))))
 
 
-(deftest update
+(deftest update-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
     (let [project-id       (get gen-projects "foo")
@@ -36,7 +36,7 @@
       (is (= actual-project updated-project)))))
 
 
-(deftest delete
+(deftest delete-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})]
     (let [project-id     (get gen-projects "foo")
@@ -47,7 +47,7 @@
       (is (nil? actual-project)))))
 
 
-(deftest retrieve-authorized-projects
+(deftest retrieve-authorized-projects-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})]
 
@@ -66,7 +66,7 @@
                (sort project-names)))))))
 
 
-(deftest create
+(deftest create-test
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
                                ["Paul Graham" "gid2" "user"])
   (let [created-project (projects.db/create!
