@@ -15,6 +15,9 @@
 (def disallowed-method-response
   (error-response 405 "Method not allowed"))
 
+(def not-found-response
+  (error-response 404 "Not found"))
+
 (defn snake-case->hyphenated-kw
   "In: \"key_string\"
   Out: :key-string"
