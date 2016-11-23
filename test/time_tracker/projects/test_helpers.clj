@@ -1,20 +1,19 @@
 (ns time-tracker.projects.test-helpers
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
-            [yesql.core :refer [defqueries]]))
+            [yesql.core :refer [defqueries]]
+            [time-tracker.projects.db :as projects-db]))
 
 (defqueries "time_tracker/projects/sql/db.sql")
 
 (defn- create-project-as-user!
   "Creates a project and gives the user admin permissions.
   Returns the project id."
-  [connection user-id project-name]
-  (let [{project-id :id} (first (jdbc/insert!
-                                 connection "project"
-                                 {"name" project-name}))]
-    (create-admin-permission-query! {:project_id project-id
-                                     :user_id    user-id}
-                                    {:connection connection})
+  [connection google-id project-name]
+  (let [{project-id :id} (projects-db/create!
+                          connection
+                          {:name project-name})]
+    (projects-db/grant-permission! connection google-id project-id "admin")
     project-id))
 
 (defn- create-user!
@@ -31,10 +30,10 @@
   "Given a user, creates projects for the user
   and grants admin permissions on those projects.
   Returns {project-name project-id}"
-  [connection user-id project-names]
+  [connection google-id project-names]
   (->> (for [project-name project-names]
          (let [project-id (create-project-as-user!
-                           connection user-id project-name)]
+                           connection google-id project-name)]
            [project-name project-id]))
        (into {})))
 
@@ -47,6 +46,6 @@
     (reduce (fn [project-name-ids [google-id project-names]]
               (let [user-id (create-user! conn google-id)]
                 (merge project-name-ids
-                       (populate-projects! conn user-id project-names))))
+                       (populate-projects! conn google-id project-names))))
             {}
             test-data)))
