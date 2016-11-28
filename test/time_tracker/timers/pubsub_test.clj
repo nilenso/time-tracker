@@ -15,7 +15,7 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def connect-url "ws://localhost:8000/timers/ws-connect/")
+(def connect-url "ws://localhost:8000/api/timers/ws-connect/")
 
 (defn- try-take!!
   [channel]
