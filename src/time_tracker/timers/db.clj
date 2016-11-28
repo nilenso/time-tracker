@@ -1,28 +1,10 @@
 (ns time-tracker.timers.db
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
-            [time-tracker.util :refer [statement-success?]]
+            [time-tracker.util :refer [statement-success?] :as util]
             [yesql.core :refer [defqueries]]
             ;; For protocol extensions
-            [clj-time.jdbc])
-  (:import org.postgresql.util.PGInterval))
-
-(defrecord TimePeriod [hours minutes seconds]
-  jdbc/ISQLParameter
-  (set-parameter [value statement index]
-    (.setObject statement
-                index
-                (PGInterval. 0 0 0
-                             (:hours   value)
-                             (:minutes value)
-                             (:seconds value)))))
-
-(extend-protocol jdbc/IResultSetReadColumn
-  PGInterval
-  (result-set-read-column [^PGInterval interval _ _]
-    (TimePeriod. (.getHours   interval)
-                 (.getMinutes interval)
-                 (.getSeconds interval))))
+            [clj-time.jdbc]))
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
@@ -91,11 +73,19 @@
   "Stops a timer if the timer is not already stopped.
   Returns {:keys [duration]} or nil."
   [connection timer-id current-time]
-  (when (statement-success? (stop-timer-query! {:timer_id     timer-id
-                                                :current_time current-time}
-                                               {:connection connection}))
-    (-> (retrieve-timer-query {:timer_id  timer-id}
-                              {:connection connection})
-        (first)
-        (select-keys [:duration]))))
+  (let [{:keys [duration] :as timer} (first (retrieve-timer-query {:timer_id timer-id}
+                                                                  {:connection connection}))]
+    ;; When the timer is started
+    (when (:started_time timer)
+      (let [started-time (util/to-epoch-seconds (:started_time timer))
+            new-duration (+ duration (- current-time started-time))]
+        (assert (>= new-duration duration) "Cannot stop timer before its start time")
+        (when (statement-success? (stop-timer-query! {:timer_id     timer-id
+                                                      :current_time current-time
+                                                      :duration     new-duration}
+                                                     {:connection connection}))
+          (-> (retrieve-timer-query {:timer_id  timer-id}
+                                    {:connection connection})
+              (first)
+              (select-keys [:duration])))))))
 

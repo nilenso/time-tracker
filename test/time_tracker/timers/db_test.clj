@@ -8,8 +8,7 @@
             [time-tracker.users.test-helpers :as users.helpers]
             [time-tracker.util :as util]
             [clj-time.jdbc]
-            [clj-time.coerce :as time.coerce])
-  (:import time_tracker.timers.db.TimePeriod))
+            [clj-time.coerce :as time.coerce]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db)
 (use-fixtures :each fixtures/isolate-db)
@@ -79,7 +78,7 @@
                                 "gid2"
                                 (:id timer1)))))))
 
-(deftest update-duration-if-authorized-test
+(deftest update-duration-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers.db/create! (db/connection)
@@ -94,9 +93,9 @@
             updated-project (timers.db/update-duration!
                              (db/connection)
                              timer-id
-                             (TimePeriod. 0 7 0.0)
+                             (* 7 60)
                              current-time)]
-        (is (= (TimePeriod. 0 7 0.0)
+        (is (= (* 7 60)
                (:duration updated-project)))
         (is (nil? (:started_time updated-project)))))
 
@@ -110,10 +109,10 @@
             updated-project (timers.db/update-duration!
                              (db/connection)
                              timer-id
-                             (TimePeriod. 0 9 0.0)
+                             (* 9 60)
                              current-time)]
         (is (some? start-result))
-        (is (= (TimePeriod. 0 9 0.0)
+        (is (= (* 9 60)
                (:duration updated-project)))
         (is (=  current-time
                 (-> (:started_time updated-project)
@@ -221,7 +220,7 @@
                                 (db/connection)
                                 timer-id
                                 stop-time)]
-        (is (= (TimePeriod. 0 0 10.0)
+        (is (= 10
                duration))))
     
     (testing "Not started"

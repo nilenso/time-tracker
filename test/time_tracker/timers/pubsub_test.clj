@@ -89,8 +89,8 @@
                               :stop-time stop-time}))
         (let [command-response (try-take!! response-chan)]
           (is (s/valid? :timers.db/duration (:duration command-response)))
-          (is (= 7.0
-                 (get-in command-response [:duration :seconds])))))
+          (is (= 7
+                 (:duration command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode
@@ -195,15 +195,11 @@
                              {:command      "change-timer-duration"
                               :timer-id     (:id timer1)
                               :current-time update-time
-                              :duration     {:hours   0
-                                             :minutes 0
-                                             :seconds 37}}))
+                              :duration     37}))
         (let [command-response (try-take!! response-chan)]
           (is (= (:id timer1) (:timer-id command-response)))
           (is (= update-time (:started-time command-response)))
-          (is (= {:hours   0
-                  :minutes 0
-                  :seconds 37.0}
+          (is (= 37
                  (:duration command-response)))
           (is (not (:error command-response)))))
 
@@ -213,9 +209,7 @@
                              {:command      "change-timer-duration"
                               :timer-id     (:id timer2)
                               :current-time update-time
-                              :duration     {:hours   0
-                                             :minutes 0
-                                             :seconds 37}}))
+                              :duration     37}))
         (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
 

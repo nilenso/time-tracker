@@ -9,8 +9,7 @@
 (s/def ::minutes :core/positive-num)
 (s/def ::seconds :core/positive-num)
 
-(s/def :timers.db/duration
-  (s/keys :req-un [::hours ::minutes ::seconds]))
+(s/def :timers.db/duration ::epoch)
 
 (s/def ::timer-id ::id)
 (s/def ::project-id ::id)

@@ -104,7 +104,7 @@
   (if-let [{started-time :started_time duration :duration}
            (timers.db/update-duration! connection
                                        timer-id
-                                       (timers.db/map->TimePeriod duration)
+                                       duration
                                        current-time)]
     (broadcast-to! google-id
                    {:timer-id     timer-id

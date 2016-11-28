@@ -1,0 +1,8 @@
+ALTER TABLE timer
+ALTER COLUMN duration DROP DEFAULT;
+
+ALTER TABLE timer
+ALTER COLUMN duration TYPE integer USING EXTRACT(epoch FROM duration);
+
+ALTER TABLE timer
+ALTER COLUMN duration SET DEFAULT 0;

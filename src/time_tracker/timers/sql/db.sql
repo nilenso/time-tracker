@@ -45,7 +45,7 @@ WHERE timer.id = :timer_id;
 -- name: stop-timer-query!
 -- Stops a timer if it isn't stopped already and if the user owns it.
 UPDATE timer
-SET duration = duration + (to_timestamp(:current_time) - started_time), started_time = NULL
+SET duration = :duration, started_time = NULL
 WHERE timer.started_time IS NOT NULL
 AND timer.id = :timer_id;
 
