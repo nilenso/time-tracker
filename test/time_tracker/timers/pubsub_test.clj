@@ -41,7 +41,7 @@
         current-time  (util/current-epoch-seconds)
         response-chan (chan 1)
         socket        (ws/connect connect-url
-                                  :headers    (auth.test/fake-login-headers "gid1")
+                                  :headers    (auth.test/fake-login-headers "gid1" "foo")
                                   :on-receive #(put! response-chan (json/decode % keyword)))]
     (try
       (testing "Owned timer"
@@ -76,7 +76,7 @@
         stop-time     (+ current-time 7.0)
         response-chan (chan 1)
         socket        (ws/connect connect-url
-                                  :headers    (auth.test/fake-login-headers "gid1")
+                                  :headers    (auth.test/fake-login-headers "gid1" "foo")
                                   :on-receive #(put! response-chan
                                                      (json/decode % keyword)))]
     (timers.db/start! (db/connection) (:id timer1) current-time)
@@ -112,7 +112,7 @@
                                             "gid2")
         response-chan    (chan 1)
         socket           (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :headers    (auth.test/fake-login-headers "gid1" "foo")
                                      :on-receive #(put! response-chan (json/decode % keyword)))]
     (try
       (testing "Owned timer"
@@ -147,7 +147,7 @@
         current-time     (util/current-epoch-seconds)
         response-chan    (chan 1)
         socket           (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :headers    (auth.test/fake-login-headers "gid1" "foo")
                                      :on-receive #(put! response-chan (json/decode % keyword)))]
     (try
       (testing "Can track time on project"
@@ -185,7 +185,7 @@
         update-time      (+ current-time 17)
         response-chan    (chan 1)
         socket           (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :headers    (auth.test/fake-login-headers "gid1" "foo")
                                      :on-receive #(put! response-chan
                                                         (json/decode % keyword)))]
     (try
@@ -222,17 +222,17 @@
         current-time     (util/current-epoch-seconds)
         response1        (promise)
         socket1          (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :headers    (auth.test/fake-login-headers "gid1" "foo")
                                      :on-receive #(deliver response1
                                                            (json/decode % keyword)))
         response2        (promise)
         socket2          (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid1")
+                                     :headers    (auth.test/fake-login-headers "gid1" "foo")
                                      :on-receive #(deliver response2
                                                            (json/decode % keyword)))
         response3        (promise)
         socket3          (ws/connect connect-url
-                                     :headers    (auth.test/fake-login-headers "gid2")
+                                     :headers    (auth.test/fake-login-headers "gid2" "goo")
                                      :on-receive #(deliver response3
                                                            (json/decode % keyword)))]
     (try

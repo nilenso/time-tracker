@@ -5,7 +5,7 @@
             [cheshire.core :as json]))
 
 (defn ws-handler
-  [request]
+  [request connection]
   (http-kit/with-channel request channel
     (let [google-id      (get-in request [:credentials :sub])
           user-agent     (get-in request [:headers "user-agent"])

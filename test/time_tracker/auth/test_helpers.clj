@@ -10,6 +10,7 @@
 
 (defn fake-login-headers
   "Fake headers to be used with fake-google-tokeninfo-api"
-  [google-id]
-  (let [token (json/encode {:sub google-id})]
+  [google-id name]
+  (let [token (json/encode {:sub  google-id
+                            :name name})]
     {"Authorization" (format "Bearer %s" token)}))

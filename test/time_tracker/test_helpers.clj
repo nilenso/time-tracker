@@ -5,10 +5,11 @@
 
 (defn http-request
   ([method url google-id] (http-request method url google-id nil))
-  ([method url google-id body]
+  ([method url google-id body] (http-request method url google-id "Agent Smith" body))
+  ([method url google-id name body]
    (let [params       (merge {:url url
                               :method method
-                              :headers (merge (auth.helpers/fake-login-headers google-id)
+                              :headers (merge (auth.helpers/fake-login-headers google-id name)
                                               {"Content-Type" "application/json"})
                               :as :text}
                              (if body {:body (json/encode body)}))

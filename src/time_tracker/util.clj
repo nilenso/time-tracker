@@ -28,6 +28,8 @@
   [result]
   (< 0 result))
 
+(def select-success? (comp statement-success? :count first))
+
 (defn to-epoch-seconds
   [time-obj]
   (/ (clj-time.coerce/to-long time-obj) 1000.0))

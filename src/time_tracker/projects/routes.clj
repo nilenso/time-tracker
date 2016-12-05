@@ -3,9 +3,10 @@
             [time-tracker.auth.core :refer [wrap-auth]]
             [clojure.algo.generic.functor :refer [fmap]]
             [clojure.java.jdbc :as jdbc]
-            [time-tracker.db :refer [wrap-transaction]]))
+            [time-tracker.db :refer [wrap-transaction]]
+            [time-tracker.users.core :refer [wrap-autoregister]]))
 
-(def middleware (comp wrap-auth wrap-transaction))
+(def middleware (comp wrap-auth wrap-transaction wrap-autoregister))
 
 (def routes {[:id "/"] (fmap middleware
                              {:get    handlers/retrieve
