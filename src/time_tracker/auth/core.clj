@@ -24,7 +24,8 @@
   See: https://jwt.io/introduction/"
   [ring-headers]
   (if-let [header-value (get ring-headers "authorization")]
-    (let [[scheme token] (clojure.string/split header-value #" ")]
+    (let [[scheme & rest] (clojure.string/split header-value #" ")
+          token (clojure.string/join " " rest)]
       (if (= "Bearer" scheme)
         token))))
 
