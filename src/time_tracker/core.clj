@@ -1,6 +1,7 @@
 (ns time-tracker.core
   (:require [time-tracker.logging :as log]
-            [time-tracker.web.service :as web-service])
+            [time-tracker.web.service :as web-service]
+            [time-tracker.util :refer [from-config]])
   (:use org.httpkit.server))
 
 
@@ -8,4 +9,4 @@
   [& args]
   (web-service/init!)
   (log/info {:event ::server-start})
-  (run-server web-service/app {:port 8000}))
+  (run-server web-service/app {:port (from-config :port)}))

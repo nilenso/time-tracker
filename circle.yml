@@ -1,5 +1,6 @@
 machine:
   environment:
+    PORT: 8000
     GOOGLE_TOKENINFO_URL: https://www.googleapis.com/oauth2/v3/tokeninfo
     DB_CONNECTION_STRING: jdbc:postgresql://localhost/circle_test?user=ubuntu
     CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS: 1800
