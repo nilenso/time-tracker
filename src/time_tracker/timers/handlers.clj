@@ -7,20 +7,6 @@
             [cheshire.core :as json]
             [time-tracker.util :as util]))
 
-(defn- accept-nil
-  [func]
-  (fn [arg]
-    (if (nil? arg)
-      nil
-      (func arg))))
-
-(defn- make-joda-time-epoch
-  [timer-obj]
-  (let [convert-fn (accept-nil util/to-epoch-seconds)]
-    (-> timer-obj
-        (update :started_time convert-fn)
-        (update :time_created convert-fn))))
-
 ;; List endpoint ------------------------------------------------------------
 ;; /timers/
 
@@ -30,8 +16,7 @@
         list-of-timers (timers-db/retrieve-authorized-timers
                         connection
                         google-id)]
-    (res/response (map make-joda-time-epoch
-                       list-of-timers))))
+    (res/response list-of-timers)))
 
 (defn ws-handler
   [request connection]

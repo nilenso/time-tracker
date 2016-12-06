@@ -60,11 +60,11 @@
 
 (defn start-timer-command!
   [channel google-id connection {:keys [timer-id started-time] :as args}]
-  (if-let [{started-time :started_time duration :duration}
+  (if-let [{:keys [started-time duration]}
            (timers.db/start! connection timer-id started-time)]
     (broadcast-to! google-id
                    {:timer-id     timer-id
-                    :started-time (util/to-epoch-seconds started-time)
+                    :started-time started-time
                     :duration     duration})
     (send-error! channel "Could not start timer")))
 
@@ -90,25 +90,25 @@
 (defn create-and-start-timer-command!
   [channel google-id connection {:keys [project-id started-time] :as args}]
   (let [{timer-id :id} (timers.db/create! connection project-id google-id)
-        {started-time :started_time duration :duration}
+        {:keys [started-time duration]}
         (timers.db/start! connection timer-id started-time)]
     (broadcast-to! google-id
                    {:timer-id     timer-id
                     :project-id   project-id
-                    :started-time (util/to-epoch-seconds started-time)
+                    :started-time started-time
                     :duration     duration
                     :create?      true})))
 
 (defn change-timer-duration-command!
   [channel google-id connection {:keys [timer-id duration current-time] :as args}]
-  (if-let [{started-time :started_time duration :duration}
+  (if-let [{:keys [started-time duration]}
            (timers.db/update-duration! connection
                                        timer-id
                                        duration
                                        current-time)]
     (broadcast-to! google-id
                    {:timer-id     timer-id
-                    :started-time (util/to-epoch-seconds started-time)
+                    :started-time started-time
                     :duration     duration})
     (send-error! channel "Could not update duration")))
 

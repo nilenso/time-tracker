@@ -8,6 +8,22 @@
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
+(defn- hyphenize-walk
+  [thing]
+  (if (keyword? thing)
+    (util/hyphenize thing)
+    thing))
+
+(defn- epochize-walk
+  [thing]
+  (if (instance? org.joda.time.DateTime thing)
+    (util/to-epoch-seconds thing)
+    thing))
+
+(defn transform-timer-map
+  [timer-map]
+  (util/transform-map timer-map hyphenize-walk epochize-walk))
+
 (defn has-timing-access?
   [connection google-id project-id]
   (let [authorized-query-result (first (has-timing-access-query {:google_id  google-id
@@ -41,7 +57,8 @@
     (-> (retrieve-timer-query {:timer_id timer-id}
                               {:connection connection})
         (first)
-        (select-keys [:started_time :duration]))))
+        (select-keys [:started_time :duration])
+        (transform-timer-map))))
 
 (defn delete!
   "Deletes a timer. Returns false if the timer doesn't exist."
@@ -55,7 +72,9 @@
   [connection google-id]
   (->> (retrieve-authorized-timers-query {:google_id google-id}
                                          {:connection connection})
-       (map #(select-keys % [:id :project_id :started_time :duration :time_created]))))
+       (map #(-> %
+                 (select-keys [:id :project_id :started_time :duration :time_created])
+                 (transform-timer-map)))))
 
 (defn start!
   "Starts a timer if the timer is not already started.
@@ -67,7 +86,8 @@
     (-> (retrieve-timer-query {:timer_id  timer-id}
                               {:connection connection})
         (first)
-        (select-keys [:started_time :duration]))))
+        (select-keys [:started_time :duration])
+        (transform-timer-map))))
 
 (defn stop!
   "Stops a timer if the timer is not already stopped.
@@ -87,5 +107,6 @@
           (-> (retrieve-timer-query {:timer_id  timer-id}
                                     {:connection connection})
               (first)
-              (select-keys [:duration])))))))
+              (select-keys [:duration])
+              (transform-timer-map)))))))
 

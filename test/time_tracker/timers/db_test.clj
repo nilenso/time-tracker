@@ -97,7 +97,7 @@
                              current-time)]
         (is (= (* 7 60)
                (:duration updated-project)))
-        (is (nil? (:started_time updated-project)))))
+        (is (nil? (:started-time updated-project)))))
 
     (testing "Started"
       (let [timer-id        (:id timer3)
@@ -115,8 +115,7 @@
         (is (= (* 9 60)
                (:duration updated-project)))
         (is (=  current-time
-                (-> (:started_time updated-project)
-                    (util/to-epoch-seconds))))))))
+                (:started-time updated-project)))))))
 
 
 (defn- create-timers!
@@ -183,7 +182,7 @@
                           timer-id
                           current-time)]
         (is (= current-time
-               (util/to-epoch-seconds (:started_time start-result))))))
+               (:started-time start-result)))))
     (testing "Started"
       (let [timer-id      (:id timer2)
             first-result  (timers.db/start!
