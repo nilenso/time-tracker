@@ -9,4 +9,4 @@
   [& args]
   (web-service/init!)
   (log/info {:event ::server-start})
-  (run-server web-service/app {:port (from-config :port)}))
+  (run-server web-service/app {:port (Integer/parseInt (from-config :port))}))
