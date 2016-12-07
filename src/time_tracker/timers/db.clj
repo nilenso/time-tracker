@@ -43,9 +43,10 @@
 (defn create!
   "Creates and returns a timer if authorized."
   [connection project-id google-id]
-  (create-timer-query<! {:google_id  google-id
-                         :project_id project-id}
-                        {:connection connection}))
+  (-> (create-timer-query<! {:google_id  google-id
+                             :project_id project-id}
+                            {:connection connection})
+      (transform-timer-map)))
 
 (defn update-duration!
   "Set the elapsed duration of the timer."
