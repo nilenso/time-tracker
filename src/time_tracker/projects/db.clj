@@ -1,71 +1,75 @@
 (ns time-tracker.projects.db
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
-            [yesql.core :refer [defqueries]]))
+            [yesql.core :refer [defqueries]]
+            [time-tracker.util :refer [statement-success?]]))
 
 (defqueries "time_tracker/projects/sql/db.sql")
 
-(defn- statement-success?
-  [result]
-  (< 0 result))
+(defn has-project-permissions?
+  [google-id project-id connection permissions]
+  (let [predicate (comp statement-success? :count first)]
+    (some predicate
+          (map (fn [permission]
+                 (has-project-permission-query {:google_id  google-id
+                                                :project_id project-id
+                                                :permission permission}
+                                               {:connection connection}))
+               permissions))))
 
-(defn retrieve-if-authorized
+(defn has-user-role?
+  [google-id connection roles]
+  (let [predicate (comp statement-success? :count first)]
+    (some predicate
+          (map (fn [role]
+                 (has-role-query {:google_id google-id
+                                  :role      role}
+                                 {:connection connection}))
+               roles))))
+
+(defn retrieve
   "Retrieves one specific project if authorized."
-  [project-id google-id]
-  (first (retrieve-if-authorized-query {:google_id  google-id
-                                        :project_id project-id
-                                        :permission "admin"}
-                                       {:connection (db/connection)})))
+  [connection project-id]
+  (first (retrieve-query {:project_id project-id}
+                         {:connection connection})))
 
-(defn update-if-authorized!
-  "Updates a project if authorized and returns the updated project."
-  [project-id {:keys [name]} google-id]
+(defn update!
+  "Updates a project and returns the updated project."
+  [connection project-id {:keys [name]}]
   ;; The Postgres RETURNING clause doesn't work,
   ;; so using two queries for now
-  (jdbc/with-db-transaction [connection (db/connection)]
-    (when (statement-success?
-           (update-if-authorized-query! {:name       name
-                                         :google_id  google-id
-                                         :project_id project-id
-                                         :permission "admin"}
-                                        {:connection connection}))
-      (jdbc/get-by-id connection "project" project-id))))
+  (when (statement-success?
+         (update-query! {:name       name
+                         :project_id project-id}
+                        {:connection connection}))
+    (jdbc/get-by-id connection "project" project-id)))
 
-(defn delete-if-authorized!
-  "Deletes a project and returns true if authorized."
-  [project-id google-id]
+(defn delete!
+  "Deletes a project and returns true."
+  [connection project-id]
   (statement-success?
-   (delete-if-authorized-query! {:google_id  google-id
-                                 :project_id project-id
-                                 :permission "admin"}
-                                {:connection (db/connection)})))
+   (delete-query! {:project_id project-id}
+                  {:connection connection})))
 
 (defn retrieve-authorized-projects
   "Retrieves a (possibly empty) list of authorized projects."
-  [google-id]
+  [connection google-id]
   (retrieve-authorized-projects-query {:google_id  google-id
                                        :permission "admin"}
-                                      {:connection (db/connection)}))
+                                      {:connection connection}))
 
-(defn- admin?
-  [connection google-id]
-  (let [authorized-query-result (first (is-admin-query {:google_id google-id
-                                                        :role      "admin"}
-                                                       {:connection connection}))]
-    (statement-success? (:count authorized-query-result))))
+(defn create!
+  [connection contents]
+  (first (jdbc/insert! connection "project"
+                       {"name" (:name contents)})))
 
-(defn create-if-authorized!
-  [contents google-id]
-  (jdbc/with-db-transaction [connection (db/connection)]
-    (when (admin? connection google-id)
-      (let [{project-id :id :as created-project}
-            (first (jdbc/insert! connection "project"
-                                 {"name" (:name contents)}))
-
-            {user-id :id}
-            (first (jdbc/find-by-keys connection "app_user"
-                                      {"google_id" google-id}))]
-        (create-admin-permission-query! {:project_id project-id
-                                         :user_id    user-id}
-                                        {:connection connection})
-        created-project))))
+(defn grant-permission!
+  "Grants a permission on a project to a user."
+  [connection google-id project-id permission]
+  (let [{user-id :id} (first (jdbc/find-by-keys connection "app_user"
+                                                {"google_id" google-id}))]
+    (statement-success?
+     (grant-permission-query! {:project_id project-id
+                               :user_id    user-id
+                               :permission permission}
+                              {:connection connection}))))

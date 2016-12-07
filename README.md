@@ -1,36 +1,33 @@
 # time-tracker
 
-FIXME: description
+Be nilenso's time tracking tool.
 
 ## Installation
 
-Download from http://example.com/FIXME.
+- setup config file: Please see `profiles.clj.sample` for a sample `profiles.clj`.
+Change the settings as needed. Rename it to `profiles.clj`.xs
+
+- setup postgres databases:
+	``` shell
+	initdb db
+	pg_ctl -D db -l pg.log start
+	psql -d postgres
+	create database time_tracker;
+	create database time_tracker_test;
+	```
+- migrate
+  ``` lein migrate```
+
+- ensure tests pass
+  ```lein test```
 
 ## Usage
 
 FIXME: explanation
 
-    $ java -jar time-tracker-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

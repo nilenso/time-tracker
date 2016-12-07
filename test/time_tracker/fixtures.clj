@@ -2,19 +2,19 @@
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.migration :refer [migrate-db]]
             [time-tracker.db :as db]
-            [time-tracker.core :refer [app]]
+            [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
-            [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
-            [environ.core :as environ]
-            [time-tracker.config :as config])
+            [time-tracker.auth.test-helpers :refer [fake-token->credentials]])
   (:use org.httpkit.server))
 
-(defn init-db! [f]
-  (db/init-db!)
+(defn init! [f]
+  (time-tracker.web.service/init!)
   (f))
 
 (defn destroy-db []
-  (jdbc/execute! config/db-spec [(str "DROP OWNED BY " (environ/env :test-db-username))]))
+  (jdbc/with-db-transaction [conn (db/connection)]
+    (jdbc/execute! conn "DROP SCHEMA IF EXISTS public CASCADE;")
+    (jdbc/execute! conn "CREATE SCHEMA IF NOT EXISTS public;")))
 
 (defn migrate-test-db [f]
   (migrate-db)

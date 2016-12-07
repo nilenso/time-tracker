@@ -1,0 +1,86 @@
+---
+swagger: '2.0'
+info:
+  version: 0.0.0
+  title: Time tracker API
+paths:
+  /projects/:
+    get:
+      summary: View all projects
+      description: |
+        This endpoint returns all projects the user is authorized to view.
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Project"
+    post:
+      summary: Create a project
+      description: | 
+        This endpoint will create a new project.
+      parameters:
+        - in: body
+          name: name
+          required: true
+          type: string
+          description: The name of the project to add.
+      responses:
+        201:
+          description: Project successfully created.
+  
+  /projects/{projectId}/:
+    get:
+      summary: Retrieve a single project.
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          type: number
+          description: ID of the project
+      responses:
+        200:
+          description: The retrieved project.
+          schema:
+            $ref: '#/definitions/Project'
+            
+    put:
+      summary: Update the name of a single project.
+      parameters:
+        - name: projectId
+          in: path
+          type: number
+          required: true
+          description: ID of the project
+        - in: body
+          name: name
+          type: string
+          required: true
+          description: The fields to update.
+      responses:
+        200:
+          description: The modified project.
+          schema:
+            $ref: '#/definitions/Project'
+    
+    delete:
+      summary: Deletes a project.
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          type: number
+      responses:
+        204:
+          description: Successfully deleted
+    
+
+definitions:
+  Project:
+    type: object
+    properties:
+      id:
+        type: number
+      name:
+        type: string
