@@ -26,8 +26,9 @@
         created-timer (timers.db/create! (db/connection)
                                          project-id
                                          "gid1")
-        actual-timer  (first (jdbc/find-by-keys (db/connection) "timer"
-                                                {"project_id" project-id}))]
+        actual-timer  (timers.db/transform-timer-map
+                       (first (jdbc/find-by-keys (db/connection) "timer"
+                                                 {"project_id" project-id})))]
     (is (some? created-timer))
     (is (some? actual-timer))
     (is (contains-map? actual-timer created-timer))))
