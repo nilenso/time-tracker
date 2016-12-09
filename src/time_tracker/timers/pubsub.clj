@@ -1,5 +1,5 @@
 (ns time-tracker.timers.pubsub
-  (:require [org.httpkit.server :refer [send!]]
+  (:require [org.httpkit.server :refer [send!] :as httpkit]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
@@ -8,12 +8,16 @@
             [clojure.spec :as s]
             [time-tracker.timers.spec]
             [clojure.algo.generic.functor :refer [fmap]]
-            [time-tracker.logging :as log]))
+            [time-tracker.logging :as log]
+            [time-tracker.auth.core :refer [token->credentials]]))
 
 ;; Connection management -------
 
 ;; A map of google-ids to sets of channels.
 (defonce active-connections (atom {}))
+
+;; A map of channels to google IDs
+(defonce channel->google-id (atom {}))
 
 (defn- conj-to-set
   "If the-set is nil, returns a new set containing value.
@@ -30,10 +34,13 @@
 
 (defn on-close!
   "Called when a channel is closed."
-  [channel google-id status]
+  [channel status]
   ;; See https://github.com/http-kit/http-kit/blob/protocol-api/src/org/httpkit/server.clj#L61
   ;; for the possible values of status
-  (swap! active-connections update google-id disj channel))
+  (if-let [google-id (get @channel->google-id channel)]
+    (do
+      (swap! active-connections update google-id disj channel)
+      (swap! channel->google-id dissoc channel))))
 
 ;; Utils ----------------------
 
@@ -191,10 +198,28 @@
 
 ;; -------
 
+(defn authenticate-channel!
+  [channel {:keys [command token]}]
+  (if (= command "authenticate")
+    (if-let [{google-id :sub} (token->credentials
+                               [(util/from-config :google-client-id)]
+                               token)]
+      (do
+        (swap! channel->google-id assoc channel google-id)
+        (add-channel! channel google-id)
+        (send! channel (json/encode {:auth-status "success"}))
+        true))))
+
 (defn dispatch-command!
   "Calls the appropriate timer command."
-  [channel google-id command-data]
-  (if-let [command-fn (command-map (get command-data :command))]
-    (command-fn channel google-id (dissoc command-data :command))
-    (send! channel (json/encode
-                    {:error "Invalid command"}))))
+  [channel command-data]
+  (if-let [google-id (get @channel->google-id channel)]
+    (if-let [command-fn (command-map (get command-data :command))]
+      (command-fn channel google-id (dissoc command-data :command))
+      (send! channel (json/encode
+                      {:error "Invalid command"})))
+    (when-not (authenticate-channel! channel command-data)
+      (send! channel (json/encode
+                      {:error "Authentication failure"}))
+      (log/info {:event ::authentication-failure})
+      (httpkit/close channel))))

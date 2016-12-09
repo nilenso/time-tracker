@@ -7,6 +7,6 @@
 
 (def middleware (comp wrap-auth wrap-transaction wrap-autoregister))
 
-(def routes {"ws-connect/" (middleware handlers/ws-handler)
+(def routes {"ws-connect/" handlers/ws-handler
              ""            (fmap middleware
                                  {:get handlers/list-all})})

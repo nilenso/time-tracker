@@ -19,16 +19,13 @@
     (res/response list-of-timers)))
 
 (defn ws-handler
-  [request connection]
+  [request]
   (http-kit/with-channel request channel
-    (let [google-id      (get-in request [:credentials :sub])
-          user-agent     (get-in request [:headers "user-agent"])
+    (let [user-agent     (get-in request [:headers "user-agent"])
           remote-address (:remote-addr request)]
       (log/info {:event          ::websockets-connection-established
                  :user-agent     user-agent
-                 :remote-address remote-address
-                 :google-id      google-id})
-      (pubsub/add-channel! channel google-id)
+                 :remote-address remote-address})
 
       ;; See https://github.com/http-kit/http-kit/blob/protocol-api/src/org/httpkit/server.clj#L61
       ;; for the possible values of status
@@ -37,9 +34,8 @@
                            (log/info {:event          ::websockets-connection-closed
                                       :user-agent     user-agent
                                       :remote-address remote-address
-                                      :google-id      google-id
                                       :status         status})
-                           (pubsub/on-close! channel google-id status)))
+                           (pubsub/on-close! channel status)))
       (http-kit/on-receive channel (fn [data]
-                                     (pubsub/dispatch-command! channel google-id
+                                     (pubsub/dispatch-command! channel
                                                                (json/decode data keyword)))))))
