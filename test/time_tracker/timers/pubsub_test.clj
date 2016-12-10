@@ -63,7 +63,7 @@
                               :timer-id     (:id timer1)
                               :started-time current-time}))
         (let [command-response (try-take!! response-chan)]
-          (is (= (:id timer1) (:timer-id command-response)))
+          (is (= (:id timer1) (:id command-response)))
           (is (= current-time (:started-time command-response)))))
 
       (testing "Unowned timer"
@@ -127,9 +127,9 @@
                                {:command   "delete-timer"
                                 :timer-id  (:id timer1)}))
           (let [command-response (try-take!! response-chan)]
-            (is (:delete? command-response))
+            (is (= "delete" (:type command-response)))
             (is (= (:id timer1)
-                   (:timer-id command-response)))))
+                   (:id command-response)))))
 
         (testing "Timer does not exist"
           (ws/send-msg socket (json/encode
@@ -161,7 +161,7 @@
         (let [command-response (try-take!! response-chan)]
           (is (= (get gen-projects "foo")
                  (:project-id command-response)))
-          (is (:create? command-response))
+          (is (= "create" (:type command-response)))
           (is (= current-time
                  (:started-time command-response)))))
 
@@ -196,7 +196,7 @@
                               :current-time update-time
                               :duration     37}))
         (let [command-response (try-take!! response-chan)]
-          (is (= (:id timer1) (:timer-id command-response)))
+          (is (= (:id timer1) (:id command-response)))
           (is (= update-time (:started-time command-response)))
           (is (= 37
                  (:duration command-response)))
@@ -230,7 +230,7 @@
                              :started-time current-time}))
       (let [result1 (try-take!! response1)
             result2 (try-take!! response2)]
-        (is (= timer-id (:timer-id result1)))
+        (is (= timer-id (:id result1)))
         (is (= current-time (:started-time result2)))
 
         (testing "All clients with the same gid receive the broadcast"

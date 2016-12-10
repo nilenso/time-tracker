@@ -70,7 +70,8 @@
   (if-let [{:keys [started-time duration]}
            (timers.db/start! connection timer-id started-time)]
     (broadcast-to! google-id
-                   {:timer-id     timer-id
+                   {:type         :update
+                    :id           timer-id
                     :started-time started-time
                     :duration     duration})
     (send-error! channel "Could not start timer")))
@@ -80,7 +81,8 @@
   (if-let [{:keys [duration]} (timers.db/stop!
                                connection timer-id stop-time)]
     (broadcast-to! google-id
-                   {:timer-id     timer-id
+                   {:type         :update
+                    :id           timer-id
                     :started-time nil
                     :duration     duration})
     (send-error! channel "Could not stop timer")))
@@ -90,8 +92,8 @@
   (if (timers.db/delete!
        connection timer-id)
     (broadcast-to! google-id
-                   {:timer-id timer-id
-                    :delete?  true})
+                   {:type :delete
+                    :id   timer-id})
     (send-error! channel "Could not delete timer")))
 
 (defn create-and-start-timer-command!
@@ -100,11 +102,11 @@
         {:keys [started-time duration]}
         (timers.db/start! connection timer-id started-time)]
     (broadcast-to! google-id
-                   {:timer-id     timer-id
+                   {:type         :create
+                    :timer-id     timer-id
                     :project-id   project-id
                     :started-time started-time
-                    :duration     duration
-                    :create?      true})))
+                    :duration     duration})))
 
 (defn change-timer-duration-command!
   [channel google-id connection {:keys [timer-id duration current-time] :as args}]
@@ -114,7 +116,8 @@
                                        duration
                                        current-time)]
     (broadcast-to! google-id
-                   {:timer-id     timer-id
+                   {:type         :update
+                    :id           timer-id
                     :started-time started-time
                     :duration     duration})
     (send-error! channel "Could not update duration")))
