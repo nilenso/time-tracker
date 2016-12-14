@@ -33,7 +33,7 @@
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
-  (let [response-chan (chan 1)
+  (let [response-chan (chan 5)
         socket        (ws/connect connect-url
                                   :on-receive #(put! response-chan
                                                      (json/decode % keyword)))]
@@ -54,6 +54,9 @@
         timer2                 (timers.db/create! (db/connection)
                                                   (get gen-projects "goo")
                                                   "gid2")
+        timer3                 (timers.db/create! (db/connection)
+                                                  (get gen-projects "foo")
+                                                  "gid1")
         current-time           (util/current-epoch-seconds)
         [response-chan socket] (make-ws-connection "gid1")]
     (try
@@ -74,6 +77,19 @@
         (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
 
+      (testing "Other started timers should be stopped"
+        ;; At this point timer1 is started.
+        (ws/send-msg socket (json/encode
+                             {:command      "start-timer"
+                              :timer-id     (:id timer3)
+                              :started-time (+ 5 current-time)}))
+        (let [start-response (try-take!! response-chan)
+              stop-response  (try-take!! response-chan)]
+          (is (= (:id timer3) (:id start-response)))
+          (is (= (:id timer1) (:id stop-response)))
+          (is (not (nil? :started-time )))
+          (is (nil? (:started-time stop-response)))))
+      
       (finally (ws/close socket)))))
 
 (deftest stop-timer-command-test
@@ -158,12 +174,14 @@
                              {:command      "create-and-start-timer"
                               :project-id   (get gen-projects "foo")
                               :started-time current-time}))
-        (let [command-response (try-take!! response-chan)]
+        (let [create-response (try-take!! response-chan)
+              start-response  (try-take!! response-chan)]
           (is (= (get gen-projects "foo")
-                 (:project-id command-response)))
-          (is (= "create" (:type command-response)))
+                 (:project-id create-response)))
+          (is (= "create" (:type create-response)))
+          (is (nil? (:started-time create-response)))
           (is (= current-time
-                 (:started-time command-response)))))
+                 (:started-time start-response)))))
 
       (println "Part of create-and-start-timer-command-test is currently disabled!")
       #_(testing "Can't track time on project"

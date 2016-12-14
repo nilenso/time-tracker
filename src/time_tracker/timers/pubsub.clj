@@ -65,17 +65,6 @@
 
 ;; Commands -----
 
-(defn start-timer-command!
-  [channel google-id connection {:keys [timer-id started-time] :as args}]
-  (if-let [{:keys [started-time duration]}
-           (timers.db/start! connection timer-id started-time)]
-    (broadcast-to! google-id
-                   {:type         :update
-                    :id           timer-id
-                    :started-time started-time
-                    :duration     duration})
-    (send-error! channel "Could not start timer")))
-
 (defn stop-timer-command!
   [channel google-id connection {:keys [timer-id stop-time] :as args}]
   (if-let [{:keys [duration]} (timers.db/stop!
@@ -87,6 +76,34 @@
                     :duration     duration})
     (send-error! channel "Could not stop timer")))
 
+(defn start-timer-command!
+  [channel google-id connection {:keys [timer-id started-time] :as args}]
+  (if-let [{:keys [started-time duration]}
+           (timers.db/start! connection timer-id started-time)]
+    (do (broadcast-to! google-id
+                       {:type         :update
+                        :id           timer-id
+                        :started-time started-time
+                        :duration     duration})
+        (let [started-timers (timers.db/retrieve-started-timers connection
+                                                                google-id)
+              timers-to-stop (filter #(not= (:id %) timer-id)
+                                     started-timers)]
+          (doseq [timer timers-to-stop]
+            (stop-timer-command! channel google-id connection
+                                 {:timer-id  (:id timer)
+                                  :stop-time started-time}))))
+    (send-error! channel "Could not start timer")))
+
+(defn create-and-start-timer-command!
+  [channel google-id connection {:keys [project-id started-time] :as args}]
+  (let [created-timer (timers.db/create! connection project-id google-id)]
+    (broadcast-to! google-id
+                   (assoc created-timer :type :create))
+    (start-timer-command! channel google-id connection
+                          {:timer-id     (:id created-timer)
+                           :started-time started-time})))
+
 (defn delete-timer-command!
   [channel google-id connection {:keys [timer-id] :as args}]
   (if (timers.db/delete!
@@ -95,18 +112,6 @@
                    {:type :delete
                     :id   timer-id})
     (send-error! channel "Could not delete timer")))
-
-(defn create-and-start-timer-command!
-  [channel google-id connection {:keys [project-id started-time] :as args}]
-  (let [{timer-id :id} (timers.db/create! connection project-id google-id)
-        {:keys [started-time duration]}
-        (timers.db/start! connection timer-id started-time)]
-    (broadcast-to! google-id
-                   {:type         :create
-                    :id           timer-id
-                    :project-id   project-id
-                    :started-time started-time
-                    :duration     duration})))
 
 (defn change-timer-duration-command!
   [channel google-id connection {:keys [timer-id duration current-time] :as args}]
