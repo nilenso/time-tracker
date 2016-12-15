@@ -51,12 +51,21 @@
    (delete-query! {:project_id project-id}
                   {:connection connection})))
 
+;; Currently not being used -- replaced with the function below
+;; Will use this when authorization is enabled and figured out
+
 (defn retrieve-authorized-projects
   "Retrieves a (possibly empty) list of authorized projects."
   [connection google-id]
   (retrieve-authorized-projects-query {:google_id  google-id
                                        :permission "admin"}
                                       {:connection connection}))
+
+;; Temporary
+(defn retrieve-all-projects
+  "Retrieves a list of ALL the projects. No authorization checks."
+  [connection]
+  (retrieve-all-projects-query {} {:connection connection}))
 
 (defn create!
   [connection contents]

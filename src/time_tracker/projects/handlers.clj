@@ -54,11 +54,11 @@
 ;; /projects/
 
 ;; list would shadow clojure.core/list
+;; Using retrieve-all-projects instead of retrieve-authorized-projects
 (defn list-all
   [{:keys [credentials]} connection]
-  (res/response (projects.db/retrieve-authorized-projects
-                 connection
-                 (:sub credentials))))
+  (res/response (projects.db/retrieve-all-projects
+                 connection)))
 
 (defn create
   [{:keys [credentials body]} connection]

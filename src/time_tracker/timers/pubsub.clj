@@ -177,11 +177,12 @@
   [middlewares command-map]
   (fmap (apply comp middlewares) command-map))
 
+;; For now, anyone can log time against any project.
 (def command-map
   (wrap-middlewares
    [wrap-exception wrap-transaction]
    (merge {"create-and-start-timer" (-> create-and-start-timer-command!
-                                        (wrap-can-create-timer)
+                                        ;;(wrap-can-create-timer)
                                         (wrap-validator
                                          :timers.pubsub/create-and-start-timer-args))}
 
