@@ -145,6 +145,20 @@
     (is (= expected2 actual2))))
 
 
+(deftest retrieve-started-timers-test
+  (let [gen-projects   (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
+                                                         "gid2" ["bar" "baz"]})
+        created-timers (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 6)
+        current-time   (util/current-epoch-seconds)]
+    ;; Start the first five timers
+    (doall (map #(timers.db/start! (db/connection) % current-time)
+                (take 5 created-timers)))
+    (let [started-timers (timers.db/retrieve-started-timers (db/connection) "gid1")]
+      (is (= 5 (count started-timers)))
+      (doseq [timer started-timers]
+        (is (not (nil? (:started-time timer))))))))
+
+
 (deftest delete-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})

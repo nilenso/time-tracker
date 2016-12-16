@@ -44,18 +44,36 @@
 
 ;; Utils ----------------------
 
+(defn send-data!
+  "Wrapper of send! that logs data and encodes JSON."
+  [channel data]
+  ;; TODO: Somehow log the recepient host.
+  (log/debug (merge {:event     ::sent-data
+                     :google-id (get @channel->google-id channel)}
+                    data))
+  (send! channel (json/encode data)))
+
 (defn broadcast-to!
   "Serializes data and sends it to all connections belonging to
   google-id."
   [google-id data]
+  (log/debug (merge {:event     ::broadcasted-data
+                     :google-id google-id}
+                    data))
   (let [str-data (json/encode data)]
     (doseq [channel (get @active-connections google-id)]
       (send! channel str-data))))
 
+(defn broadcast-state-change!
+  "Broadcasts the change in state of a timer."
+  [google-id timer change-type]
+  (broadcast-to! google-id
+                 (assoc timer :type change-type)))
+
 (defn send-error!
   [channel message]
-  (send! channel (json/encode
-                  {:error message})))
+  (send-data! channel
+              {:error message}))
 
 (defn send-invalid-args!
   [channel]
@@ -65,27 +83,35 @@
 
 ;; Commands -----
 
-(defn start-timer-command!
-  [channel google-id connection {:keys [timer-id started-time] :as args}]
-  (if-let [{:keys [started-time duration]}
-           (timers.db/start! connection timer-id started-time)]
-    (broadcast-to! google-id
-                   {:type         :update
-                    :id           timer-id
-                    :started-time started-time
-                    :duration     duration})
-    (send-error! channel "Could not start timer")))
-
 (defn stop-timer-command!
   [channel google-id connection {:keys [timer-id stop-time] :as args}]
-  (if-let [{:keys [duration]} (timers.db/stop!
-                               connection timer-id stop-time)]
-    (broadcast-to! google-id
-                   {:type         :update
-                    :id           timer-id
-                    :started-time nil
-                    :duration     duration})
+  (if-let [stopped-timer (timers.db/stop!
+                          connection timer-id stop-time)]
+    (broadcast-state-change! google-id stopped-timer :update)
     (send-error! channel "Could not stop timer")))
+
+(defn start-timer-command!
+  [channel google-id connection {:keys [timer-id started-time] :as args}]
+  (if-let [{:keys [started-time duration] :as started-timer}
+           (timers.db/start! connection timer-id started-time)]
+    (do (broadcast-state-change! google-id started-timer :update)
+        (let [started-timers (timers.db/retrieve-started-timers connection
+                                                                google-id)
+              timers-to-stop (filter #(not= (:id %) timer-id)
+                                     started-timers)]
+          (doseq [timer timers-to-stop]
+            (stop-timer-command! channel google-id connection
+                                 {:timer-id  (:id timer)
+                                  :stop-time started-time}))))
+    (send-error! channel "Could not start timer")))
+
+(defn create-and-start-timer-command!
+  [channel google-id connection {:keys [project-id started-time] :as args}]
+  (let [created-timer (timers.db/create! connection project-id google-id)]
+    (broadcast-state-change! google-id created-timer :create)
+    (start-timer-command! channel google-id connection
+                          {:timer-id     (:id created-timer)
+                           :started-time started-time})))
 
 (defn delete-timer-command!
   [channel google-id connection {:keys [timer-id] :as args}]
@@ -96,30 +122,14 @@
                     :id   timer-id})
     (send-error! channel "Could not delete timer")))
 
-(defn create-and-start-timer-command!
-  [channel google-id connection {:keys [project-id started-time] :as args}]
-  (let [{timer-id :id} (timers.db/create! connection project-id google-id)
-        {:keys [started-time duration]}
-        (timers.db/start! connection timer-id started-time)]
-    (broadcast-to! google-id
-                   {:type         :create
-                    :id           timer-id
-                    :project-id   project-id
-                    :started-time started-time
-                    :duration     duration})))
-
 (defn change-timer-duration-command!
   [channel google-id connection {:keys [timer-id duration current-time] :as args}]
-  (if-let [{:keys [started-time duration]}
+  (if-let [updated-timer
            (timers.db/update-duration! connection
                                        timer-id
                                        duration
                                        current-time)]
-    (broadcast-to! google-id
-                   {:type         :update
-                    :id           timer-id
-                    :started-time started-time
-                    :duration     duration})
+    (broadcast-state-change! google-id updated-timer :update)
     (send-error! channel "Could not update duration")))
 
 ;; Middleware ----
@@ -217,6 +227,7 @@
 (defn dispatch-command!
   "Calls the appropriate timer command."
   [channel command-data]
+  (log/debug (merge {:event ::received-data} command-data))
   (if-let [google-id (get @channel->google-id channel)]
     (if-let [command-fn (command-map (get command-data :command))]
       (command-fn channel google-id (dissoc command-data :command))
