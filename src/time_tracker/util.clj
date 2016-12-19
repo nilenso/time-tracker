@@ -55,3 +55,8 @@
   [thing-map & args]
   (let [walk-fn (apply comp args)]
     (walk/postwalk walk-fn thing-map)))
+
+(defn map-contains?
+  "Is the map `b` completely contained in `a`?"
+  [a b]
+  (= a (merge a b)))
