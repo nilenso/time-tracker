@@ -1,4 +1,5 @@
 (ns time-tracker.core
+  (:gen-class)
   (:require [time-tracker.logging :as log]
             [time-tracker.web.service :as web-service]
             [time-tracker.util :refer [from-config]])
