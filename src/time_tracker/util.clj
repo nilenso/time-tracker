@@ -29,7 +29,7 @@
   [result]
   (< 0 result))
 
-(def select-success? (comp statement-success? :count first))
+(def select-success? (comp statement-success? count))
 
 (defn to-epoch-seconds
   [time-obj]

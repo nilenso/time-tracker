@@ -6,12 +6,12 @@
 (defqueries "time_tracker/users/sql/db.sql")
 
 (defn register-user!
-  "Puts a user's details into the DB. The default role is 'user'. Returns the inserted row."
+  "Puts a user's details into the DB. The default role is 'user'.
+  Does nothing if the user is already registered."
   [connection google-id name]
-  (first (jdbc/insert! connection
-                       "app_user"
-                       {"google_id" google-id
-                        "name"      name})))
+  (register-user-query! {:google_id google-id
+                         :name      name}
+                        {:connection connection}))
 
 (defn registered?
   "Check if a user is in the DB"

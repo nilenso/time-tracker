@@ -6,6 +6,5 @@
   (fn [{:keys [credentials] :as request} connection]
     (let [google-id (:sub credentials)
           name      (:name credentials)]
-      (when-not (users-db/registered? connection google-id)
-        (users-db/register-user! connection google-id name))
+      (users-db/register-user! connection google-id name)
       (handler request connection))))
