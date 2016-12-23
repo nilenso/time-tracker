@@ -83,6 +83,15 @@
 
 ;; Commands -----
 
+;; A command receives `channel`, `google-id`, `connection` and `command-data` as
+;; arguments. Here `connection` is a database connection.
+
+;; Every command received from the client should have a :command field, and other
+;; args as necessary.
+
+;; Every message pushed from the server should have a :type field, and other args
+;; as necessary.
+
 (defn stop-timer-command!
   [channel google-id connection {:keys [timer-id stop-time] :as args}]
   (if-let [stopped-timer (timers.db/stop!
@@ -131,6 +140,10 @@
                                        current-time)]
     (broadcast-state-change! google-id updated-timer :update)
     (send-error! channel "Could not update duration")))
+
+(defn receive-ping-command!
+  [channel connection google-id args]
+  (send! channel (json/encode {:type :pong})))
 
 ;; Middleware ----
 
@@ -208,7 +221,8 @@
            "change-timer-duration"  (-> change-timer-duration-command!
                                         (wrap-owns-timer)
                                         (wrap-validator
-                                         :timers.pubsub/change-timer-duration-args))})))
+                                         :timers.pubsub/change-timer-duration-args))
+           "ping"                   receive-ping-command!})))
 
 ;; -------
 

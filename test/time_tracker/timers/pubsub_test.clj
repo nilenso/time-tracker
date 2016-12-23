@@ -234,6 +234,18 @@
       (finally (ws/close socket)))))
 
 
+(deftest ping-command-test
+  (let [[response-chan socket] (make-ws-connection "gid1")]
+    (try
+      (testing "The server should respond to a ping with a pong"
+        (ws/send-msg socket (json/encode
+                             {:command "ping"}))
+        (let [response (try-take!! response-chan)]
+          (is (= "pong" (:type response)))))
+      
+      (finally (ws/close socket)))))
+
+
 (deftest broadcast-test
   (let [gen-projects        (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id          (get gen-projects "foo")
