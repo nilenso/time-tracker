@@ -9,8 +9,7 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.spec :as s]
-            [time-tracker.timers.spec]))
+            [clojure.spec :as s]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
