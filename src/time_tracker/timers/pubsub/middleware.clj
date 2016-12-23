@@ -4,7 +4,8 @@
             [time-tracker.timers.pubsub.io :as io]
             [clojure.spec :as s]
             [time-tracker.db :as db]
-            [time-tracker.timers.db :as timers-db]))
+            [time-tracker.timers.db :as timers-db]
+            [time-tracker.timers.spec]))
 
 (defn wrap-exception
   [func]
