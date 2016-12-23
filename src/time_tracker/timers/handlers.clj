@@ -5,7 +5,8 @@
             [time-tracker.timers.db :as timers-db]
             [time-tracker.logging :as log]
             [cheshire.core :as json]
-            [time-tracker.util :as util]))
+            [time-tracker.util :as util]
+            [time-tracker.timers.pubsub.state :as pubsub-state]))
 
 ;; List endpoint ------------------------------------------------------------
 ;; /timers/
@@ -35,7 +36,7 @@
                                       :user-agent     user-agent
                                       :remote-address remote-address
                                       :status         status})
-                           (pubsub/on-close! channel status)))
+                           (pubsub-state/remove-channel! channel)))
       (http-kit/on-receive channel (fn [data]
                                      (pubsub/dispatch-command! channel
                                                                (json/decode data keyword)))))))
