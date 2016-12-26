@@ -5,7 +5,8 @@
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
             [time-tracker.projects.test-helpers :as projects-helpers]
-            [time-tracker.test-helpers :as helpers]))
+            [time-tracker.test-helpers :as helpers]
+            [time-tracker.util :as util]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
@@ -15,15 +16,19 @@
   (let [gen-projects (projects-helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         url          "http://localhost:8000/api/timers/"
+        current-time (util/current-epoch-seconds)
         timer1       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
-                                        "gid1")
+                                        "gid1"
+                                        current-time)
         timer2       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
-                                        "gid1")
+                                        "gid1"
+                                        current-time)
         timer3       (timers-db/create! (db/connection)
                                         (get gen-projects "goo")
-                                        "gid2")]
+                                        "gid2"
+                                        current-time)]
     (testing "A user should only see the timers they own"
       (let [{:keys [status body]} (helpers/http-request :get url "gid1")]
         (is (= 200 status))

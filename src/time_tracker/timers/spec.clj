@@ -15,6 +15,7 @@
 (s/def ::project-id ::id)
 (s/def ::started-time ::epoch)
 (s/def ::stop-time ::epoch)
+(s/def ::created-time ::epoch)
 (s/def ::current-time ::epoch)
 
 (s/def :timers.pubsub/start-timer-args
@@ -27,7 +28,7 @@
   (s/keys :req-un [::timer-id]))
 
 (s/def :timers.pubsub/create-and-start-timer-args
-  (s/keys :req-un [::project-id ::started-time]))
+  (s/keys :req-un [::project-id ::started-time ::created-time]))
 
 (s/def ::duration :timers.db/duration)
 (s/def :timers.pubsub/change-timer-duration-args

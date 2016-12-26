@@ -36,8 +36,8 @@
     (io/send-error! channel "Could not start timer")))
 
 (defn create-and-start-timer!
-  [channel google-id connection {:keys [project-id started-time] :as args}]
-  (let [created-timer (timers-db/create! connection project-id google-id)]
+  [channel google-id connection {:keys [project-id started-time created-time] :as args}]
+  (let [created-timer (timers-db/create! connection project-id google-id created-time)]
     (io/broadcast-state-change! google-id created-timer :create)
     (start-timer! channel google-id connection
                   {:timer-id     (:id created-timer)
