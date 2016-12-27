@@ -20,7 +20,7 @@
 ;; which can't be JSON serialized.
 (def standard-ring-request-keys
   [:server-port :server-name :remote-addr :uri :query-string :scheme
-   :headers :request-method :body])
+   :headers :request-method :body :params])
 
 ;; Define a custom JSON encoder for the AsyncChannel
 (add-encoder AsyncChannel encode-str)

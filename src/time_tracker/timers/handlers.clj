@@ -14,13 +14,21 @@
 ;; List endpoint ------------------------------------------------------------
 ;; /timers/
 
+(defn- try-parse-long [long-string]
+  (try
+    (Long/parseLong long-string)
+    (catch java.lang.NumberFormatException ex
+      nil)))
+
 (defn- list-owned-timers-on-date
   [connection google-id date]
-  (let [list-of-timers (timers-db/retrieve-authorized-timers
-                        connection
-                        google-id)]
-    (res/response (filter #(timers-core/created-on? % date)
-                          list-of-timers))))
+  (if-let [epoch (try-parse-long date)]
+    (let [list-of-timers (timers-db/retrieve-authorized-timers
+                          connection
+                          google-id)]
+      (res/response (filter #(timers-core/created-on? % epoch)
+                            list-of-timers)))
+    web-util/error-bad-request))
 
 (defn- list-all-owned-timers
   [connection google-id]
@@ -35,7 +43,7 @@
   [request connection]
   (web-util/validate-request request :timers.handlers/list-all-args)
   (let [google-id (get-in request [:credentials :sub])]
-    (if-let [{:keys [date]} (:body request)]
+    (if-let [date (get-in request [:params :date])]
       (list-owned-timers-on-date connection google-id date)
       (list-all-owned-timers connection google-id))))
 

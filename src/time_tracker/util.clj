@@ -19,7 +19,7 @@
 
 (defn to-epoch-seconds
   [time-obj]
-  (/ (clj-time.coerce/to-long time-obj) 1000.0))
+  (clj-time.coerce/to-epoch time-obj))
 
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))

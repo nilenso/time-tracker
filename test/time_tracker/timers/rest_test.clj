@@ -47,11 +47,13 @@
                (set (map #(get % "id") body))))))
 
     (testing "A user should be able to filter timers to a particular day."
-      (let [{:keys [status body]} (helpers/http-request :get url "gid1" {:date current-time})]
+      (let [query-string          (str "?date=" current-time)
+            {:keys [status body]} (helpers/http-request :get (str url query-string) "gid1")]
         (is (= 200 status))
         (is (= (set (map :id [timer1 timer2]))
                (set (map #(get % "id") body))))))
 
     (testing "An invalid request should fail."
-      (let [{:keys [status body]} (helpers/http-request :get url "gid1" {:date "foobar"})]
+      (let [query-string          "?date=foobar"
+            {:keys [status body]} (helpers/http-request :get (str url query-string) "gid1")]
         (is (= 400 status))))))
