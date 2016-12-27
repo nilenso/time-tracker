@@ -5,8 +5,8 @@
 
 (defn http-request
   ([method url google-id] (http-request method url google-id nil))
-  ([method url google-id body] (http-request method url google-id "Agent Smith" body))
-  ([method url google-id name body]
+  ([method url google-id body] (http-request method url google-id body "Agent Smith"))
+  ([method url google-id body name]
    (let [params       (merge {:url url
                               :method method
                               :headers (merge (auth.helpers/fake-login-headers google-id name)
