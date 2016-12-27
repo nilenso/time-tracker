@@ -1,26 +1,9 @@
 (ns time-tracker.util
-  (:require [ring.util.response :as res]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.coerce]
             [environ.core :as environ]
             [clojure.walk :as walk]))
 
-(defn error-response
-  [status msg]
-  (-> (res/response {:error msg})
-      (res/status status)))
-
-(def forbidden-response
-  (error-response 403 "Forbidden"))
-
-(def disallowed-method-response
-  (error-response 405 "Method not allowed"))
-
-(def not-found-response
-  (error-response 404 "Not found"))
-
-(def bad-request-response
-  (error-response 400 "Bad request"))
 
 (defn snake-case->hyphenated-kw
   "In: \"key_string\"

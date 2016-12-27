@@ -3,7 +3,7 @@
             [time-tracker.auth.core :refer [wrap-auth]]
             [time-tracker.db :refer [wrap-transaction]]
             [time-tracker.users.core :refer [wrap-autoregister]]
-            [time-tracker.util :as util]
+            [time-tracker.web.util :as web-util]
             [time-tracker.logging :as log]
             [cheshire.generate :refer [add-encoder encode-str]])
     (:import org.httpkit.server.AsyncChannel))
@@ -44,11 +44,11 @@
         (do
           (log/error {:event   ::nil-response
                       :request request})
-          (util/error-response 500 "Internal Server Error")))
+          web-util/error-internal-server-error))
       (catch Exception ex
         (log/error ex {:event   ::unhandled-exception
                        :request request})
-        (util/error-response 500 "Internal Server Error")))))
+        web-util/error-internal-server-error))))
 
 
 (defn wrap-validate
@@ -60,5 +60,5 @@
         (if (= :validation-failed
                (:event (ex-data ex)))
           (do (log/info (assoc (ex-data ex) :event ::validation-failed))
-              util/bad-request-response)
+              web-util/error-bad-request)
           (throw ex))))))

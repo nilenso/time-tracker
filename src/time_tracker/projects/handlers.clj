@@ -2,7 +2,7 @@
   (:require [ring.util.response :as res]
             [time-tracker.auth.core :refer [wrap-google-authenticated]]
             [time-tracker.projects.db :as projects.db]
-            [time-tracker.util :as util]))
+            [time-tracker.web.util :as web-util]))
 
 ;; Single project endpoint --------------------------------------------------
 ;; /projects/<id>/
@@ -17,8 +17,8 @@
                         connection
                         project-id)]
         (res/response project)
-        util/not-found-response)
-      util/forbidden-response)))
+        web-util/error-not-found)
+      web-util/error-forbidden)))
 
 ;; Calling this handler 'update' would shadow
 ;; clojure.core/update
@@ -34,8 +34,8 @@
                                 project-id
                                 body)]
         (res/response updated-project)
-        util/not-found-response)
-      util/forbidden-response)))
+        web-util/error-not-found)
+      web-util/error-forbidden)))
 
 (defn delete
   [{:keys [route-params credentials]} connection]
@@ -47,8 +47,8 @@
                                (Integer/parseInt (:id route-params)))
         (-> (res/response nil)
             (res/status 204))
-        util/not-found-response)
-      util/forbidden-response)))
+        web-util/error-not-found)
+      web-util/error-forbidden)))
 
 ;; List endpoint -----------------------------------------------------------
 ;; /projects/
@@ -71,7 +71,6 @@
                                 body)]
         (-> (res/response created-project)
             (res/status 201))
-        ;; TODO: Think of a better error response (this project already exists)
-        util/forbidden-response)
-      util/forbidden-response)))
+        web-util/error-bad-request)
+      web-util/error-forbidden)))
 
