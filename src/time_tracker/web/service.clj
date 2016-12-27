@@ -5,6 +5,7 @@
                                           wrap-json-body]]
             [ring.middleware.defaults :refer :all]
             [time-tracker.web.routes :refer [routes]]
+            [time-tracker.web.middleware :refer [wrap-validate]]
             [time-tracker.db :as db]
             [time-tracker.util :as util]
             [cheshire.generate :refer [add-encoder encode-str]])
@@ -49,6 +50,7 @@
 
 (def app
   (-> handler
+      (wrap-validate)
       (wrap-log-request-response)
       (wrap-error-logging)
       (wrap-json-body {:keywords? true})

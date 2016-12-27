@@ -19,6 +19,9 @@
 (def not-found-response
   (error-response 404 "Not found"))
 
+(def bad-request-response
+  (error-response 400 "Bad request"))
+
 (defn snake-case->hyphenated-kw
   "In: \"key_string\"
   Out: :key-string"
