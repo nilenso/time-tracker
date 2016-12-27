@@ -14,21 +14,22 @@
 ;; List endpoint ------------------------------------------------------------
 ;; /timers/
 
-(defn- try-parse-long [long-string]
+(defn- coerce-list-all-args
+  [{:keys [date utc-offset] :as params}]
   (try
-    (Long/parseLong long-string)
-    (catch java.lang.NumberFormatException ex
-      nil)))
+    {:epoch      (Long/parseLong date)
+     :utc-offset (Long/parseLong utc-offset)}
+    (catch Exception ex
+      (throw (ex-info "Validation failed" {:event :validation-failed})))))
 
 (defn- list-owned-timers-on-date
-  [connection google-id date]
-  (if-let [epoch (try-parse-long date)]
-    (let [list-of-timers (timers-db/retrieve-authorized-timers
-                          connection
-                          google-id)]
-      (res/response (filter #(timers-core/created-on? % epoch)
-                            list-of-timers)))
-    web-util/error-bad-request))
+  [connection google-id params]
+  (let [{:keys [epoch utc-offset]} (coerce-list-all-args params)
+        list-of-timers             (timers-db/retrieve-authorized-timers
+                                    connection
+                                    google-id)]
+    (res/response (filter #(timers-core/created-on? % epoch utc-offset)
+                          list-of-timers))))
 
 (defn- list-all-owned-timers
   [connection google-id]
@@ -43,9 +44,9 @@
   [request connection]
   (web-util/validate-request request :timers.handlers/list-all-args)
   (let [google-id (get-in request [:credentials :sub])]
-    (if-let [date (get-in request [:params :date])]
-      (list-owned-timers-on-date connection google-id date)
-      (list-all-owned-timers connection google-id))))
+    (if (empty? (:params request))
+      (list-all-owned-timers connection google-id)
+      (list-owned-timers-on-date connection google-id (:params request)))))
 
 (defn ws-handler
   [request]

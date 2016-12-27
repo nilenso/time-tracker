@@ -59,6 +59,8 @@
       (catch Exception ex
         (if (= :validation-failed
                (:event (ex-data ex)))
-          (do (log/info (assoc (ex-data ex) :event ::validation-failed))
+          (do (log/info (merge (ex-data ex)
+                               {:event   ::validation-failed
+                                :request request}))
               web-util/error-bad-request)
           (throw ex))))))

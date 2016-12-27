@@ -6,8 +6,7 @@
   [request spec]
   (when-not (s/valid? spec (:body request))
     (throw (ex-info "Validation failed" {:event   :validation-failed
-                                         :spec    spec
-                                         :request request}))))
+                                         :spec    spec}))))
 
 (defn error-response
   [status msg]
