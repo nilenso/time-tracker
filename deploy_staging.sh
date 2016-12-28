@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-echo "Hello World!"
+USER=timetracker
+HOST=time.nilenso.com
+ssh $USER@$HOST 'touch test.foo'
