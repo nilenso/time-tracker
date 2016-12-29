@@ -74,7 +74,6 @@
   ([level]
    (set-root-logger-level! "error")
    (set-logger-level! "time-tracker" level)
-   (add-root-logger-appender! (ConsoleAppender. (PatternLayout. "%-5p %c: %m%n")))
    (add-root-logger-appender! (RollingFileAppender. (PatternLayout. "%-5p %c: %m%n")
                                                     (from-config :log-file-prefix)
                                                     true))))
