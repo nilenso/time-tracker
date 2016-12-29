@@ -50,10 +50,10 @@
 (def app
   (-> handler
       (wrap-log-request-response)
+      (wrap-error-logging)
       (wrap-json-body {:keywords? true})
       (wrap-json-response)
-      (wrap-defaults api-defaults)
-      (wrap-error-logging)))
+      (wrap-defaults api-defaults)))
 
 (defn init! []
   (log/configure-logging!)

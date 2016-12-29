@@ -57,3 +57,10 @@ SET duration = :duration,
                         ELSE to_timestamp(:current_time)
                    END
 WHERE timer.id = :timer_id;
+
+-- name: retrieve-started-timers-query
+-- Retrieves all the timers the user has started.
+SELECT timer.* FROM timer
+INNER JOIN app_user ON app_user.id = timer.app_user_id
+WHERE app_user.google_id = :google_id
+AND timer.started_time IS NOT NULL;

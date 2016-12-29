@@ -26,8 +26,9 @@
         created-timer (timers.db/create! (db/connection)
                                          project-id
                                          "gid1")
-        actual-timer  (first (jdbc/find-by-keys (db/connection) "timer"
-                                                {"project_id" project-id}))]
+        actual-timer  (timers.db/transform-timer-map
+                       (first (jdbc/find-by-keys (db/connection) "timer"
+                                                 {"project_id" project-id})))]
     (is (some? created-timer))
     (is (some? actual-timer))
     (is (contains-map? actual-timer created-timer))))
@@ -97,7 +98,7 @@
                              current-time)]
         (is (= (* 7 60)
                (:duration updated-project)))
-        (is (nil? (:started_time updated-project)))))
+        (is (nil? (:started-time updated-project)))))
 
     (testing "Started"
       (let [timer-id        (:id timer3)
@@ -115,8 +116,7 @@
         (is (= (* 9 60)
                (:duration updated-project)))
         (is (=  current-time
-                (-> (:started_time updated-project)
-                    (util/to-epoch-seconds))))))))
+                (:started-time updated-project)))))))
 
 
 (defn- create-timers!
@@ -143,6 +143,20 @@
                           (set))]
     (is (= expected1 actual1))
     (is (= expected2 actual2))))
+
+
+(deftest retrieve-started-timers-test
+  (let [gen-projects   (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
+                                                         "gid2" ["bar" "baz"]})
+        created-timers (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 6)
+        current-time   (util/current-epoch-seconds)]
+    ;; Start the first five timers
+    (doall (map #(timers.db/start! (db/connection) % current-time)
+                (take 5 created-timers)))
+    (let [started-timers (timers.db/retrieve-started-timers (db/connection) "gid1")]
+      (is (= 5 (count started-timers)))
+      (doseq [timer started-timers]
+        (is (not (nil? (:started-time timer))))))))
 
 
 (deftest delete-test
@@ -183,7 +197,7 @@
                           timer-id
                           current-time)]
         (is (= current-time
-               (util/to-epoch-seconds (:started_time start-result))))))
+               (:started-time start-result)))))
     (testing "Started"
       (let [timer-id      (:id timer2)
             first-result  (timers.db/start!

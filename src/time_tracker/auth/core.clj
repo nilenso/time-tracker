@@ -11,12 +11,24 @@
                                               :query-params {"id_token" token}})]
     (assoc response :body (json/parse-string body util/snake-case->hyphenated-kw))))
 
+(defn allowed-hosted-domain?
+  [domain]
+  (let [allowed-domain (from-config :allowed-hosted-domain)]
+    (or (= "*" allowed-domain)
+        (= allowed-domain domain))))
+
+(defn validate-body
+  [client-ids token-body]
+  (and (some #{(:aud token-body)} client-ids)
+       (allowed-hosted-domain? (:hd token-body))))
+
 (defn token->credentials
   "Validates a JWT by calling Google's API and by checking the client ID."
   [client-ids token]
   (let [{:keys [status body]} (call-google-tokeninfo-api token)]
     (if (and (= 200 status)
-             (some #{(:aud body)} client-ids))
+             (some #{(:aud body)} client-ids)
+             (= "nilenso.com" (:hd body)))
       body)))
 
 (defn token-from-headers
@@ -24,7 +36,8 @@
   See: https://jwt.io/introduction/"
   [ring-headers]
   (if-let [header-value (get ring-headers "authorization")]
-    (let [[scheme token] (clojure.string/split header-value #" ")]
+    (let [[scheme & rest] (clojure.string/split header-value #" ")
+          token (clojure.string/join " " rest)]
       (if (= "Bearer" scheme)
         token))))
 

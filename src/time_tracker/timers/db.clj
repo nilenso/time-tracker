@@ -8,6 +8,26 @@
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
+(def timer-keys [:id :project_id :started_time :duration :time_created])
+
+(defn- hyphenize-walk
+  [thing]
+  (if (keyword? thing)
+    (util/hyphenize thing)
+    thing))
+
+(defn- epochize-walk
+  [thing]
+  (if (instance? org.joda.time.DateTime thing)
+    (util/to-epoch-seconds thing)
+    thing))
+
+(defn transform-timer-map
+  [timer-map]
+  (-> timer-map
+      (select-keys timer-keys)
+      (util/transform-map hyphenize-walk epochize-walk)))
+
 (defn has-timing-access?
   [connection google-id project-id]
   (let [authorized-query-result (first (has-timing-access-query {:google_id  google-id
@@ -27,9 +47,10 @@
 (defn create!
   "Creates and returns a timer if authorized."
   [connection project-id google-id]
-  (create-timer-query<! {:google_id  google-id
-                         :project_id project-id}
-                        {:connection connection}))
+  (-> (create-timer-query<! {:google_id  google-id
+                             :project_id project-id}
+                            {:connection connection})
+      (transform-timer-map)))
 
 (defn update-duration!
   "Set the elapsed duration of the timer."
@@ -41,7 +62,7 @@
     (-> (retrieve-timer-query {:timer_id timer-id}
                               {:connection connection})
         (first)
-        (select-keys [:started_time :duration]))))
+        (transform-timer-map))))
 
 (defn delete!
   "Deletes a timer. Returns false if the timer doesn't exist."
@@ -55,11 +76,19 @@
   [connection google-id]
   (->> (retrieve-authorized-timers-query {:google_id google-id}
                                          {:connection connection})
-       (map #(select-keys % [:id :project_id :started_time :duration :time_created]))))
+       (map transform-timer-map)))
+
+(defn retrieve-started-timers
+  "Retrieves all timers which the user is authorized to modify
+  and which are started."
+  [connection google-id]
+  (->> (retrieve-started-timers-query {:google_id google-id}
+                                      {:connection connection})
+       (map transform-timer-map)))
 
 (defn start!
   "Starts a timer if the timer is not already started.
-  Returns {:keys [start_time duration]} or nil."
+  Returns the started timer or nil."
   [connection timer-id current-time]
   (when (statement-success? (start-timer-query! {:timer_id     timer-id
                                                  :current_time current-time}
@@ -67,11 +96,11 @@
     (-> (retrieve-timer-query {:timer_id  timer-id}
                               {:connection connection})
         (first)
-        (select-keys [:started_time :duration]))))
+        (transform-timer-map))))
 
 (defn stop!
   "Stops a timer if the timer is not already stopped.
-  Returns {:keys [duration]} or nil."
+  Returns the stopped timer or nil."
   [connection timer-id current-time]
   (let [{:keys [duration] :as timer} (first (retrieve-timer-query {:timer_id timer-id}
                                                                   {:connection connection}))]
@@ -79,13 +108,12 @@
     (when (:started_time timer)
       (let [started-time (util/to-epoch-seconds (:started_time timer))
             new-duration (+ duration (- current-time started-time))]
-        (assert (>= new-duration duration) "Cannot stop timer before its start time")
-        (when (statement-success? (stop-timer-query! {:timer_id     timer-id
-                                                      :current_time current-time
-                                                      :duration     new-duration}
-                                                     {:connection connection}))
+        (when (and (>= new-duration duration)
+                   (statement-success? (stop-timer-query! {:timer_id     timer-id
+                                                           :current_time current-time
+                                                           :duration     new-duration}
+                                                          {:connection connection})))
           (-> (retrieve-timer-query {:timer_id  timer-id}
                                     {:connection connection})
               (first)
-              (select-keys [:duration])))))))
-
+              (transform-timer-map)))))))

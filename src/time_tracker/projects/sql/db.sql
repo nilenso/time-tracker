@@ -37,6 +37,10 @@ INNER JOIN app_user ON app_user.id = project_permission.app_user_id
 WHERE app_user.google_id = :google_id 
 AND :permission::permission = ANY (project_permission.permissions);
 
+-- name: retrieve-all-projects-query
+-- Retrieves all the projects.
+SELECT project.* from project;
+
 -- name: create-admin-permission-query!
 -- Creates an admin permission for the given user on the given project.
 INSERT INTO project_permission 

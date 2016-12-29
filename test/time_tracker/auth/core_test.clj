@@ -1,14 +1,15 @@
 (ns time-tracker.auth.core-test
   (:require [clojure.test :refer :all]
             [time-tracker.auth.core :as auth]
-            [ring.util.response :as res]))
+            [ring.util.response :as res]
+            [time-tracker.util :refer [map-contains?]]))
 
 (def bad-google-api-call (constantly {:status 400}))
 
 (defn good-google-api-call
   [credentials]
   (constantly {:status 200
-               :body credentials}))
+               :body (assoc credentials :hd "nilenso.com")}))
 
 
 (deftest token->credentials-test
@@ -16,8 +17,8 @@
     (with-redefs [auth/call-google-tokeninfo-api
                   (good-google-api-call {:aud "test"})]
       (testing "Valid client id"
-        (is (= {:aud "test"}
-               (auth/token->credentials ["test"] "token"))))
+        (is (= "test"
+               (:aud (auth/token->credentials ["test"] "token")))))
 
       (testing "Invalid client id"
         (is (nil? (auth/token->credentials ["foo" "goo"] "token"))))))
@@ -46,9 +47,9 @@
                                          :username "sandy"})]
       (let [valid-request {:headers {"content-type" "application/json"
                                      "authorization" "Bearer token"}}]
-        (is (= {:aud "test"
-                :username "sandy"}
-               (auth/auth-credentials ["test" "test2"] valid-request))))))
+        (is (map-contains? (auth/auth-credentials ["test" "test2"] valid-request)
+                           {:aud "test"
+                            :username "sandy"})))))
 
   (testing "Bad request"
     (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call]
