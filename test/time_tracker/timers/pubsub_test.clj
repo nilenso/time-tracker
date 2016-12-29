@@ -9,8 +9,7 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.spec :as s]
-            [time-tracker.timers.spec]))
+            [clojure.spec :as s]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
@@ -231,6 +230,18 @@
         (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
 
+      (finally (ws/close socket)))))
+
+
+(deftest ping-command-test
+  (let [[response-chan socket] (make-ws-connection "gid1")]
+    (try
+      (testing "The server should respond to a ping with a pong"
+        (ws/send-msg socket (json/encode
+                             {:command "ping"}))
+        (let [response (try-take!! response-chan)]
+          (is (= "pong" (:type response)))))
+      
       (finally (ws/close socket)))))
 
 
