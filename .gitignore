@@ -13,3 +13,4 @@ pom.xml.asc
 profiles.clj
 pg.log
 db/
+logs/
