@@ -11,10 +11,11 @@
                                                  wrap-error-logging]]
             [time-tracker.db :as db]))
 
-(def handler (make-handler routes))
+(defn handler []
+  (make-handler (routes)))
 
-(def app
-  (-> handler
+(defn app []
+  (-> (handler)
       (wrap-validate)
       (wrap-log-request-response)
       (wrap-error-logging)
