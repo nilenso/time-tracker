@@ -16,5 +16,11 @@
 (defn registered?
   "Check if a user is in the DB"
   [connection google-id]
-  (select-success? (is-registered-query {:google_id google-id}
-                                        {:connection connection})))
+  (select-success? (retrieve-user-data-query {:google_id google-id}
+                                             {:connection connection})))
+
+(defn retrieve-user-data
+  "Retrieve data of one user."
+  [connection google-id]
+  (first (retrieve-user-data-query {:google_id google-id}
+                                   {:connection connection})))
