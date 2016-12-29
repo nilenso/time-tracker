@@ -45,10 +45,11 @@
     (statement-success? (:count owns-query-result))))
 
 (defn create!
-  "Creates and returns a timer if authorized."
-  [connection project-id google-id]
-  (-> (create-timer-query<! {:google_id  google-id
-                             :project_id project-id}
+  "Creates and returns a timer."
+  [connection project-id google-id created-time]
+  (-> (create-timer-query<! {:google_id    google-id
+                             :project_id   project-id
+                             :created_time created-time}
                             {:connection connection})
       (transform-timer-map)))
 

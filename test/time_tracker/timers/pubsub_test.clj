@@ -3,7 +3,7 @@
             [clojure.core.async :refer [chan alt!! put!] :as async]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
-            [time-tracker.timers.db :as timers.db]
+            [time-tracker.timers.db :as timers-db]
             [time-tracker.projects.test-helpers :as projects.helpers]
             [time-tracker.auth.test-helpers :as auth.test]
             [time-tracker.util :as util]
@@ -49,14 +49,16 @@
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
                                                                  "gid2" ["goo"]})
         project-id             (get gen-projects "foo")
-        timer1                 (timers.db/create! (db/connection) project-id "gid1")
-        timer2                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "goo")
-                                                  "gid2")
-        timer3                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "foo")
-                                                  "gid1")
         current-time           (util/current-epoch-seconds)
+        timer1                 (timers-db/create! (db/connection) project-id "gid1" current-time)
+        timer2                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "goo")
+                                                  "gid2"
+                                                  current-time)
+        timer3                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "foo")
+                                                  "gid1"
+                                                  current-time)
         [response-chan socket] (make-ws-connection "gid1")]
     (try
       (testing "Owned timer"
@@ -94,17 +96,19 @@
 (deftest stop-timer-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
                                                                  "gid2" ["goo"]})
-        timer1                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "foo")
-                                                  "gid1")
-        timer2                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "goo")
-                                                  "gid2")
         current-time           (util/current-epoch-seconds)
+        timer1                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "foo")
+                                                  "gid1"
+                                                  current-time)
+        timer2                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "goo")
+                                                  "gid2"
+                                                  current-time)
         stop-time              (+ current-time 7.0)
         [response-chan socket] (make-ws-connection "gid1")]
-    (timers.db/start! (db/connection) (:id timer1) current-time)
-    (timers.db/start! (db/connection) (:id timer2) current-time)
+    (timers-db/start! (db/connection) (:id timer1) current-time)
+    (timers-db/start! (db/connection) (:id timer2) current-time)
     (try
       (testing "Owned timer"
         (ws/send-msg socket (json/encode
@@ -128,12 +132,15 @@
 (deftest delete-timer-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
                                                                  "gid2" ["goo"]})
-        timer1                 (timers.db/create! (db/connection)
+        current-time           (util/current-epoch-seconds)
+        timer1                 (timers-db/create! (db/connection)
                                                   (get gen-projects "foo")
-                                                  "gid1")
-        timer2                 (timers.db/create! (db/connection)
+                                                  "gid1"
+                                                  current-time)
+        timer2                 (timers-db/create! (db/connection)
                                                   (get gen-projects "goo")
-                                                  "gid2")
+                                                  "gid2"
+                                                  current-time)
         [response-chan socket] (make-ws-connection "gid1")]
     (try
       (testing "Owned timer"
@@ -172,7 +179,8 @@
         (ws/send-msg socket (json/encode
                              {:command      "create-and-start-timer"
                               :project-id   (get gen-projects "foo")
-                              :started-time current-time}))
+                              :started-time current-time
+                              :created-time current-time}))
         (let [create-response (try-take!! response-chan)
               start-response  (try-take!! response-chan)]
           (is (= (get gen-projects "foo")
@@ -180,14 +188,35 @@
           (is (= "create" (:type create-response)))
           (is (nil? (:started-time create-response)))
           (is (= current-time
-                 (:started-time start-response)))))
+                 (:started-time start-response)))
+          (timers-db/delete! (db/connection) (:id create-response))))
+
+      (testing "Can create and start a timer at different times"
+        (let [created-time (- current-time 20)]
+          (ws/send-msg socket (json/encode
+                               {:command      "create-and-start-timer"
+                                :project-id   (get gen-projects "foo")
+                                :started-time current-time
+                                :created-time created-time}))
+          (let [create-response (try-take!! response-chan)
+                start-response  (try-take!! response-chan)]
+            (is (= (get gen-projects "foo")
+                   (:project-id create-response)))
+            (is (= "create" (:type create-response)))
+            (is (nil? (:started-time create-response)))
+            (is (= created-time
+                   (:time-created create-response)))
+            (is (= current-time
+                   (:started-time start-response)))
+            (timers-db/delete! (db/connection) (:id create-response)))))
 
       (println "Part of create-and-start-timer-command-test is currently disabled!")
       #_(testing "Can't track time on project"
         (ws/send-msg socket (json/encode
                              {:command      "create-and-start-timer"
                               :project-id   (get gen-projects "goo")
-                              :started-time current-time}))
+                              :started-time current-time
+                              :created-time current-time}))
         (let [command-response (try-take!! response-chan)]
           (is (:error command-response))))
       
@@ -196,18 +225,20 @@
 (deftest change-timer-duration-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
                                                                  "gid2" ["goo"]})
-        timer1                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "foo")
-                                                  "gid1")
-        timer2                 (timers.db/create! (db/connection)
-                                                  (get gen-projects "goo")
-                                                  "gid2")
         current-time           (util/current-epoch-seconds)
+        timer1                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "foo")
+                                                  "gid1"
+                                                  current-time)
+        timer2                 (timers-db/create! (db/connection)
+                                                  (get gen-projects "goo")
+                                                  "gid2"
+                                                  current-time)
         [response-chan socket] (make-ws-connection "gid1")
         update-time            (+ current-time 17)]
     (try
       (testing "Owned timer"
-        (timers.db/start! (db/connection) (:id timer1) current-time)
+        (timers-db/start! (db/connection) (:id timer1) current-time)
         (ws/send-msg socket (json/encode
                              {:command      "change-timer-duration"
                               :timer-id     (:id timer1)
@@ -221,7 +252,7 @@
           (is (not (:error command-response)))))
 
       (testing "Unowned timer"
-        (timers.db/start! (db/connection) (:id timer2) current-time)
+        (timers-db/start! (db/connection) (:id timer2) current-time)
         (ws/send-msg socket (json/encode
                              {:command      "change-timer-duration"
                               :timer-id     (:id timer2)
@@ -248,8 +279,8 @@
 (deftest broadcast-test
   (let [gen-projects        (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id          (get gen-projects "foo")
-        {timer-id :id}      (timers.db/create! (db/connection) project-id "gid1")
         current-time        (util/current-epoch-seconds)
+        {timer-id :id}      (timers-db/create! (db/connection) project-id "gid1" current-time)
         [response1 socket1] (make-ws-connection "gid1")
         [response2 socket2] (make-ws-connection "gid1")
         [response3 socket3] (make-ws-connection "gid2")]

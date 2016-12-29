@@ -2,7 +2,8 @@
   (:require [ring.util.response :as res]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
-            [time-tracker.util :refer [from-config] :as util]))
+            [time-tracker.util :refer [from-config] :as util]
+            [time-tracker.web.util :as web-util]))
 
 (defn- call-google-tokeninfo-api
   [token]
@@ -54,7 +55,7 @@
   (fn [request]
     (if-let [user-information (auth-credentials client-ids request)]
       (handler (assoc request :credentials user-information))
-      util/forbidden-response)))
+      web-util/error-forbidden)))
 
 (def wrap-auth
   #(wrap-google-authenticated % [(from-config :google-client-id)]))

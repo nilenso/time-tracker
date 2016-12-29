@@ -4,16 +4,16 @@
             [time-tracker.util :refer [from-config]]
             [time-tracker.logging :as log]))
 
-(def ^:private db-spec {:connection-uri (from-config :db-connection-string)})
+(defn db-spec [] {:connection-uri (from-config :db-connection-string)})
 
-(def migration-config
-  {:datastore  (ragtime.jdbc/sql-database db-spec)
+(defn migration-config []
+  {:datastore  (ragtime.jdbc/sql-database (db-spec))
    :migrations (ragtime.jdbc/load-resources "migrations")})
 
 (defn migrate-db []
   (try
     (let [out (with-out-str
-                (ragtime.repl/migrate migration-config))]
+                (ragtime.repl/migrate (migration-config)))]
       (log/info {:event          ::applied-migrations
                  :ragtime-output out}))
     (catch Exception ex
@@ -22,7 +22,7 @@
 (defn rollback-db []
   (try
     (let [out (with-out-str
-                (ragtime.repl/rollback migration-config))]
+                (ragtime.repl/rollback (migration-config)))]
       (log/info {:event          ::rolled-back-migration
                  :ragtime-output out}))
     (catch Exception ex

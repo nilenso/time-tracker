@@ -8,11 +8,12 @@
 
 (def middleware (comp wrap-auth wrap-transaction wrap-autoregister))
 
-(def routes {[:id "/"] (fmap middleware
-                             {:get    handlers/retrieve
-                              :put    handlers/modify
-                              :delete handlers/delete})
-             ""        (fmap middleware
-                             {:get  handlers/list-all
-                              :post handlers/create})})
+(defn routes []
+  {[:id "/"] (fmap middleware
+                   {:get    handlers/retrieve
+                    :put    handlers/modify
+                    :delete handlers/delete})
+   ""        (fmap middleware
+                   {:get  handlers/list-all
+                    :post handlers/create})})
 

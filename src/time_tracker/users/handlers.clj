@@ -1,7 +1,7 @@
 (ns time-tracker.users.handlers
   (:require [ring.util.response :as res]
             [time-tracker.users.db :as users-db]
-            [time-tracker.util :as util]))
+            [time-tracker.web.util :as web-util]))
 
 ;; /users/me/
 
@@ -10,4 +10,4 @@
   (if-let [user-profile (users-db/retrieve-user-data connection
                                                      (:sub credentials))]
     (res/response user-profile)
-    util/not-found-response))
+    web-util/error-not-found))

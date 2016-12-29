@@ -6,8 +6,8 @@
   (:import [org.apache.log4j Level
             Logger
             ConsoleAppender
-            PatternLayout]
-           org.apache.log4j.net.SocketAppender))
+            RollingFileAppender
+            PatternLayout]))
 
 (defmacro trace
   [msg]
@@ -35,7 +35,6 @@
 (defmacro fatal
   ([msg]
    `(log/fatal (json/encode ~msg)))
-
   ([throwable msg]
    `(log/fatal ~throwable (json/encode ~msg))))
 
@@ -75,8 +74,6 @@
   ([level]
    (set-root-logger-level! "error")
    (set-logger-level! "time-tracker" level)
-   (add-root-logger-appender! (ConsoleAppender. (PatternLayout. "%-5p %c: %m%n")))
-   (if-let [logstash-host (environ/env :logstash-host)]
-     (if-let [logstash-port (environ/env :logstash-port)]
-       (add-root-logger-appender! (SocketAppender. logstash-host
-                                                   (Integer/parseInt logstash-port)))))))
+   (add-root-logger-appender! (RollingFileAppender. (PatternLayout. "%-5p %c: %m%n")
+                                                    (from-config :log-file-prefix)
+                                                    true))))

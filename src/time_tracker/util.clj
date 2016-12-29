@@ -1,23 +1,9 @@
 (ns time-tracker.util
-  (:require [ring.util.response :as res]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.coerce]
             [environ.core :as environ]
             [clojure.walk :as walk]))
 
-(defn error-response
-  [status msg]
-  (-> (res/response {:error msg})
-      (res/status status)))
-
-(def forbidden-response
-  (error-response 403 "Forbidden"))
-
-(def disallowed-method-response
-  (error-response 405 "Method not allowed"))
-
-(def not-found-response
-  (error-response 404 "Not found"))
 
 (defn snake-case->hyphenated-kw
   "In: \"key_string\"
@@ -33,7 +19,7 @@
 
 (defn to-epoch-seconds
   [time-obj]
-  (/ (clj-time.coerce/to-long time-obj) 1000.0))
+  (clj-time.coerce/to-epoch time-obj))
 
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))
