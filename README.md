@@ -110,7 +110,7 @@ the backend is fully set up.
 
 Create a user to run the backend.
 ``` bash
-adduser --system timetracker
+adduser timetracker
 ```
 
 Next, create the postgres database.
@@ -123,6 +123,7 @@ sudo -u postgres createdb timetracker -O timetracker
 Clone/download the backend code. Make sure that you are on the branch that you
 want to deploy.
 ``` bash
+su timetracker
 cd
 git clone https://github.com/nilenso/time-tracker.git
 cd time-tracker/
@@ -131,70 +132,68 @@ git pull
 cd
 ```
 
-The backend is configured using environment variables. Building an uberjar
-and running migrations require some of them to be defined. Create a file in your home called
-`env.sh` with the following contents (insert your details as necessary):
+Create a file in `/home/timetracker` called
+`env` with the following contents (insert your details as necessary):
 ``` bash
-export GOOGLE_TOKENINFO_URL="https://www.googleapis.com/oauth2/v3/tokeninfo";
-export CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS="1800";
-export CP_MAX_IDLE_TIME="10800";
-export DB_CONNECTION_STRING="jdbc:postgresql://localhost/timetracker?user=timetracker&password=your_password_if_any";
-export GOOGLE_CLIENT_ID="your_google_client_id";
-export APP_LOG_LEVEL="debug";
-export PORT="8000";
-export ALLOWED_HOSTED_DOMAIN="yourgoogleappsforworkhosteddomain.com";
-```
-
-Export these variables:
-``` bash
-source ./env.sh
+GOOGLE_TOKENINFO_URL="https://www.googleapis.com/oauth2/v3/tokeninfo"
+CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS="1800"
+CP_MAX_IDLE_TIME="10800"
+DB_CONNECTION_STRING="jdbc:postgresql://localhost/timetracker?user=timetracker&password=your_password_if_any"
+GOOGLE_CLIENT_ID="your_google_client_id"
+APP_LOG_LEVEL="debug"
+PORT="8000"
+ALLOWED_HOSTED_DOMAIN="yourgoogleappsforworkhosteddomain.com"
+LOG_FILE_PREFIX="/path/to/log/file.log"
 ```
 
 Install Leiningen to build the project.
-
 ``` bash
+su timetracker
 cd
 wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 chmod a+x ./lein
-export LEIN_ROOT=true
 ./lein
 ```
 
-Run the migrations and build the uberjar. You should see an INFO log telling you which migrations were
+Run the migrations. You should see an INFO log telling you which migrations were
 applied if the environment variables are configured correctly.
 
 ``` bash
+su timetracker
 cd ~/time-tracker
 ../lein deps
 ../lein migrate
-../lein uberjar
-# Substitude this filename with the name of the standalone jar produced.
-cp target/uberjar/<standalone-jar-name.jar> /home/timetracker/time-tracker.jar
-cd /home/timetracker/
-chown timetracker ./time-tracker.jar
 ```
 
-Create a file here called `start-jar.sh` with the following contents. Substitute
-your details as necessary.
+Configuring iptables:
 ``` bash
-export GOOGLE_TOKENINFO_URL="https://www.googleapis.com/oauth2/v3/tokeninfo";
-export CP_MAX_IDLE_TIME_EXCESS_CONNECTIONS="1800";
-export CP_MAX_IDLE_TIME="10800";
-export DB_CONNECTION_STRING="jdbc:postgresql://localhost/timetracker?user=timetracker&password=your_password_if_any";
-export GOOGLE_CLIENT_ID="your_google_client_id";
-export APP_LOG_LEVEL="debug";
-export PORT="8000";
-export ALLOWED_HOSTED_DOMAIN="yourgoogleappsforworkhosteddomain.com";
-java -jar $1;
+iptables -A INPUT -i lo -p tcp -m tcp --dport 8000 -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 8000 -j DROP
+ip6tables -A INPUT -i lo -p tcp -m tcp --dport 8000 -j ACCEPT
+ip6tables -A INPUT -p tcp -m tcp --dport 8000 -j DROP
 ```
 
-Finally, start the uberjar as `timetracker`.
+`systemd` unit file configuration.
+`/etc/systemd/system/timetracker.service`
+```
+[Unit]
+Description=time tracker
+
+[Service]
+Type=simple
+User=timetracker
+ExecStart=/usr/bin/java -jar /home/timetracker/time-tracker.jar
+EnvironmentFile=/home/timetracker/env
+Restart=always
+
+[Install]
+WantedBy=default.target
+```
+
+Finally, run `bin/deploy.sh` as root.
 ``` bash
-chmod 755 ./start-jar.sh
-sudo -u timetracker ./start-jar.sh time-tracker.jar >> logs.txt &
+sudo bin/deploy.sh
 ```
-
-You may `tail -f /home/timetracker/logs.txt` to view the logs.
 
 ## License
 
