@@ -9,10 +9,7 @@
    :app-log-level "debug"
    ;; If this is "*", any hosted domain will be allowed.
    :allowed-hosted-domain "nilenso.com"
-   
-   ;; These two settings are optional, you don't need logstash
-   ;;:logstash-host "0.0.0.0"
-   ;;:logstash-port "15000"
+   :log-file-prefix "logs/time-tracker.log"   
    }}
  
  :test
