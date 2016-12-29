@@ -21,7 +21,7 @@
                      :google-id google-id}
                     data))
   (let [str-data (json/encode data)]
-    (doseq [channel (get @state/active-connections google-id)]
+    (doseq [channel (state/active-connections google-id)]
       (send! channel str-data))))
 
 (defn broadcast-state-change!
