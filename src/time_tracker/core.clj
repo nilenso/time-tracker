@@ -1,13 +1,8 @@
 (ns time-tracker.core
   (:gen-class)
-  (:require [time-tracker.logging :as log]
-            [time-tracker.web.service :as web-service]
-            [time-tracker.util :refer [from-config]])
-  (:use org.httpkit.server))
+  (:require [time-tracker.web.service :as web-service]))
 
 
 (defn -main
   [& args]
-  (web-service/init!)
-  (log/info {:event ::server-start})
-  (run-server (web-service/app) {:port (Integer/parseInt (from-config :port))}))
+  (web-service/start-server!))
