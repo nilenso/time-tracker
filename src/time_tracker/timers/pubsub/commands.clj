@@ -63,5 +63,5 @@
     (io/send-error! channel "Could not update duration")))
 
 (defn receive-ping!
-  [channel connection google-id args]
+  [channel google-id connection args]
   (io/send-data! channel {:type :pong}))

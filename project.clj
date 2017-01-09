@@ -4,8 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
-                 [org.clojure/core.async "0.2.395"]
                  [org.clojure/tools.logging "0.3.1"]
+                 [org.clojure/data.csv "0.1.3"]
                  [log4j "1.2.17"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
                  [http-kit "2.2.0"]
@@ -21,6 +21,9 @@
                  [ring/ring-defaults "0.2.1"]
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
+
+                 [org.clojure/test.check "0.9.0"]
+                 [org.clojure/core.async "0.2.395"]
                  [stylefruits/gniazdo "1.0.0"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
@@ -28,5 +31,6 @@
   :profiles {:uberjar {:aot :all}}
 
   :aliases {"migrate"  ["run" "-m" "time-tracker.migration/lein-migrate-db"]
-            "rollback" ["run" "-m" "time-tracker.migration/lein-rollback-db"]})
+            "rollback" ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
+  :monkeypatch-clojure-test false)
 

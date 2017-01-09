@@ -138,6 +138,18 @@
                  current-time))))))
 
 
+(deftest retrieve-all-test
+  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
+                                                       "gid2" ["bar" "baz"]})
+        expected1    (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 2)
+        expected2    (create-timers! (db/connection) "gid2" gen-projects ["bar" "baz"] 2)
+        expected-ids (into expected1 expected2)
+        actual (->> (timers-db/retrieve-all (db/connection))
+                    (map :id)
+                    (set))]
+    (is (= expected-ids actual))))
+
+
 (deftest retrieve-authorized-timers-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})

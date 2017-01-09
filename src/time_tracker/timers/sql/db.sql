@@ -37,6 +37,10 @@ SET started_time = to_timestamp(:current_time)
 WHERE timer.id = :timer_id
 AND timer.started_time IS NULL;
 
+-- name: retrieve-all-query
+-- Retrieves all timers.
+SELECT timer.* FROM timer;
+
 -- name: retrieve-timer-query
 -- Retrieves a single timer.
 SELECT timer.* FROM timer

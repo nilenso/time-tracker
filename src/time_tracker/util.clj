@@ -46,3 +46,18 @@
   "Is the map `b` completely contained in `a`?"
   [a b]
   (= a (merge a b)))
+
+(defn rebind-var!
+  "Rebinds `v` to `new-value`, and also returns
+  a function to reset the var back to its old value."
+  [v new-value]
+  (let [old-value (deref v)]
+    (alter-var-root v (constantly new-value))
+    (fn []
+      (alter-var-root v (constantly old-value)))))
+
+(defn normalize-entities
+  [entity-list]
+  (into {}
+        (for [entity entity-list]
+          [(:id entity) entity])))

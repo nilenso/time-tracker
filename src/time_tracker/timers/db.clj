@@ -2,6 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
             [time-tracker.util :refer [statement-success?] :as util]
+            [clojure.algo.generic.functor :refer [fmap]]
             [yesql.core :refer [defqueries]]
             ;; For protocol extensions
             [clj-time.jdbc]))
@@ -16,7 +17,7 @@
     (util/hyphenize thing)
     thing))
 
-(defn- epochize-walk
+(defn epochize
   [thing]
   (if (instance? org.joda.time.DateTime thing)
     (util/to-epoch-seconds thing)
@@ -26,7 +27,7 @@
   [timer-map]
   (-> timer-map
       (select-keys timer-keys)
-      (util/transform-map hyphenize-walk epochize-walk)))
+      (util/transform-map hyphenize-walk epochize)))
 
 (defn has-timing-access?
   [connection google-id project-id]
@@ -71,6 +72,13 @@
   (statement-success?
    (delete-timer-query! {:timer_id  timer-id}
                         {:connection connection})))
+
+(defn retrieve-all
+  "Retrieves all timers."
+  [connection]
+  (retrieve-all-query {} {:connection connection
+                          :identifiers util/hyphenize
+                          :row-fn #(fmap epochize %)}))
 
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."
