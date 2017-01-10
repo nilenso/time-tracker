@@ -65,6 +65,15 @@
         (is (= (sort ["bar" "baz"])
                (sort project-names)))))))
 
+(deftest retrieve-all-test
+  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
+                                                       "gid2" ["bar" "baz"]})]
+
+    (testing "All projects should be retrieved"
+      (let [projects      (projects.db/retrieve-all (db/connection))
+            project-names (map :name projects)]
+        (is (= (sort ["foo" "goo" "bar" "baz"])
+               (sort project-names)))))))
 
 (deftest create-test
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]

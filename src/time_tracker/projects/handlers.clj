@@ -57,8 +57,7 @@
 ;; Using retrieve-all-projects instead of retrieve-authorized-projects
 (defn list-all
   [{:keys [credentials]} connection]
-  (res/response (projects.db/retrieve-all-projects
-                 connection)))
+  (res/response (projects.db/retrieve-all connection)))
 
 (defn create
   [{:keys [credentials body]} connection]

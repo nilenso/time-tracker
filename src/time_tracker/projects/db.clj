@@ -61,8 +61,7 @@
                                        :permission "admin"}
                                       {:connection connection}))
 
-;; Temporary
-(defn retrieve-all-projects
+(defn retrieve-all
   "Retrieves a list of ALL the projects. No authorization checks."
   [connection]
   (retrieve-all-projects-query {} {:connection connection}))
