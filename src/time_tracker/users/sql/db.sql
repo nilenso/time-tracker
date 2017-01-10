@@ -8,10 +8,9 @@ LIMIT 1;
 -- Retrieve all the users.
 SELECT * FROM app_user;
 
--- name: register-user-query!
--- Registers a user in the database.
+-- name: create-user-query<!
+-- Inserts a user in the database.
 INSERT INTO app_user
 (google_id, name)
 VALUES (:google_id, :name)
 ON CONFLICT DO NOTHING;
-

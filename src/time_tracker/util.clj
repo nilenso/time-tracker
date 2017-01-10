@@ -61,3 +61,8 @@
   (into {}
         (for [entity entity-list]
           [(:id entity) entity])))
+
+(defn transform-keys
+  [m transform-fn]
+  (into {}
+        (for [[k v] m] [(transform-fn k) v])))

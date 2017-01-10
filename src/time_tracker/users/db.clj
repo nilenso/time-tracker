@@ -5,21 +5,22 @@
 
 (defqueries "time_tracker/users/sql/db.sql")
 
-(defn register-user!
+(defn create!
   "Puts a user's details into the DB. The default role is 'user'.
   Does nothing if the user is already registered."
   [connection google-id name]
-  (register-user-query! {:google_id google-id
-                         :name      name}
-                        {:connection connection}))
+  (when-let [created-user (create-user-query<! {:google_id google-id
+                                                :name      name}
+                                               {:connection  connection})]
+      (util/transform-keys created-user util/hyphenize)))
 
 (defn registered?
   "Check if a user is in the DB"
   [connection google-id]
   (util/select-success? (retrieve-user-data-query {:google_id google-id}
-                                             {:connection connection})))
+                                                  {:connection connection})))
 
-(defn retrieve-user-data
+(defn retrieve
   "Retrieve data of one user."
   [connection google-id]
   (first (retrieve-user-data-query {:google_id google-id}

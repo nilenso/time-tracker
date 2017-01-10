@@ -3,9 +3,9 @@
             [clojure.spec :as s]
             [clojure.spec.gen :as gen]
             [time-tracker.spec]
-            [time-tracker.timers.spec]
-            [time-tracker.users.spec]
-            [time-tracker.projects.spec]
+            [time-tracker.timers.spec :as timers-spec]
+            [time-tracker.users.spec :as users-spec]
+            [time-tracker.projects.spec :as projects-spec]
             [time-tracker.util :as util]))
 
 (s/def ::time-map
@@ -22,7 +22,7 @@
     (fn [] (gen/fmap util/normalize-entities
                      (gen/list (s/gen entity-spec))))))
 
-(s/def ::users (normalized-entities-spec :users.db/user))
+(s/def ::users (normalized-entities-spec ::users-spec/user))
 (s/def ::projects (normalized-entities-spec :projects.db/project))
 (s/def ::timers (normalized-entities-spec :timers.db/timer))
 
@@ -60,7 +60,7 @@
 
 (defn timers-for-user-and-project-gen []
   (gen/bind
-   (s/gen (s/cat :user    :users.db/user
+   (s/gen (s/cat :user    ::users-spec/user
                  :project :projects.db/project))
    (fn [[user project]]
      (gen/tuple

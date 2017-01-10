@@ -3,11 +3,18 @@
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.users.db :as users-db]
-            [time-tracker.users.test-helpers :as users-test-helpers]))
+            [time-tracker.users.test-helpers :as users-test-helpers]
+            [clojure.spec :as s]
+            [time-tracker.users.spec :as users-spec]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
+(deftest create-test
+  (let [created-user (users-db/create! (db/connection) "gid1" "sandy")
+        second-call  (users-db/create! (db/connection) "gid1" "sandy")]
+    (is (s/valid? ::users-spec/user created-user))
+    (is (nil? second-call))))
 
 (deftest retrieve-all-test
   (users-test-helpers/create-users! ["sandy" "gid1" "user"]

@@ -7,5 +7,5 @@
 (s/def ::name string?)
 (s/def ::role string?)
 
-(s/def :users.db/user
+(s/def ::user
   (s/keys :req-un [::id ::google-id ::name ::role]))
