@@ -49,11 +49,15 @@
       [response-chan socket]
       (throw (ex-info "Authentication failed" {})))))
 
+(defn- num-tests-from-config []
+  (Integer/parseInt (util/from-config :num-tests)))
+
 (defn assert-generative-test
-  ([sym] (assert-generative-test sym (Integer/parseInt (util/from-config :num-tests))))
-  ([sym num-tests]
+  ([sym] (assert-generative-test sym {:num-tests (num-tests-from-config)}))
+  ([sym opts]
    (test/is (empty? (->> (stest/check sym
-                                      {:clojure.spec.test.check/opts {:num-tests num-tests}})
+                                      {:clojure.spec.test.check/opts
+                                       (merge {:num-tests (num-tests-from-config)} opts)})
                          (map stest/abbrev-result)
                          (filter :failure)
                          (map :failure))))))

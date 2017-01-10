@@ -9,12 +9,12 @@
 
 (deftest add-hours-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/add-hours)))
+    (assert-generative-test `invoices-core/add-hours {:max-size 30})))
 
 (deftest build-time-map-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/build-time-map)))
+    (assert-generative-test `invoices-core/build-time-map {:max-size 30})))
 
 (deftest time-map->csv-rows-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/time-map->csv-rows)))
+    (assert-generative-test `invoices-core/time-map->csv-rows {:max-size 30})))
