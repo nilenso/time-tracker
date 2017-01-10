@@ -8,7 +8,7 @@
             [time-tracker.util :as util]
             [time-tracker.timers.pubsub.state :as pubsub-state]
             [time-tracker.timers.core :as timers-core]
-            [time-tracker.timers.spec]
+            [time-tracker.timers.handlers.spec :as handlers-spec]
             [time-tracker.web.util :as web-util]))
 
 ;; List endpoint ------------------------------------------------------------
@@ -42,7 +42,7 @@
   When called with {:date `epoch`}, returns all of the timers 
   created on the same day as `epoch`."
   [request connection]
-  (web-util/validate-request request :timers.handlers/list-all-args)
+  (web-util/validate-request request ::handlers-spec/list-all-args)
   (let [google-id (get-in request [:credentials :sub])]
     (if (empty? (:params request))
       (list-all-owned-timers connection google-id)

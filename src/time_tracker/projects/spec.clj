@@ -1,9 +1,9 @@
 (ns time-tracker.projects.spec
   (:require [clojure.spec :as s]
-            [time-tracker.spec]))
+            [time-tracker.spec :as core-spec]))
 
-(s/def ::id :core/id)
+(s/def ::id ::core-spec/id)
 (s/def ::name string?)
 
-(s/def :projects.db/project
+(s/def ::project
   (s/keys :req-un [::id ::name]))

@@ -2,14 +2,14 @@
   (:require [time-tracker.invoices.core :as invoices-core]
             [clojure.spec :as s]
             [clojure.spec.gen :as gen]
-            [time-tracker.spec]
+            [time-tracker.spec :as core-spec]
             [time-tracker.timers.spec :as timers-spec]
             [time-tracker.users.spec :as users-spec]
             [time-tracker.projects.spec :as projects-spec]
             [time-tracker.util :as util]))
 
 (s/def ::time-map
-  (s/map-of :core/id (s/map-of :core/id :core/positive-num)))
+  (s/map-of ::core-spec/id (s/map-of ::core-spec/id ::core-spec/positive-num)))
 
 (defn normalized-pred
   [entity-map]
@@ -17,14 +17,14 @@
 
 (defn normalized-entities-spec
   [entity-spec]
-  (s/with-gen (s/and (s/map-of :core/id entity-spec :min-count 1)
+  (s/with-gen (s/and (s/map-of ::core-spec/id entity-spec :min-count 1)
                      normalized-pred)
     (fn [] (gen/fmap util/normalize-entities
                      (gen/list (s/gen entity-spec))))))
 
 (s/def ::users (normalized-entities-spec ::users-spec/user))
-(s/def ::projects (normalized-entities-spec :projects.db/project))
-(s/def ::timers (normalized-entities-spec :timers.db/timer))
+(s/def ::projects (normalized-entities-spec ::projects-spec/project))
+(s/def ::timers (normalized-entities-spec ::timers-spec/timer))
 
 (defn- empty-time-map-pred
   [{:keys [args ret]}]
@@ -43,31 +43,31 @@
 
 (defn add-hours-args-gen []
   (gen/bind
-   (gen/vector (s/gen :core/positive-int) 3)
+   (gen/vector (s/gen ::core-spec/positive-int) 3)
    (fn [v]
      (gen/tuple
       (gen/fmap #(assoc-in % (take 2 v) (get v 2))
                 (s/gen ::time-map))
       (gen/fmap #(merge % {:app-user-id (first v)
                            :project-id  (second v)})
-                (s/gen :timers.db/timer))))))
+                (s/gen ::timers-spec/timer))))))
 
 (s/fdef invoices-core/add-hours
         :args (s/with-gen (s/cat :time-map ::time-map
-                                 :timer :timers.db/timer)
+                                 :timer ::timers-spec/timer)
                 add-hours-args-gen)
         :ret ::time-map)
 
 (defn timers-for-user-and-project-gen []
   (gen/bind
    (s/gen (s/cat :user    ::users-spec/user
-                 :project :projects.db/project))
+                 :project ::projects-spec/project))
    (fn [[user project]]
      (gen/tuple
       (gen/return user)
       (gen/return project)
       (gen/list (gen/fmap #(merge % {:app-user-id (:id user) :project-id (:id project)})
-                          (s/gen :timers.db/timer)))))))
+                          (s/gen ::timers-spec/timer)))))))
 
 (defn user-project-timer-gen []
   (gen/bind
@@ -106,7 +106,7 @@
         :ret (s/coll-of
               (s/cat :user-name string?
                      :project-name string?
-                     :hours :core/positive-num)))
+                     :hours ::core-spec/positive-num)))
 
 
 (s/fdef invoices-core/generate-csv

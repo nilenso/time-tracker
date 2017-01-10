@@ -10,7 +10,8 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [time-tracker.timers.spec :as timers-spec]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
@@ -88,7 +89,7 @@
                               :timer-id  (:id timer1)
                               :stop-time stop-time}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (s/valid? :timers.db/duration (:duration command-response)))
+          (is (s/valid? ::timers-spec/duration (:duration command-response)))
           (is (= 7
                  (:duration command-response)))))
 
