@@ -10,3 +10,4 @@ machine:
     APP_LOG_LEVEL: error
     ALLOWED_HOSTED_DOMAIN: "*"
     LOG_FILE_PREFIX: "time-tracker.log"
+    NUM_TESTS: 1000

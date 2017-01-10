@@ -3,7 +3,10 @@
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clojure.core.async :refer [chan alt!! put!] :as async]
-            [gniazdo.core :as ws]))
+            [gniazdo.core :as ws]
+            [clojure.test :as test]
+            [clojure.spec.test :as stest]
+            [time-tracker.util :as util]))
 
 (defn http-request-raw
   "Makes a HTTP request. Does not process the body."
@@ -45,3 +48,12 @@
            (:auth-status (try-take!! response-chan)))
       [response-chan socket]
       (throw (ex-info "Authentication failed" {})))))
+
+(defn assert-generative-test
+  ([sym] (assert-generative-test sym (Integer/parseInt (util/from-config :num-tests))))
+  ([sym num-tests]
+   (test/is (empty? (->> (stest/check sym
+                                      {:clojure.spec.test.check/opts {:num-tests num-tests}})
+                         (map stest/abbrev-result)
+                         (filter :failure)
+                         (map :failure))))))

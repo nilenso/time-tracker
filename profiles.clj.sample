@@ -9,11 +9,13 @@
    :app-log-level "debug"
    ;; If this is "*", any hosted domain will be allowed.
    :allowed-hosted-domain "nilenso.com"
-   :log-file-prefix "logs/time-tracker.log"   
+   :log-file-prefix "logs/time-tracker.log"
+   ;; Number of generative tests to run.
+   :num-tests "100"
    }}
  
  :test
  {:env
   {:db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
-   :app-log-level "error"
+   :app-log-level "debug"
    :allowed-hosted-domain "*"}}}
