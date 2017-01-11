@@ -15,6 +15,4 @@
         projects   (util/normalize-entities (projects-db/retrieve-all connection))
         timers     (util/normalize-entities (timers-db/retrieve-all connection))
         csv-string (invoices-core/generate-csv users projects timers)]
-    ;; TODO: add current date in the invoice filename
-    (-> (res/response csv-string)
-        (res/header "Content-Disposition" "attachment; filename=\"invoice.csv\""))))
+    (res/response csv-string)))
