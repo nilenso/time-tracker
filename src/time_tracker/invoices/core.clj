@@ -49,7 +49,8 @@
   (let [time-map (build-time-map users projects timers)]
     (with-out-str
       (csv/write-csv *out*
-                     (time-map->csv-rows
-                      time-map users projects timers)))))
+                     (-> (time-map->csv-rows
+                          time-map users projects timers)
+                         (conj ["Name" "Project" "Hours Logged"]))))))
 
 (require 'time-tracker.invoices.core.spec)

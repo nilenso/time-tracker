@@ -103,10 +103,11 @@
                                  :projects ::projects
                                  :timers ::timers)
                 time-map->csv-rows-args-gen)
-        :ret (s/coll-of
-              (s/cat :user-name string?
-                     :project-name string?
-                     :hours ::core-spec/positive-num)))
+        :ret (s/and (s/coll-of
+                     (s/cat :user-name string?
+                            :project-name string?
+                            :hours ::core-spec/positive-num))
+                    list?))
 
 
 (s/fdef invoices-core/generate-csv
