@@ -32,17 +32,18 @@
           (empty-time-map users projects)
           (vals timers)))
 
-(defn- round-number
-  [number]
-  (.setScale (bigdec number) 4 java.math.BigDecimal/ROUND_HALF_UP))
+(defn- round-to-places
+  "Rounds a floating point number to `places` decimal places."
+  [number places]
+  (.setScale (bigdec number) places java.math.BigDecimal/ROUND_HALF_UP))
 
 (defn time-map->csv-rows
   [time-map users projects timers]
-  (for [[user-id v] time-map
-        [project-id hours] v]
-    [(:name (get users user-id))
-     (:name (get projects project-id))
-     (round-number hours)]))
+  (for [[user-id project->hours] time-map
+        [project-id hours]       project->hours]
+    [(get-in users [user-id :name])
+     (get-in projects [project-id :name])
+     (round-to-places hours 4)]))
 
 (defn generate-csv
   [users projects timers]
@@ -53,4 +54,3 @@
                           time-map users projects timers)
                          (conj ["Name" "Project" "Hours Logged"]))))))
 
-(require 'time-tracker.invoices.core.spec)
