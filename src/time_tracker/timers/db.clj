@@ -11,7 +11,7 @@
 
 (def timer-keys [:id :project_id :started_time :duration :time_created])
 
-(defn- hyphenize-walk
+(defn- hyphenize
   [thing]
   (if (keyword? thing)
     (util/hyphenize thing)
@@ -27,7 +27,7 @@
   [timer-map]
   (-> timer-map
       (select-keys timer-keys)
-      (util/transform-map hyphenize-walk epochize)))
+      (util/transform-map hyphenize epochize)))
 
 (defn has-timing-access?
   [connection google-id project-id]
