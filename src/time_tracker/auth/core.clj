@@ -10,7 +10,7 @@
   (let [{body :body :as response} @(http/get (from-config :google-tokeninfo-url)
                                              {:as :text
                                               :query-params {"id_token" token}})]
-    (assoc response :body (json/parse-string body util/snake-case->hyphenated-kw))))
+    (assoc response :body (json/parse-string body util/hyphenize))))
 
 (defn allowed-hosted-domain?
   [domain]

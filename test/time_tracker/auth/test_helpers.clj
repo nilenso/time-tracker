@@ -5,7 +5,7 @@
 (defn fake-token->credentials
   "Fakes core/token->credentials"
   [_ token]
-  (let [body (json/decode token util/snake-case->hyphenated-kw)]
+  (let [body (json/decode token util/hyphenize)]
     body))
 
 (defn fake-login-headers

@@ -4,13 +4,6 @@
             [environ.core :as environ]
             [clojure.walk :as walk]))
 
-
-(defn snake-case->hyphenated-kw
-  "In: \"key_string\"
-  Out: :key-string"
-  [key-string]
-  (keyword (clojure.string/replace key-string #"_" "-")))
-
 (defn statement-success?
   [result]
   (< 0 result))
