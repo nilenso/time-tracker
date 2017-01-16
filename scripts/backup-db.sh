@@ -11,5 +11,5 @@ latest_tar () {
 }
 
 pg_dump timetracker -Ft > ${DUMP_DIR}/db-dump-$(date +%s).tar
-s3cmd put $(latest_tar) s3://${BUCKET} -c ${S3CONF_FILE}
+/usr/local/bin/s3cmd put $(latest_tar) s3://${BUCKET} -c ${S3CONF_FILE}
 rm ${DUMP_DIR}/*.tar
