@@ -57,10 +57,10 @@
       (alter-var-root v (constantly old-value)))))
 
 (defn normalize-entities
-  [entity-list]
-  (into {}
-        (for [entity entity-list]
-          [(:id entity) entity])))
+  ([coll] (normalize-entities coll :id))
+  ([coll key-fn]
+   (zipmap (map key-fn coll)
+           coll)))
 
 (defn transform-keys
   [m transform-fn]
