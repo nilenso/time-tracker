@@ -9,7 +9,7 @@
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
-(def timer-keys [:id :project_id :started_time :duration :time_created])
+(def timer-keys [:id :project_id :started_time :duration :time_created :notes])
 
 (defn- hyphenize
   [thing]
@@ -47,20 +47,22 @@
 
 (defn create!
   "Creates and returns a timer."
-  [connection project-id google-id created-time]
+  [connection project-id google-id created-time notes]
   (-> (create-timer-query<! {:google_id    google-id
                              :project_id   project-id
-                             :created_time created-time}
+                             :created_time created-time
+                             :notes        notes}
                             {:connection connection})
       (transform-timer-map)))
 
-(defn update-duration!
+(defn update!
   "Set the elapsed duration of the timer."
-  [connection timer-id duration current-time]
-  (when (statement-success? (update-timer-duration-query! {:duration     duration
-                                                           :timer_id     timer-id
-                                                           :current_time current-time}
-                                                          {:connection connection}))
+  [connection timer-id duration current-time notes]
+  (when (statement-success? (update-timer-query! {:duration     duration
+                                                  :timer_id     timer-id
+                                                  :current_time current-time
+                                                  :notes        notes}
+                                                 {:connection connection}))
     (-> (retrieve-timer-query {:timer_id timer-id}
                               {:connection connection})
         (first)

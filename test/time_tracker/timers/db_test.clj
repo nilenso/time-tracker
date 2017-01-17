@@ -27,7 +27,8 @@
         created-timer (timers-db/create! (db/connection)
                                          project-id
                                          "gid1"
-                                         current-time)
+                                         current-time
+                                         "thunne")
         actual-timer  (timers-db/transform-timer-map
                        (first (jdbc/find-by-keys (db/connection) "timer"
                                                  {"project_id" project-id})))]
@@ -62,11 +63,13 @@
         timer1 (timers-db/create! (db/connection)
                                   (get gen-projects "foo")
                                   "gid1"
-                                  (util/current-epoch-seconds))
+                                  (util/current-epoch-seconds)
+                                  "")
         timer2 (timers-db/create! (db/connection)
                                   (get gen-projects "goo")
                                   "gid2"
-                                  (util/current-epoch-seconds))]
+                                  (util/current-epoch-seconds)
+                                  "")]
     (testing "If you create a timer you own it"
       (is (timers-db/owns? (db/connection)
                            "gid1"
@@ -83,28 +86,33 @@
                                 "gid2"
                                 (:id timer1)))))))
 
-(deftest update-duration-test
+(deftest update-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
                                                        "gid2" ["goo"]})
         timer1       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        (util/current-epoch-seconds))
+                                        (util/current-epoch-seconds)
+                                        "")
         timer3       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        (util/current-epoch-seconds))]
+                                        (util/current-epoch-seconds)
+                                        "baz")]
     (testing "Not started"
       (let [timer-id        (:id timer1)
             current-time    (util/current-epoch-seconds)
-            updated-project (timers-db/update-duration!
+            updated-project (timers-db/update!
                              (db/connection)
                              timer-id
                              (* 7 60)
-                             current-time)]
+                             current-time
+                             "astro zombies")]
         (is (= (* 7 60)
                (:duration updated-project)))
-        (is (nil? (:started-time updated-project)))))
+        (is (nil? (:started-time updated-project)))
+        (is (= "astro zombies"
+               (:notes updated-project)))))
 
     (testing "Started"
       (let [timer-id        (:id timer3)
@@ -113,16 +121,19 @@
                              timer-id
                              (util/current-epoch-seconds))
             current-time    (util/current-epoch-seconds)
-            updated-project (timers-db/update-duration!
+            updated-project (timers-db/update!
                              (db/connection)
                              timer-id
                              (* 9 60)
-                             current-time)]
+                             current-time
+                             "hermaeus mora")]
         (is (some? start-result))
         (is (= (* 9 60)
                (:duration updated-project)))
         (is (=  current-time
-                (:started-time updated-project)))))))
+                (:started-time updated-project)))
+        (is (= "hermaeus mora"
+               (:notes updated-project)))))))
 
 
 (defn- create-timers!
@@ -135,7 +146,8 @@
                  connection
                  project-id
                  google-id
-                 current-time))))))
+                 current-time
+                 ""))))))
 
 
 (deftest retrieve-all-test
@@ -186,11 +198,13 @@
         timer1       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        current-time)
+                                        current-time
+                                        "")
         timer2       (timers-db/create! (db/connection)
                                         (get gen-projects "goo")
                                         "gid2"
-                                        current-time)]
+                                        current-time
+                                        "")]
 
     (testing "Owned timer"
       (let [timer-id     (:id timer1)
@@ -206,15 +220,18 @@
         timer1       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        (util/current-epoch-seconds))
+                                        (util/current-epoch-seconds)
+                                        "")
         timer2       (timers-db/create! (db/connection)
                                         (get gen-projects "goo")
                                         "gid2"
-                                        (util/current-epoch-seconds))
+                                        (util/current-epoch-seconds)
+                                        "")
         timer3       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        (util/current-epoch-seconds))]
+                                        (util/current-epoch-seconds)
+                                        "")]
     (testing "Not started"
       (let [timer-id     (:id timer1)
             current-time (util/current-epoch-seconds)
@@ -245,11 +262,13 @@
         timer1       (timers-db/create! (db/connection)
                                         (get gen-projects "foo")
                                         "gid1"
-                                        current-time)
+                                        current-time
+                                        "")
         timer2       (timers-db/create! (db/connection)
                                         (get gen-projects "goo")
                                         "gid2"
-                                        current-time)]
+                                        current-time
+                                        "")]
     (testing "Started"
       (let [timer-id           (:id timer1)
             current-time       (util/current-epoch-seconds)

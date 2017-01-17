@@ -7,6 +7,7 @@
 (s/def ::created-time ::timers-spec/time-created)
 (s/def ::current-time ::timers-spec/epoch)
 (s/def ::stop-time ::timers-spec/epoch)
+(s/def ::notes ::timers-spec/notes)
 
 (s/def ::start-timer-args
   (s/keys :req-un [::timer-id ::started-time]))
@@ -18,9 +19,9 @@
   (s/keys :req-un [::timer-id]))
 
 (s/def ::create-and-start-timer-args
-  (s/keys :req-un [::timers-spec/project-id ::started-time ::created-time]))
+  (s/keys :req-un [::timers-spec/project-id ::started-time ::created-time ::notes]))
 
-(s/def ::change-timer-duration-args
-  (s/keys :req-un [::timer-id ::duration ::current-time]))
+(s/def ::update-timer-args
+  (s/keys :req-un [::timer-id ::duration ::current-time ::notes]))
 
 

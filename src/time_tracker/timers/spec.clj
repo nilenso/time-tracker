@@ -13,6 +13,7 @@
 (s/def ::started-time (s/nilable ::started-time))
 (s/def ::duration ::epoch)
 (s/def ::time-created ::epoch)
+(s/def ::notes string?)
 
 (s/def ::timer
-  (s/keys :req-un [::id ::project-id ::app-user-id ::started-time ::duration ::time-created]))
+  (s/keys :req-un [::id ::project-id ::app-user-id ::started-time ::duration ::time-created ::notes]))

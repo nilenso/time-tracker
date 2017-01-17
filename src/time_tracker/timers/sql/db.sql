@@ -16,8 +16,8 @@ AND app_user.google_id = :google_id;
 
 -- name: create-timer-query<!
 -- Creates a timer given a google id and a project id.
-INSERT INTO timer (project_id, app_user_id, time_created)
-VALUES (:project_id, (SELECT id FROM app_user WHERE google_id = :google_id), to_timestamp(:created_time));
+INSERT INTO timer (project_id, app_user_id, time_created, notes)
+VALUES (:project_id, (SELECT id FROM app_user WHERE google_id = :google_id), to_timestamp(:created_time), :notes);
 
 -- name: delete-timer-query!
 -- Deletes a timer..
@@ -53,10 +53,11 @@ SET duration = :duration, started_time = NULL
 WHERE timer.started_time IS NOT NULL
 AND timer.id = :timer_id;
 
--- name: update-timer-duration-query!
--- Sets the timer's duration to the given value and restarts it if already started.
+-- name: update-timer-query!
+-- Updates the timer. Sets the timer's duration to the given value and restarts it if already started.
 UPDATE timer
-SET duration = :duration,
+SET notes = :notes,
+    duration = :duration,
     started_time = CASE WHEN started_time IS NULL THEN NULL
                         ELSE to_timestamp(:current_time)
                    END

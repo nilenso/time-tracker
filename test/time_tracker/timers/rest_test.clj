@@ -22,25 +22,30 @@
         timer1         (timers-db/create! (db/connection)
                                           (get gen-projects "foo")
                                           "gid1"
-                                          current-time)
+                                          current-time
+                                          "")
         timer2         (timers-db/create! (db/connection)
                                           (get gen-projects "foo")
                                           "gid1"
-                                          current-time)
+                                          current-time
+                                          "")
         timer3         (timers-db/create! (db/connection)
                                           (get gen-projects "goo")
                                           "gid2"
-                                          current-time)
+                                          current-time
+                                          "")
         ;; Create a timer yesterday.
         timer4         (timers-db/create! (db/connection)
                                           (get gen-projects "foo")
                                           "gid1"
-                                          (- current-time seconds-in-day))
+                                          (- current-time seconds-in-day)
+                                          "")
         ;; Create a timer in the future.
         timer5         (timers-db/create! (db/connection)
                                           (get gen-projects "foo")
                                           "gid1"
-                                          (+ current-time seconds-in-day))]
+                                          (+ current-time seconds-in-day)
+                                          "")]
     (testing "A user should only see the timers they own"
       (let [{:keys [status body]} (helpers/http-request :get url "gid1")]
         (is (= 200 status))

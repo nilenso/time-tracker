@@ -29,7 +29,8 @@
                            {:command "create-and-start-timer"
                             :project-id project-id
                             :started-time current-time
-                            :created-time current-time}))
+                            :created-time current-time
+                            :notes "baz"}))
       (let [create-response (test-helpers/try-take!! ws-chan)
             start-response (test-helpers/try-take!! ws-chan)
             timer-id (:id create-response)]
@@ -38,10 +39,11 @@
                               :timer-id timer-id
                               :stop-time current-time}))
         (ws/send-msg socket (json/encode
-                             {:command "change-timer-duration"
+                             {:command "update-timer"
                               :timer-id timer-id
                               :current-time current-time
-                              :duration 3600}))
+                              :duration 3600
+                              :notes "baz"}))
         (let [{:keys [status body]} (test-helpers/http-request-raw :get invoice-url "gid1")]
           (is (= 200 status))
           (is (string/includes? body "foo"))
