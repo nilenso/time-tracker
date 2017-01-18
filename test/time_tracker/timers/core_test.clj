@@ -1,7 +1,8 @@
 (ns time-tracker.timers.core-test
   (:require [clojure.test :refer :all]
             [time-tracker.util :as util]
-            [time-tracker.timers.core :as timers-core]))
+            [time-tracker.timers.core :as timers-core]
+            [time-tracker.test-helpers :refer [assert-generative-test]]))
 
 (deftest same-day-test
   (let [utc-offset (+ 30 (* 5 60))]
@@ -17,3 +18,7 @@
             tomorrow       (+ current-time seconds-in-day)]
         (is (not (timers-core/same-day? tomorrow current-time utc-offset)))
         (is (not (timers-core/same-day? current-time tomorrow utc-offset)))))))
+
+(deftest clamp-test
+  (testing "Generative test"
+    (assert-generative-test `timers-core/clamp)))

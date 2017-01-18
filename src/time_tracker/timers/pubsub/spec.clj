@@ -22,6 +22,6 @@
   (s/keys :req-un [::timers-spec/project-id ::started-time ::created-time ::notes]))
 
 (s/def ::update-timer-args
-  (s/keys :req-un [::timer-id ::duration ::current-time ::notes]))
+  (s/keys :req-un [::timer-id ::timers-spec/duration ::current-time ::notes]))
 
 
