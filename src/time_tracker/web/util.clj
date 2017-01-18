@@ -1,12 +1,11 @@
 (ns time-tracker.web.util
   (:require [clojure.spec :as s]
-            [ring.util.response :as res]))
+            [ring.util.response :as res]
+            [time-tracker.util :as util]))
 
-(defn validate-request
+(defn validate-request-body
   [request spec]
-  (when-not (s/valid? spec (:body request))
-    (throw (ex-info "Validation failed" {:event   :validation-failed
-                                         :spec    spec}))))
+  (util/validate-spec (:body request) spec))
 
 (defn error-response
   [status msg]

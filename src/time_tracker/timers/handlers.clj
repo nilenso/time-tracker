@@ -42,7 +42,7 @@
   When called with {:date `epoch`}, returns all of the timers 
   created on the same day as `epoch`."
   [request connection]
-  (web-util/validate-request request ::handlers-spec/list-all-args)
+  (web-util/validate-request-body request ::handlers-spec/list-all-args)
   (let [google-id (get-in request [:credentials :sub])]
     (if (empty? (:params request))
       (list-all-owned-timers connection google-id)

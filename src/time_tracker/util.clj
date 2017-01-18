@@ -2,7 +2,8 @@
   (:require [clj-time.core :as time]
             [clj-time.coerce]
             [environ.core :as environ]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [clojure.spec :as s]))
 
 
 (defn snake-case->hyphenated-kw
@@ -66,3 +67,10 @@
   [m transform-fn]
   (into {}
         (for [[k v] m] [(transform-fn k) v])))
+
+(defn validate-spec
+  [value spec]
+  (when-not (s/valid? spec value)
+    (throw (ex-info "Validation failed" {:event :validation-failed
+                                         :spec  spec
+                                         :value value}))))
