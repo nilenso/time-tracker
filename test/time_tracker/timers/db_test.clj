@@ -162,6 +162,50 @@
     (is (= expected-ids actual))))
 
 
+(deftest retrieve-between-test
+  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]})
+        current-time (util/current-epoch-seconds)
+        recent-time  (- current-time 10)
+        older-time   (- current-time 2400)
+        recent-timer (timers-db/create! (db/connection)
+                                        (get gen-projects "foo")
+                                        "gid1"
+                                        recent-time
+                                        "")
+        older-timer  (timers-db/create! (db/connection)
+                                        (get gen-projects "goo")
+                                        "gid1"
+                                        older-time
+                                        "")]
+    (testing "start-epoch is inclusive and end-epoch is exclusive"
+      (let [result-timers (timers-db/retrieve-between (db/connection) older-time recent-time)]
+        (is (= #{(:id older-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set))))))
+
+    (testing "timers should be between the epochs"
+      (let [result-timers (timers-db/retrieve-between (db/connection)
+                                                      older-time
+                                                      (+ recent-time 1))]
+        (is (= #{(:id older-timer)
+                 (:id recent-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set)))))
+      (let [result-timers (timers-db/retrieve-between (db/connection)
+                                                      recent-time
+                                                      (+ recent-time 1))]
+        (is (= #{(:id recent-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set)))))
+      (let [result-timers (timers-db/retrieve-between (db/connection)
+                                                      recent-time
+                                                      recent-time)]
+        (is (empty? result-timers))))))
+
+
 (deftest retrieve-authorized-timers-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})

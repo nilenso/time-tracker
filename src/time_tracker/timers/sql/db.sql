@@ -41,6 +41,12 @@ AND timer.started_time IS NULL;
 -- Retrieves all timers.
 SELECT timer.* FROM timer;
 
+-- name: retrieve-between-query
+-- Retrieves all timers created in [start_epoch, end_epoch)
+SELECT timer.* FROM timer
+WHERE time_created >= to_timestamp(:start_epoch)
+AND time_created < to_timestamp(:end_epoch);
+
 -- name: retrieve-timer-query
 -- Retrieves a single timer.
 SELECT timer.* FROM timer

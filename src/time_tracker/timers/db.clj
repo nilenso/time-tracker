@@ -82,6 +82,16 @@
                           :identifiers util/hyphenize
                           :row-fn #(fmap epochize %)}))
 
+(defn retrieve-between
+  "Retrieves all timers created between `start-epoch` and `end-epoch`.
+  `start-epoch` is inclusive and `end-epoch` is exclusive."
+  [connection start-epoch end-epoch]
+  (retrieve-between-query {:start_epoch start-epoch
+                           :end_epoch   end-epoch}
+                          {:connection connection
+                           :identifiers util/hyphenize
+                           :row-fn #(fmap epochize %)}))
+
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."
   [connection google-id]
