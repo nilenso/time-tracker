@@ -20,7 +20,8 @@
     {:epoch      (Long/parseLong date)
      :utc-offset (Long/parseLong utc-offset)}
     (catch Exception ex
-      (throw (ex-info "Validation failed" {:event :validation-failed})))))
+      (throw (ex-info "Validation failed" {:event :validation-failed
+                                           :params params})))))
 
 (defn- list-owned-timers-on-date
   [connection google-id params]

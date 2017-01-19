@@ -16,14 +16,14 @@
 
 
 (deftest download-invoice-test
-  (let [project-url "http://localhost:8000/api/projects/"
-        invoice-url "http://localhost:8000/download/invoice/"
-        _ (users-helpers/create-users! ["sandy" "gid1" "admin"])
+  (let [project-url           "http://localhost:8000/api/projects/"
+        invoice-url           "http://localhost:8000/download/invoice/"
+        _                     (users-helpers/create-users! ["sandy" "gid1" "admin"])
         {:keys [status body]} (test-helpers/http-request :post project-url "gid1"
                                                          {:name "foo"})
-        project-id (get body "id")
-        current-time (util/current-epoch-seconds)
-        [ws-chan socket] (test-helpers/make-ws-connection "gid1")]
+        project-id            (get body "id")
+        current-time          (util/current-epoch-seconds)
+        [ws-chan socket]      (test-helpers/make-ws-connection "gid1")]
     (try
       (ws/send-msg socket (json/encode
                            {:command "create-and-start-timer"
@@ -44,9 +44,22 @@
                               :current-time current-time
                               :duration 3600
                               :notes "baz"}))
-        (let [{:keys [status body]} (test-helpers/http-request-raw :get invoice-url "gid1")]
-          (is (= 200 status))
-          (is (string/includes? body "foo"))
-          (is (string/includes? body "sandy"))))
+        (testing "valid args"
+          (let [query-string          (str "?start=" (- current-time 10)
+                                           "&end="   (+ current-time 10))
+                {:keys [status body]} (test-helpers/http-request-raw :get
+                                                                     (str invoice-url query-string)
+                                                                     "gid1")]
+            (is (= 200 status))
+            (is (string/includes? body "foo"))
+            (is (string/includes? body "sandy"))))
+
+        (testing "invalid args"
+          (let [query-string          (str "?start=" "foo"
+                                           "&end="   (+ current-time 10))
+                {:keys [status body]} (test-helpers/http-request-raw :get
+                                                                     (str invoice-url query-string)
+                                                                     "gid1")]
+            (is (= 400 status)))))
 
       (finally (ws/close socket)))))
