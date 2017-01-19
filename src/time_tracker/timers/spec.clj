@@ -3,16 +3,14 @@
             [time-tracker.spec :as core-spec]
             [time-tracker.util :as util]))
 
-(s/def ::epoch ::core-spec/positive-int)
-
 (s/def ::id ::core-spec/id)
 (s/def ::project-id ::core-spec/id)
 (s/def ::app-user-id ::id)
-(s/def ::started-time-not-nilable (s/and ::epoch
+(s/def ::started-time-not-nilable (s/and ::core-spec/epoch
                                          #(<= % (util/current-epoch-seconds))))
 (s/def ::started-time (s/nilable ::started-time))
-(s/def ::duration ::epoch)
-(s/def ::time-created ::epoch)
+(s/def ::duration ::core-spec/epoch)
+(s/def ::time-created ::core-spec/epoch)
 (s/def ::notes string?)
 
 (s/def ::timer
