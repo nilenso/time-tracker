@@ -38,29 +38,31 @@
 (defn wrap-error-logging
   [handler]
   (fn [request]
-    (try
-      (if-let [response (handler request)]
-        response
-        (do
-          (log/error {:event   ::nil-response
-                      :request request})
-          web-util/error-internal-server-error))
-      (catch Exception ex
-        (log/error ex {:event   ::unhandled-exception
-                       :request request})
-        web-util/error-internal-server-error))))
+    (let [loggable-request (select-keys request standard-ring-request-keys)]
+      (try
+        (if-let [response (handler request)]
+          response
+          (do
+            (log/error {:event   ::nil-response
+                        :request loggable-request})
+            web-util/error-internal-server-error))
+        (catch Exception ex
+          (log/error ex {:event   ::unhandled-exception
+                         :request loggable-request})
+          web-util/error-internal-server-error)))))
 
 
 (defn wrap-validate
   [handler]
   (fn [request]
-    (try
-      (handler request)
-      (catch Exception ex
-        (if (= :validation-failed
-               (:event (ex-data ex)))
-          (do (log/info (merge (ex-data ex)
-                               {:event   ::validation-failed
-                                :request request}))
-              web-util/error-bad-request)
-          (throw ex))))))
+    (let [loggable-request (select-keys request standard-ring-request-keys)]
+      (try
+        (handler request)
+        (catch Exception ex
+          (if (= :validation-failed
+                 (:event (ex-data ex)))
+            (do (log/info (merge (ex-data ex)
+                                 {:event   ::validation-failed
+                                  :request loggable-request}))
+                web-util/error-bad-request)
+            (throw ex)))))))
