@@ -206,6 +206,72 @@
         (is (empty? result-timers))))))
 
 
+(deftest retrieve-between-authorized-test
+  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
+                                                       "gid2" ["bar" "baz"]})
+        current-time        (util/current-epoch-seconds)
+        recent-time          (- current-time 10)
+        older-time           (- current-time 2400)
+        recent-timer         (timers-db/create! (db/connection)
+                                                (get gen-projects "foo")
+                                                "gid1"
+                                                recent-time
+                                                "")
+        older-timer          (timers-db/create! (db/connection)
+                                                (get gen-projects "goo")
+                                                "gid1"
+                                                older-time
+                                                "")
+        somebody-elses-timer (timers-db/create! (db/connection)
+                                                (get gen-projects "bar")
+                                                "gid2"
+                                                older-time
+                                                "")]
+    (testing "start-epoch is inclusive and end-epoch is exclusive"
+      (let [result-timers (timers-db/retrieve-between-authorized (db/connection)
+                                                                 "gid1"
+                                                                 older-time
+                                                                 recent-time)]
+        (is (= #{(:id older-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set))))))
+
+    (testing "timers should be between the epochs"
+      (let [result-timers (timers-db/retrieve-between-authorized (db/connection)
+                                                                 "gid1"
+                                                                 older-time
+                                                                 (+ recent-time 1))]
+        (is (= #{(:id older-timer)
+                 (:id recent-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set)))))
+      (let [result-timers (timers-db/retrieve-between-authorized (db/connection)
+                                                                 "gid1"
+                                                                 recent-time
+                                                                 (+ recent-time 1))]
+        (is (= #{(:id recent-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set)))))
+      (let [result-timers (timers-db/retrieve-between-authorized (db/connection)
+                                                                 "gid1"
+                                                                 recent-time
+                                                                 recent-time)]
+        (is (empty? result-timers))))
+
+    (testing "retrieving the other person's timers"
+      (let [result-timers (timers-db/retrieve-between-authorized (db/connection)
+                                                                 "gid2"
+                                                                 older-time
+                                                                 recent-time)]
+        (is (= #{(:id somebody-elses-timer)}
+               (->> result-timers
+                    (map :id)
+                    (set))))))))
+
+
 (deftest retrieve-authorized-timers-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
                                                        "gid2" ["bar" "baz"]})

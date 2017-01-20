@@ -47,6 +47,14 @@ SELECT timer.* FROM timer
 WHERE time_created >= to_timestamp(:start_epoch)
 AND time_created < to_timestamp(:end_epoch);
 
+-- name: retrieve-between-authorized-query
+-- Retrieves all timers created in [start_epoch, end_epoch) owned by google_id
+SELECT timer.* FROM timer
+INNER JOIN app_user ON app_user.id=timer.app_user_id
+WHERE app_user.google_id = :google_id
+AND timer.time_created >= to_timestamp(:start_epoch)
+AND timer.time_created < to_timestamp(:end_epoch);
+
 -- name: retrieve-timer-query
 -- Retrieves a single timer.
 SELECT timer.* FROM timer

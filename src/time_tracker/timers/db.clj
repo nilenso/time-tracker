@@ -78,9 +78,9 @@
 (defn retrieve-all
   "Retrieves all timers."
   [connection]
-  (retrieve-all-query {} {:connection connection
+  (retrieve-all-query {} {:connection  connection
                           :identifiers util/hyphenize
-                          :row-fn #(fmap epochize %)}))
+                          :row-fn      #(fmap epochize %)}))
 
 (defn retrieve-between
   "Retrieves all timers created between `start-epoch` and `end-epoch`.
@@ -88,9 +88,21 @@
   [connection start-epoch end-epoch]
   (retrieve-between-query {:start_epoch start-epoch
                            :end_epoch   end-epoch}
-                          {:connection connection
+                          {:connection  connection
                            :identifiers util/hyphenize
-                           :row-fn #(fmap epochize %)}))
+                           :row-fn      #(fmap epochize %)}))
+
+(defn retrieve-between-authorized
+  "Retrieves all timers created between `start-epoch` and `end-epoch`
+  and owned by `google-id`.
+  `start-epoch` is inclusive and `end-epoch` is exclusive."
+  [connection google-id start-epoch end-epoch]
+  (retrieve-between-authorized-query {:start_epoch start-epoch
+                                      :end_epoch   end-epoch
+                                      :google_id   google-id}
+                                     {:connection  connection
+                                      :identifiers util/hyphenize
+                                      :row-fn      #(fmap epochize %)}))
 
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."
