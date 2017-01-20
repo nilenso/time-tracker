@@ -4,7 +4,6 @@
             [time-tracker.projects.db :as projects-db]
             [time-tracker.timers.db :as timers-db]
             [time-tracker.invoices.core :as invoices-core]
-            [clojure.algo.generic.functor :refer [fmap]]
             [time-tracker.util :as util]
             [time-tracker.web.util :as web-util]))
 
