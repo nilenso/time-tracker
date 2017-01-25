@@ -29,10 +29,11 @@
 (def error-internal-server-error
   (error-response 500 "Internal Server Error"))
 
-(defn- coerce-epoch-range-params
+(defn coerce-epoch-range-params
   [params]
   (try
-    (fmap #(Long/parseLong %) params)
+    (merge params
+           (fmap #(Long/parseLong %) (select-keys params [:start :end])))
     (catch Exception ex
       (throw (ex-info "Validation failed" {:event :validation-failed
                                            :params params})))))
