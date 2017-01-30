@@ -7,7 +7,7 @@
             [time-tracker.util :as util]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
-            [clojure.string :as string]))
+            [time-tracker.projects.core :as projects-core]))
 
 ;; Download invoice endpoint
 ;; /download/invoice/?start=<some-epoch>&end=<some-other-epoch>
@@ -18,15 +18,10 @@
     (util/validate-spec coerced-params ::handlers-spec/generate-invoice-params)
     coerced-params))
 
-(defn- client-is?
-  [project client]
-  (= client (-> (string/split (:name project) #"\|" 2)
-                (first))))
-
 (defn- get-client-projects
   [connection client]
   (->> (projects-db/retrieve-all connection)
-       (filter #(client-is? % client))
+       (filter #(= client (projects-core/client %)))
        (util/normalize-entities)))
 
 (defn- get-timers-to-invoice
