@@ -93,15 +93,16 @@
             (fn [[users projects timers]]
               (gen/tuple
                (gen/return (invoices-core/build-time-map users projects timers))
-               (gen/return users)
-               (gen/return projects)
-               (gen/return timers)))))
+               (gen/return (invoices-core/id->name users))
+               (gen/return (invoices-core/id->name projects))))))
+
+(s/def ::id->name-map
+  (s/map-of ::core-spec/id string?))
 
 (s/fdef invoices-core/time-map->csv-rows
         :args (s/with-gen (s/cat :time-map ::time-map
-                                 :users ::users
-                                 :projects ::projects
-                                 :timers ::timers)
+                                 :users ::id->name-map
+                                 :projects ::id->name-map)
                 time-map->csv-rows-args-gen)
         :ret (s/and (s/coll-of
                      (s/cat :user-name string?

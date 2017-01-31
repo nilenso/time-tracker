@@ -1,6 +1,7 @@
 (ns time-tracker.invoices.core
   (:require [clojure.data.csv :as csv]
-            [time-tracker.timers.core :as timers-core]))
+            [time-tracker.timers.core :as timers-core]
+            [clojure.algo.generic.functor :refer [fmap]]))
 
 (defn empty-time-map
   "Returns a map of {user-id {project-id 0}}
@@ -37,20 +38,25 @@
   [number places]
   (.setScale (bigdec number) places java.math.BigDecimal/ROUND_HALF_UP))
 
+(defn id->name [normalized-entities]
+  (fmap :name normalized-entities))
+
 (defn time-map->csv-rows
-  [time-map users projects timers]
+  [time-map user-id->name project-id->name]
   (for [[user-id project->hours] time-map
         [project-id hours]       project->hours]
-    [(get-in users [user-id :name])
-     (get-in projects [project-id :name])
+    [(user-id->name user-id)
+     (project-id->name project-id)
      (round-to-places hours 4)]))
 
 (defn generate-csv
   [users projects timers]
-  (let [time-map (build-time-map users projects timers)]
+  (let [user-id->name    (id->name users)
+        project-id->name (id->name projects)
+        time-map         (build-time-map users projects timers)]
     (with-out-str
       (csv/write-csv *out*
                      (-> (time-map->csv-rows
-                          time-map users projects timers)
+                          time-map user-id->name project-id->name)
                          (conj ["Name" "Project" "Hours Logged"]))))))
 
