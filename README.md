@@ -70,10 +70,17 @@ server {
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection "Upgrade";
 	}
+
 	location /api/ {
 		# Proxy to backend
 		proxy_pass http://127.0.0.1:8000;
 	}
+
+	location /download/ {
+		# Proxy to backend
+		proxy_pass http://127.0.0.1:8000;
+	}
+
 	location / {
 		# Serve the contents of index.html, no matter what the URL
 		try_files $uri /index.html;
