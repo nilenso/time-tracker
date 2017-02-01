@@ -36,8 +36,8 @@
     (io/send-error! channel "Could not start timer")))
 
 (defn create-and-start-timer!
-  [channel google-id connection {:keys [project-id started-time created-time] :as args}]
-  (let [created-timer (timers-db/create! connection project-id google-id created-time)]
+  [channel google-id connection {:keys [project-id started-time created-time notes] :as args}]
+  (let [created-timer (timers-db/create! connection project-id google-id created-time notes)]
     (io/broadcast-state-change! google-id created-timer :create)
     (start-timer! channel google-id connection
                   {:timer-id     (:id created-timer)
@@ -52,16 +52,17 @@
                        :id   timer-id})
     (io/send-error! channel "Could not delete timer")))
 
-(defn change-timer-duration!
-  [channel google-id connection {:keys [timer-id duration current-time] :as args}]
+(defn update-timer!
+  [channel google-id connection {:keys [timer-id duration current-time notes] :as args}]
   (if-let [updated-timer
-           (timers-db/update-duration! connection
+           (timers-db/update! connection
                                        timer-id
                                        duration
-                                       current-time)]
+                                       current-time
+                                       notes)]
     (io/broadcast-state-change! google-id updated-timer :update)
     (io/send-error! channel "Could not update duration")))
 
 (defn receive-ping!
-  [channel connection google-id args]
+  [channel google-id connection args]
   (io/send-data! channel {:type :pong}))

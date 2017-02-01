@@ -1,12 +1,13 @@
 (ns time-tracker.web.util
   (:require [clojure.spec :as s]
-            [ring.util.response :as res]))
+            [ring.util.response :as res]
+            [time-tracker.util :as util]
+            [clojure.algo.generic.functor :refer [fmap]]
+            [time-tracker.web.spec :as web-spec]))
 
-(defn validate-request
+(defn validate-request-body
   [request spec]
-  (when-not (s/valid? spec (:body request))
-    (throw (ex-info "Validation failed" {:event   :validation-failed
-                                         :spec    spec}))))
+  (util/validate-spec (:body request) spec))
 
 (defn error-response
   [status msg]
@@ -27,3 +28,18 @@
 
 (def error-internal-server-error
   (error-response 500 "Internal Server Error"))
+
+(defn coerce-epoch-range-params
+  [params]
+  (try
+    (merge params
+           (fmap #(Long/parseLong %) (select-keys params [:start :end])))
+    (catch Exception ex
+      (throw (ex-info "Validation failed" {:event :validation-failed
+                                           :params params})))))
+
+(defn coerce-and-validate-epoch-range
+  [params]
+  (let [coerced-params (coerce-epoch-range-params params)]
+    (util/validate-spec coerced-params ::web-spec/start-end-epoch-params)
+    coerced-params))

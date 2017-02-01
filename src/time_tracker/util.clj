@@ -2,7 +2,8 @@
   (:require [clj-time.core :as time]
             [clj-time.coerce]
             [environ.core :as environ]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [clojure.spec :as s]))
 
 (defn statement-success?
   [result]
@@ -39,3 +40,30 @@
   "Is the map `b` completely contained in `a`?"
   [a b]
   (= a (merge a b)))
+
+(defn rebind-var!
+  "Rebinds `v` to `new-value`, and also returns
+  a function to reset the var back to its old value."
+  [v new-value]
+  (let [old-value (deref v)]
+    (alter-var-root v (constantly new-value))
+    (fn []
+      (alter-var-root v (constantly old-value)))))
+
+(defn normalize-entities
+  ([coll] (normalize-entities coll :id))
+  ([coll key-fn]
+   (zipmap (map key-fn coll)
+           coll)))
+
+(defn transform-keys
+  [m transform-fn]
+  (into {}
+        (for [[k v] m] [(transform-fn k) v])))
+
+(defn validate-spec
+  [value spec]
+  (when-not (s/valid? spec value)
+    (throw (ex-info "Validation failed" {:event :validation-failed
+                                         :spec  spec
+                                         :value value}))))

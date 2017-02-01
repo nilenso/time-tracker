@@ -9,11 +9,17 @@
    :app-log-level "debug"
    ;; If this is "*", any hosted domain will be allowed.
    :allowed-hosted-domain "nilenso.com"
-   :log-file-prefix "logs/time-tracker.log"   
+   :log-file-prefix "logs/time-tracker.log"
+   ;; Number of generative tests to run.
+   :num-tests "1000"
+   ;; For Harvest data import.
+   :harvest-url "https://your-company.harvestapp.com"
+   :harvest-id "your-id@your-company.com"
+   :harvest-pass "your-harvest-password"
    }}
  
  :test
  {:env
   {:db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
-   :app-log-level "error"
+   :app-log-level "debug"
    :allowed-hosted-domain "*"}}}

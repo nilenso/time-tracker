@@ -2,21 +2,22 @@
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
             [time-tracker.util :refer [statement-success?] :as util]
+            [clojure.algo.generic.functor :refer [fmap]]
             [yesql.core :refer [defqueries]]
             ;; For protocol extensions
             [clj-time.jdbc]))
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
-(def timer-keys [:id :project_id :started_time :duration :time_created])
+(def timer-keys [:id :project_id :started_time :duration :time_created :notes])
 
-(defn- hyphenize-walk
+(defn- hyphenize
   [thing]
   (if (keyword? thing)
     (util/hyphenize thing)
     thing))
 
-(defn- epochize-walk
+(defn epochize
   [thing]
   (if (instance? org.joda.time.DateTime thing)
     (util/to-epoch-seconds thing)
@@ -26,7 +27,7 @@
   [timer-map]
   (-> timer-map
       (select-keys timer-keys)
-      (util/transform-map hyphenize-walk epochize-walk)))
+      (util/transform-map hyphenize epochize)))
 
 (defn has-timing-access?
   [connection google-id project-id]
@@ -46,20 +47,22 @@
 
 (defn create!
   "Creates and returns a timer."
-  [connection project-id google-id created-time]
+  [connection project-id google-id created-time notes]
   (-> (create-timer-query<! {:google_id    google-id
                              :project_id   project-id
-                             :created_time created-time}
+                             :created_time created-time
+                             :notes        notes}
                             {:connection connection})
       (transform-timer-map)))
 
-(defn update-duration!
+(defn update!
   "Set the elapsed duration of the timer."
-  [connection timer-id duration current-time]
-  (when (statement-success? (update-timer-duration-query! {:duration     duration
-                                                           :timer_id     timer-id
-                                                           :current_time current-time}
-                                                          {:connection connection}))
+  [connection timer-id duration current-time notes]
+  (when (statement-success? (update-timer-query! {:duration     duration
+                                                  :timer_id     timer-id
+                                                  :current_time current-time
+                                                  :notes        notes}
+                                                 {:connection connection}))
     (-> (retrieve-timer-query {:timer_id timer-id}
                               {:connection connection})
         (first)
@@ -71,6 +74,35 @@
   (statement-success?
    (delete-timer-query! {:timer_id  timer-id}
                         {:connection connection})))
+
+(defn retrieve-all
+  "Retrieves all timers."
+  [connection]
+  (retrieve-all-query {} {:connection  connection
+                          :identifiers util/hyphenize
+                          :row-fn      #(fmap epochize %)}))
+
+(defn retrieve-between
+  "Retrieves all timers created between `start-epoch` and `end-epoch`.
+  `start-epoch` is inclusive and `end-epoch` is exclusive."
+  [connection start-epoch end-epoch]
+  (retrieve-between-query {:start_epoch start-epoch
+                           :end_epoch   end-epoch}
+                          {:connection  connection
+                           :identifiers util/hyphenize
+                           :row-fn      #(fmap epochize %)}))
+
+(defn retrieve-between-authorized
+  "Retrieves all timers created between `start-epoch` and `end-epoch`
+  and owned by `google-id`.
+  `start-epoch` is inclusive and `end-epoch` is exclusive."
+  [connection google-id start-epoch end-epoch]
+  (retrieve-between-authorized-query {:start_epoch start-epoch
+                                      :end_epoch   end-epoch
+                                      :google_id   google-id}
+                                     {:connection  connection
+                                      :identifiers util/hyphenize
+                                      :row-fn      #(fmap epochize %)}))
 
 (defn retrieve-authorized-timers
   "Retrieves all timers the user is authorized to modify."

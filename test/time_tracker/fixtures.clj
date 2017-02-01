@@ -4,11 +4,12 @@
             [time-tracker.db :as db]
             [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
-            [time-tracker.auth.test-helpers :refer [fake-token->credentials]])
+            [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
+            [time-tracker.core :as core])
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (time-tracker.web.service/init!)
+  (core/init!)
   (f))
 
 (defn destroy-db []

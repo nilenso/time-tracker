@@ -7,7 +7,7 @@
 
 (defn retrieve
   [{:keys [credentials]} connection]
-  (if-let [user-profile (users-db/retrieve-user-data connection
-                                                     (:sub credentials))]
+  (if-let [user-profile (users-db/retrieve connection
+                                           (:sub credentials))]
     (res/response user-profile)
     web-util/error-not-found))

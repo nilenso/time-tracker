@@ -77,3 +77,6 @@
    (add-root-logger-appender! (RollingFileAppender. (PatternLayout. "%-5p %c: %m%n")
                                                     (from-config :log-file-prefix)
                                                     true))))
+
+(defn teardown-logging! []
+  (.removeAllAppenders (Logger/getRootLogger)))
