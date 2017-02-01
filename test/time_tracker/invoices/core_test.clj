@@ -6,7 +6,7 @@
 
 (deftest empty-time-map-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/empty-time-map)))
+    (assert-generative-test `invoices-core/empty-time-map {:max-size 30})))
 
 (deftest add-hours-test
   (testing "Generative test"
