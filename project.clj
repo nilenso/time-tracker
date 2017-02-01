@@ -28,9 +28,17 @@
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:dev {:dependencies [[test2junit "1.2.2"]]
+                   :plugins      [[test2junit "1.2.2"]]
+                   :test2junit-output-dir ~(or (System/getenv "CIRCLE_TEST_REPORTS")
+                                               "target/test2junit")}
+             :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
+             :default [:base :system :user :provided :dev :dev-environ]
+             :uberjar {:aot :all}}
 
-  :aliases {"migrate"  ["run" "-m" "time-tracker.migration/lein-migrate-db"]
-            "rollback" ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
+  :aliases {"test"       ["with-profile" "+test-environ" "test"]
+            "test2junit" ["with-profile" "+test-environ" "test2junit"]
+            "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
+            "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
   :monkeypatch-clojure-test false)
 

@@ -1,4 +1,4 @@
-{:dev
+{:dev-environ
  {:env
   {:port "8000"
    :google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"
@@ -18,7 +18,7 @@
    :harvest-pass "your-harvest-password"
    }}
  
- :test
+ :test-environ
  {:env
   {:db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
    :app-log-level "debug"
