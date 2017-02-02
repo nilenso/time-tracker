@@ -61,10 +61,6 @@
   (into {}
         (for [[k v] m] [(transform-fn k) v])))
 
-(defn flatten-map
-  [m]
-  (for [[k v] m] [k v]))
-
 (defn validate-spec
   [value spec]
   (when-not (s/valid? spec value)

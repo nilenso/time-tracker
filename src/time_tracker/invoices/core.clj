@@ -17,14 +17,12 @@
   "Adds the hours logged against the timer entry
   to the `user-id->hours` map."
   [user-id->hours {:keys [app-user-id] :as timer}]
-  (update user-id->hours app-user-id
-          (fn [current-hours]
-            (let [hours-to-add (-> (timers-core/elapsed-time timer)
-                                   (seconds->hours)
-                                   (round-to-places 4))]
-              (if (some? current-hours)
-                (+ current-hours hours-to-add)
-                hours-to-add)))))
+  (let [hours-to-add  (-> (timers-core/elapsed-time timer)
+                          (seconds->hours)
+                          (round-to-places 4))
+        current-hours (get user-id->hours app-user-id)
+        new-hours     (+ (or current-hours 0) hours-to-add)]
+    (assoc user-id->hours app-user-id new-hours)))
 
 (defn build-user-id->hours
   "Returns a map of {user-id hours-logged}"
@@ -37,9 +35,7 @@
 
 (defn csv-rows
   [user-id->hours user-id->name]
-  (-> user-id->hours
-      (util/transform-keys user-id->name)
-      (util/flatten-map)))
+  (into [] (util/transform-keys user-id->hours user-id->name)))
 
 (defn generate-csv
   "Generates a CSV given `users` and `timers`.
@@ -49,5 +45,5 @@
         user-id->hours (build-user-id->hours (keys users) timers)]
     (with-out-str
       (csv/write-csv *out*
-                     (-> (csv-rows user-id->hours user-id->name)
-                         (conj ["Name" "Hours Logged"]))))))
+                     (->> (csv-rows user-id->hours user-id->name)
+                          (cons ["Name" "Hours Logged"]))))))

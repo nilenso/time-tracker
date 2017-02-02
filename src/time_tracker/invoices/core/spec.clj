@@ -117,7 +117,6 @@
         :ret (s/and (s/coll-of
                      (s/cat :user-name string?
                             :hours ::core-spec/positive-num))
-                    list?
                     csv-rows-ret))
 
 (s/fdef invoices-core/generate-csv
