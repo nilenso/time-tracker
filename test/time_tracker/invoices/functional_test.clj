@@ -45,7 +45,8 @@
 (deftest download-invoice-test
   (let [project-url           "http://localhost:8000/api/projects/"
         invoice-url           "http://localhost:8000/download/invoice/"
-        _                     (users-helpers/create-users! ["sandy" "gid1" "admin"])
+        _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
+                                                           ["quux" "gid2" "admin"])
         _                     (test-helpers/http-request :post project-url "gid1"
                                                          {:name "bar|baz"})
         {:keys [status body]} (test-helpers/http-request :post project-url "gid1"
@@ -65,11 +66,8 @@
                                                                         query-string)
                                                                    "gid1")]
           (is (= 200 status))
-          (is (string/includes? body "foo"))
-          (is (string/includes? body "goo"))
-          (is (not (string/includes? body "bar")))
-          (is (not (string/includes? body "baz")))
-          (is (string/includes? body "sandy"))))
+          (is (string/includes? body "sandy"))
+          (is (string/includes? body "quux"))))
 
       (testing "Another client with no timers"
         (let [query-string          (str "?start="  (- current-time 10)
@@ -80,11 +78,8 @@
                                                                         query-string)
                                                                    "gid1")]
           (is (= 200 status))
-          (is (string/includes? body "bar"))
-          (is (string/includes? body "baz"))
-          (is (not (string/includes? body "foo")))
-          (is (not (string/includes? body "goo")))
-          (is (string/includes? body "sandy"))))
+          (is (string/includes? body "sandy"))
+          (is (string/includes? body "quux"))))
       
       (testing "Client does not exist"
         (let [query-string          (str "?start="  (- current-time 10)

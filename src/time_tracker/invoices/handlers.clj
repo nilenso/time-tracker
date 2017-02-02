@@ -38,5 +38,5 @@
       web-util/error-not-found
       (let [users      (util/normalize-entities (users-db/retrieve-all connection))
             timers     (get-timers-to-invoice connection start end projects)
-            csv-string (invoices-core/generate-csv users projects timers)]
+            csv-string (invoices-core/generate-csv users timers)]
         (res/response csv-string)))))

@@ -1,62 +1,53 @@
 (ns time-tracker.invoices.core
   (:require [clojure.data.csv :as csv]
             [time-tracker.timers.core :as timers-core]
-            [clojure.algo.generic.functor :refer [fmap]]))
-
-(defn empty-time-map
-  "Returns a map of {user-id {project-id 0}}
-  for all users and projects. The last entry is the number of hours.
-  There must be at least one user and one project."
-  [users projects]
-  (->> (for [user-id (keys users)
-             project-id (keys projects)]
-         {user-id {project-id 0}})
-       (apply merge-with merge)))
+            [clojure.algo.generic.functor :refer [fmap]]
+            [time-tracker.util :as util]))
 
 (defn- seconds->hours
   [seconds]
   (double (/ seconds 3600)))
-
-(defn add-hours
-  "Adds the hours logged against the timer entry
-  to the time map."
-  [time-map {:keys [project-id app-user-id] :as timer}]
-  (update-in time-map
-             [app-user-id project-id]
-             #(+ % (seconds->hours (timers-core/elapsed-time timer)))))
-
-(defn build-time-map
-  "Returns a map of {user-id {project-id hours-logged}}.
-  There must be at least one user and one project."
-  [users projects timers]
-  (reduce #(add-hours %1 %2)
-          (empty-time-map users projects)
-          (vals timers)))
 
 (defn- round-to-places
   "Rounds a floating point number to `places` decimal places."
   [number places]
   (.setScale (bigdec number) places java.math.BigDecimal/ROUND_HALF_UP))
 
+(defn add-hours
+  "Adds the hours logged against the timer entry
+  to the `user-id->hours` map."
+  [user-id->hours {:keys [app-user-id] :as timer}]
+  (update user-id->hours app-user-id
+          (fn [current-hours]
+            (let [hours-to-add (-> (timers-core/elapsed-time timer)
+                                   (seconds->hours)
+                                   (round-to-places 4))]
+              (if (some? current-hours)
+                (+ current-hours hours-to-add)
+                hours-to-add)))))
+
+(defn build-user-id->hours
+  "Returns a map of {user-id hours-logged}"
+  [required-user-ids timers]
+  (let [user-id->zero (zipmap required-user-ids (repeat 0))]
+    (reduce add-hours user-id->zero (vals timers))))
+
 (defn id->name [normalized-entities]
   (fmap :name normalized-entities))
 
-(defn time-map->csv-rows
-  [time-map user-id->name project-id->name]
-  (for [[user-id project->hours] time-map
-        [project-id hours]       project->hours]
-    [(user-id->name user-id)
-     (project-id->name project-id)
-     (round-to-places hours 4)]))
+(defn csv-rows
+  [user-id->hours user-id->name]
+  (-> user-id->hours
+      (util/transform-keys user-id->name)
+      (util/flatten-map)))
 
 (defn generate-csv
-  [users projects timers]
-  (let [user-id->name    (id->name users)
-        project-id->name (id->name projects)
-        time-map         (build-time-map users projects timers)]
+  "Generates a CSV given `users` and `timers`.
+  There will be a row for every user in `users`."
+  [users timers]
+  (let [user-id->name  (id->name users)
+        user-id->hours (build-user-id->hours (keys users) timers)]
     (with-out-str
       (csv/write-csv *out*
-                     (-> (time-map->csv-rows
-                          time-map user-id->name project-id->name)
-                         (conj ["Name" "Project" "Hours Logged"]))))))
-
+                     (-> (csv-rows user-id->hours user-id->name)
+                         (conj ["Name" "Hours Logged"]))))))
