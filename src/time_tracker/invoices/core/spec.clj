@@ -8,8 +8,8 @@
             [time-tracker.projects.spec :as projects-spec]
             [time-tracker.util :as util]))
 
-(s/def ::time-map
-  (s/map-of ::core-spec/id (s/map-of ::core-spec/id ::core-spec/positive-num)))
+(s/def ::user-id->hours
+  (s/map-of ::core-spec/id ::core-spec/positive-num))
 
 (defn normalized-pred
   [entity-map]
@@ -23,96 +23,104 @@
                      (gen/list (s/gen entity-spec))))))
 
 (s/def ::users (normalized-entities-spec ::users-spec/user))
-(s/def ::projects (normalized-entities-spec ::projects-spec/project))
 (s/def ::timers (normalized-entities-spec ::timers-spec/timer))
 
-(defn- empty-time-map-pred
-  [{:keys [args ret]}]
-  (let [user-ids    (set (keys(:users args)))
-        project-ids (set (keys(:projects args)))]
-    (and (= user-ids
-            (set (keys ret)))
-         (every? #(= project-ids (set (keys %)))
-                 (vals ret)))))
-
-(s/fdef invoices-core/empty-time-map
-        :args (s/cat :users ::users
-                     :projects ::projects)
-        :ret ::time-map
-        :fn empty-time-map-pred)
+(s/def ::add-hours-args (s/cat :user-id->hours ::user-id->hours
+                             :timer ::timers-spec/timer))
 
 (defn add-hours-args-gen []
-  (gen/bind
-   (gen/vector (s/gen ::core-spec/positive-int) 3)
-   (fn [v]
-     (gen/tuple
-      (gen/fmap #(assoc-in % (take 2 v) (get v 2))
-                (s/gen ::time-map))
-      (gen/fmap #(merge % {:app-user-id (first v)
-                           :project-id  (second v)})
-                (s/gen ::timers-spec/timer))))))
+  (gen/one-of [(gen/bind
+                 ;; user-id and hours
+                 (gen/tuple (s/gen ::core-spec/positive-int) (s/gen ::core-spec/positive-num))
+                 (fn [[user-id hours]]
+                   (gen/tuple
+                    (gen/fmap #(assoc % user-id hours)
+                              (s/gen ::user-id->hours))
+                    (gen/fmap #(assoc % :app-user-id user-id)
+                              (s/gen ::timers-spec/timer)))))
+               (s/gen ::add-hours-args)]))
+
+(defn- add-hours-pred
+  [{:keys [args ret]}]
+  (let [{:keys [user-id->hours timer]} args
+        prev-hours (user-id->hours (:app-user-id timer))
+        new-hours (get ret (:app-user-id timer))]
+    (if (nil? prev-hours)
+      (>= new-hours 0)
+      (>= new-hours prev-hours))))
 
 (s/fdef invoices-core/add-hours
-        :args (s/with-gen (s/cat :time-map ::time-map
-                                 :timer ::timers-spec/timer)
-                add-hours-args-gen)
-        :ret ::time-map)
+        :args (s/with-gen ::add-hours-args add-hours-args-gen)
+        :ret ::user-id->hours
+        :fn add-hours-pred)
 
-(defn timers-for-user-and-project-gen []
+(defn timers-for-user-gen []
   (gen/bind
-   (s/gen (s/cat :user    ::users-spec/user
-                 :project ::projects-spec/project))
-   (fn [[user project]]
+   (s/gen ::users-spec/user)
+   (fn [user]
      (gen/tuple
       (gen/return user)
-      (gen/return project)
-      (gen/list (gen/fmap #(merge % {:app-user-id (:id user) :project-id (:id project)})
+      (gen/list (gen/fmap #(assoc % :app-user-id (:id user))
                           (s/gen ::timers-spec/timer)))))))
 
-(defn user-project-timer-gen []
+(defn users-timers-gen []
   (gen/bind
-   (gen/list (timers-for-user-and-project-gen))
+   (gen/list (timers-for-user-gen))
    (fn [args-list]
-     (gen/return (reduce (fn [[users-map project-map timers-map]
-                              [user project timers]]
+     (gen/return (reduce (fn [[users-map timers-map]
+                              [user timers]]
                            [(assoc users-map (:id user) user)
-                            (assoc project-map (:id project) project)
                             (merge timers-map (util/normalize-entities timers))])
-                         [{} {} {}]
+                         [{} {}]
                          args-list)))))
 
-(s/fdef invoices-core/build-time-map
-        :args (s/with-gen (s/cat :users ::users
-                                 :projects ::projects
-                                 :timers ::timers)
-                user-project-timer-gen)
-        :ret ::time-map)
-
-(defn time-map->csv-rows-args-gen []
-  (gen/bind (user-project-timer-gen)
-            (fn [[users projects timers]]
+(defn- build-user-id->hours-args-gen []
+  (gen/bind (users-timers-gen)
+            (fn [[users timers]]
               (gen/tuple
-               (gen/return (invoices-core/build-time-map users projects timers))
-               (gen/return (invoices-core/id->name users))
-               (gen/return (invoices-core/id->name projects))))))
+               (gen/return (keys users))
+               (gen/return timers)))))
+
+(defn- build-user-id->hours-pred
+  [{:keys [args ret]}]
+  ;; All required user ids must be present.
+  (= (set (:required-user-ids args))
+     (set (keys ret))))
+
+(s/fdef build-user-id->hours
+        :args (s/with-gen (s/cat :required-user-ids (s/coll-of ::core-spec/id)
+                                 :timers            ::timers)
+                build-user-id->hours-args-gen)
+        :ret ::user-id->hours)
 
 (s/def ::id->name-map
   (s/map-of ::core-spec/id string?))
 
-(s/fdef invoices-core/time-map->csv-rows
-        :args (s/with-gen (s/cat :time-map ::time-map
-                                 :users ::id->name-map
-                                 :projects ::id->name-map)
-                time-map->csv-rows-args-gen)
+(defn- csv-rows-ret
+  [ret]
+  (let [names        (mapv first ret)
+        unique-names (set names)]
+    ;; The names must be unique.
+    (= (count names) (count unique-names))))
+
+(defn- csv-rows-args-gen []
+  (gen/bind (users-timers-gen)
+            (fn [[users timers]]
+              (gen/tuple
+               (gen/return (invoices-core/build-user-id->hours (keys users) timers))
+               (gen/return (invoices-core/id->name users))))))
+
+(s/fdef invoices-core/csv-rows
+        :args (s/with-gen (s/cat :user-id->hours ::user-id->hours
+                                 :user-id->name ::id->name-map)
+                csv-rows-args-gen)
         :ret (s/and (s/coll-of
                      (s/cat :user-name string?
-                            :project-name string?
                             :hours ::core-spec/positive-num))
-                    list?))
-
+                    csv-rows-ret))
 
 (s/fdef invoices-core/generate-csv
-        :args (s/cat :users ::users
-                     :projects ::projects
-                     :timers ::timers)
+        :args (s/with-gen (s/cat :users ::users
+                                 :timers ::timers)
+                users-timers-gen)
         :ret (s/spec string?))

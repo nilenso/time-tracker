@@ -4,18 +4,14 @@
             [clojure.test :refer :all]
             [time-tracker.test-helpers :refer [assert-generative-test]]))
 
-(deftest empty-time-map-test
-  (testing "Generative test"
-    (assert-generative-test `invoices-core/empty-time-map {:max-size 30})))
-
 (deftest add-hours-test
   (testing "Generative test"
     (assert-generative-test `invoices-core/add-hours {:max-size 30})))
 
-(deftest build-time-map-test
+(deftest build-user-id->hours-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/build-time-map {:max-size 30})))
+    (assert-generative-test `invoices-core/build-user-id->hours {:max-size 30})))
 
-(deftest time-map->csv-rows-test
+(deftest csv-rows-test
   (testing "Generative test"
-    (assert-generative-test `invoices-core/time-map->csv-rows {:max-size 30})))
+    (assert-generative-test `invoices-core/csv-rows {:max-size 30})))
