@@ -63,7 +63,6 @@
 
 (defn validate-spec
   [value spec]
-  (when-not (s/valid? spec value)
-    (throw (ex-info "Validation failed" {:event :validation-failed
-                                         :spec  spec
-                                         :value value}))))
+  (when-let [failure (s/explain-data spec value)]
+    (throw (ex-info "Validation failed" {:event   :validation-failed
+                                         :failure failure}))))
