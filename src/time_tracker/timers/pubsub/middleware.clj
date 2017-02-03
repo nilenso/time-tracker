@@ -19,9 +19,11 @@
 (defn wrap-validator
   [func spec]
   (fn [channel google-id connection args]
-    (if (s/valid? spec args)
-      (func channel google-id connection args)
-      (io/send-invalid-args! channel))))
+    (if-let [failure (s/explain-data spec args)]
+      (do (log/info {:event   ::validation-failed
+                     :failure failure})
+          (io/send-invalid-args! channel))
+      (func channel google-id connection args))))
 
 (defn wrap-transaction
   [func]
