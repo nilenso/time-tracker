@@ -45,59 +45,60 @@
 (deftest download-invoice-test
   (let [project-url           "http://localhost:8000/api/projects/"
         invoice-url           "http://localhost:8000/download/invoice/"
+        users-url             "http://localhost:8000/api/users/"
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
         _                     (test-helpers/http-request :post project-url "gid1"
                                                          {:name "bar|baz"})
+        {users-body :body}    (test-helpers/http-request :get users-url "gid1")
+        user-ids              (set (map #(get % "id") users-body))
         {:keys [status body]} (test-helpers/http-request :post project-url "gid1"
                                                          {:name "foo|goo"})
         project-id            (get body "id")
         current-time          (util/current-epoch-seconds)
         [ws-chan socket]      (test-helpers/make-ws-connection "gid1")
-        created-timer         (create-timer-over-ws ws-chan socket project-id current-time
-                                                    3600)]
+        created-timer         (create-timer-over-ws ws-chan socket
+                                                    project-id current-time
+                                                    3600)
+        data                  {:start (- current-time (* 60 60 24))
+                               :end current-time
+                               :address "baz"
+                               :notes "quux"
+                               :user-id->rate (zipmap user-ids
+                                                      [12 21])
+                               :utc-offset 330
+                               :currency :inr}]
     (try
       (testing "Existing client"
-        (let [query-string          (str "?start="  (- current-time 10)
-                                         "&end="    (+ current-time 10)
-                                         "&client=" "foo")
-              {:keys [status body]} (test-helpers/http-request-raw :get
-                                                                   (str invoice-url
-                                                                        query-string)
-                                                                   "gid1")]
-          (is (= 200 status))
-          (is (string/includes? body "sandy"))
-          (is (string/includes? body "quux"))))
+        (let [{:keys [status]} (test-helpers/http-request-raw
+                                 :post
+                                 invoice-url
+                                 "gid1"
+                                 (assoc data :client "foo"))]
+          (is (= 200 status))))
 
       (testing "Another client with no timers"
-        (let [query-string          (str "?start="  (- current-time 10)
-                                         "&end="    (+ current-time 10)
-                                         "&client=" "bar")
-              {:keys [status body]} (test-helpers/http-request-raw :get
-                                                                   (str invoice-url
-                                                                        query-string)
-                                                                   "gid1")]
-          (is (= 200 status))
-          (is (string/includes? body "sandy"))
-          (is (string/includes? body "quux"))))
+        (let [{:keys [status body]} (test-helpers/http-request-raw
+                                      :post
+                                      invoice-url
+                                      "gid1"
+                                      (assoc data :client "bar"))]
+          (is (= 200 status))))
       
       (testing "Client does not exist"
-        (let [query-string          (str "?start="  (- current-time 10)
-                                         "&end="    (+ current-time 10)
-                                         "&client=" "quux")
-              {:keys [status body]} (test-helpers/http-request-raw :get
-                                                                   (str invoice-url
-                                                                        query-string)
-                                                                   "gid1")]
+        (let [{:keys [status body]} (test-helpers/http-request-raw
+                                      :post
+                                      invoice-url
+                                      "gid1"
+                                      (assoc data :client "quux"))]
           (is (= 404 status))))
 
-      (testing "invalid args"
-        (let [query-string          (str "?start=" "foo"
-                                         "&end="   (+ current-time 10))
-              {:keys [status body]} (test-helpers/http-request-raw :get
-                                                                   (str invoice-url
-                                                                        query-string)
-                                                                   "gid1")]
+      (testing "Invalid args"
+        (let [{:keys [status body]} (test-helpers/http-request-raw
+                                      :post
+                                      invoice-url
+                                      "gid1"
+                                      (assoc data :utc-offset "midget"))]
           (is (= 400 status))))
 
       (finally (ws/close socket)))))

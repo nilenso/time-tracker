@@ -1,14 +1,14 @@
 (ns time-tracker.invoices.handlers.spec
   (:require [clojure.spec :as s]
-            [time-tracker.spec :as core-spec]))
-
-(s/def ::start ::core-spec/epoch)
-(s/def ::end ::core-spec/epoch)
-;; A non-empty string.
-(s/def ::client (s/and string?
-                       seq))
+            [time-tracker.spec :as core-spec]
+            [time-tracker.invoices.spec :as invoices-spec]))
 
 (s/def ::generate-invoice-params
-  (s/and (s/keys :req-un [::start ::end ::client])
-         (fn [{:keys [start end]}]
-           (< start end))))
+  (s/merge (s/keys :req-un [::invoices-spec/client
+                            ::invoices-spec/address
+                            ::invoices-spec/notes
+                            ::invoices-spec/user-id->rate
+                            ::invoices-spec/tax-rates
+                            ::invoices-spec/currency
+                            ::invoices-spec/utc-offset])
+           ::invoices-spec/date-range))

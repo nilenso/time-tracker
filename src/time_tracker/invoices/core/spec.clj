@@ -2,14 +2,14 @@
   (:require [time-tracker.invoices.core :as invoices-core]
             [clojure.spec :as s]
             [clojure.spec.gen :as gen]
+            [time-tracker.invoices.spec :as invoices-spec]
             [time-tracker.spec :as core-spec]
             [time-tracker.timers.spec :as timers-spec]
             [time-tracker.users.spec :as users-spec]
-            [time-tracker.projects.spec :as projects-spec]
             [time-tracker.util :as util]))
 
 (s/def ::user-id->hours
-  (s/map-of ::core-spec/id ::core-spec/positive-num))
+  (s/map-of ::users-spec/id ::invoices-spec/hours))
 
 (defn normalized-pred
   [entity-map]
@@ -31,7 +31,8 @@
 (defn add-hours-args-gen []
   (gen/one-of [(gen/bind
                  ;; user-id and hours
-                 (gen/tuple (s/gen ::core-spec/positive-int) (s/gen ::core-spec/positive-num))
+                 (gen/tuple (s/gen ::core-spec/positive-int)
+                            (s/gen ::core-spec/positive-num))
                  (fn [[user-id hours]]
                    (gen/tuple
                     (gen/fmap #(assoc % user-id hours)
@@ -87,40 +88,73 @@
   (= (set (:required-user-ids args))
      (set (keys ret))))
 
-(s/fdef build-user-id->hours
+(s/fdef invoices-core/build-user-id->hours
         :args (s/with-gen (s/cat :required-user-ids (s/coll-of ::core-spec/id)
                                  :timers            ::timers)
                 build-user-id->hours-args-gen)
-        :ret ::user-id->hours)
+        :ret ::user-id->hours
+        :fn build-user-id->hours-pred)
 
-(s/def ::id->name-map
-  (s/map-of ::core-spec/id string?))
+(defn- user-id->rate-gen [users]
+  (gen/bind (gen/vector (s/gen ::invoices-spec/rate) (count users))
+            (fn [rates]
+              (gen/return (zipmap (keys users) rates)))))
 
-(defn- csv-rows-ret
-  [ret]
-  (let [names        (mapv first ret)
-        unique-names (set names)]
-    ;; The names must be unique.
-    (= (count names) (count unique-names))))
-
-(defn- csv-rows-args-gen []
+(defn- user-amounts-args-gen []
   (gen/bind (users-timers-gen)
             (fn [[users timers]]
               (gen/tuple
-               (gen/return (invoices-core/build-user-id->hours (keys users) timers))
-               (gen/return (invoices-core/id->name users))))))
+                (gen/return users)
+                (gen/return timers)
+                (user-id->rate-gen users)))))
 
-(s/fdef invoices-core/csv-rows
-        :args (s/with-gen (s/cat :user-id->hours ::user-id->hours
-                                 :user-id->name ::id->name-map)
-                csv-rows-args-gen)
-        :ret (s/and (s/coll-of
-                     (s/cat :user-name string?
-                            :hours ::core-spec/positive-num))
-                    csv-rows-ret))
+(defn- user-amounts-pred
+  [{:keys [args ret]}]
+  (let [unique-args-ids (->> (:users args)
+                             (keys)
+                             (set))
+        unique-ret-ids (set (map :id ret))]
+    ;; Every user passed should be present in the returned rows.
+    (= unique-args-ids unique-ret-ids)))
 
-(s/fdef invoices-core/generate-csv
+(s/fdef invoices-core/user-hours
         :args (s/with-gen (s/cat :users ::users
-                                 :timers ::timers)
-                users-timers-gen)
-        :ret (s/spec string?))
+                                 :timers ::timers
+                                 :user-id->rate ::invoices-spec/user-id->rate)
+                          user-amounts-args-gen)
+        :ret ::invoices-spec/user-hours
+        :fn user-amounts-pred)
+
+(s/def ::user-id->name (s/fspec :args (s/cat :id ::users-spec/id)
+                                :ret ::users-spec/name))
+
+(s/fdef invoices-core/invoice-items
+        :args (s/cat :invoice ::invoices-spec/invoice
+                     :user-id->name ::user-id->name)
+        :ret ::invoices-spec/items)
+
+(s/fdef invoices-core/subtotal
+        :args (s/cat :invoice ::invoices-spec/invoice)
+        :ret ::core-spec/money-val)
+
+(defn- tax-amounts-pred
+  [{:keys [args ret]}]
+  (= (into {} (:tax-rates args))
+     (zipmap (map :name ret)
+             (map :percentage ret))))
+
+(s/fdef invoices-core/tax-amounts
+        :args (s/cat :tax-rates ::invoices-spec/tax-rates
+                     :subtotal-amount ::core-spec/money-val)
+        :ret ::invoices-spec/tax-amounts
+        :fn tax-amounts-pred)
+
+(s/fdef invoices-core/grand-total
+        :args (s/cat :subtotal-amount ::core-spec/money-val
+                     :tax-maps ::invoices-spec/tax-amounts)
+        :ret ::core-spec/money-val)
+
+(s/fdef invoices-core/printable-invoice
+        :args (s/cat :invoice ::invoices-spec/invoice
+                     :user-id->name ::user-id->name)
+        :ret ::invoices-spec/printable-invoice)

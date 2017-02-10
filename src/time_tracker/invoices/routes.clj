@@ -4,4 +4,4 @@
 
 (defn routes []
   {"invoice/" (with-rest-middleware
-                {:get handlers/generate-invoice})})
+                {:post handlers/generate-invoice})})
