@@ -67,9 +67,9 @@
      :amount (util/round-to-two-places (* hours rate))}))
 
 (defn- subtotal
-  [{:keys [user-hours]}]
-  (->> user-hours
-       (map #(* (:hours %) (:rate %)))
+  [invoice-items]
+  (->> invoice-items
+       (map :amount)
        (apply +)
        (util/round-to-two-places)))
 
@@ -88,8 +88,8 @@
 
 (defn printable-invoice
   [{:keys [tax-rates start end utc-offset] :as invoice} user-id->name]
-  (let [items (invoice-items invoice user-id->name)
-        subtotal-amount (subtotal invoice)
+  (let [items           (invoice-items invoice user-id->name)
+        subtotal-amount (subtotal items)
         taxes           (tax-amounts tax-rates subtotal-amount)
         amount-due      (grand-total subtotal-amount taxes)
         from-date       start

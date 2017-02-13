@@ -92,6 +92,9 @@
   [a b]
   (.divide a b 2 java.math.BigDecimal/ROUND_HALF_UP))
 
+(defn eq-with-tolerance [a b tolerance]
+  (< (.abs (- a b)) tolerance))
+
 (defn utc-offset->clj-timezone
   "`utc-offset` should be in minutes."
   [utc-offset]

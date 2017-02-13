@@ -2,7 +2,8 @@
   (:require [clojure.spec :as s]
             [clojure.spec.gen :as gen]
             [time-tracker.users.spec :as users-spec]
-            [time-tracker.spec :as core-spec]))
+            [time-tracker.spec :as core-spec]
+            [time-tracker.util :as util]))
 
 (s/def ::hours (core-spec/positive-bigdec 2))
 (s/def ::rate ::core-spec/money-val)
@@ -60,13 +61,38 @@
 
 (s/def ::amount ::core-spec/money-val)
 
+(s/def ::name-hours-rate
+  (s/keys :req-un [::users-spec/name ::hours ::rate]))
+
+(defn- compute-amount [hours rate]
+  (util/round-to-two-places (* hours rate)))
+
+(defn- item-gen []
+  (->> (s/gen ::name-hours-rate)
+       (gen/fmap (fn [{:keys [hours rate] :as name-hours-rate}]
+                   (assoc name-hours-rate :amount
+                                          (compute-amount hours rate))))))
+
+(defn- invoice-item-pred
+  [{:keys [hours rate amount]}]
+  (if (or (zero? hours) (zero? rate))
+    (zero? amount)
+    (util/eq-with-tolerance rate (util/divide-money amount hours) 1.00M)))
+
 (s/def ::item
-  (s/keys :req-un [::users-spec/name ::hours ::rate ::amount]))
+  (s/with-gen (s/and (s/merge ::name-hours-rate
+                              (s/keys :req-un [::amount]))
+                     (fn [{:keys [hours rate amount]}]
+                       (= amount (util/round-to-two-places (* hours rate))))
+                     invoice-item-pred)
+              item-gen))
 (s/def ::items
   (s/coll-of ::item :min-count 1))
 
 (s/def ::name ::core-spec/non-empty-string)
 (s/def ::percentage (core-spec/positive-bigdec 2))
+
+
 (s/def ::tax-amount-map
   (s/keys :req-un [::name ::amount ::percentage]))
 (s/def ::tax-amounts (s/coll-of ::tax-amount-map))

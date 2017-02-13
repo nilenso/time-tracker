@@ -134,7 +134,7 @@
         :ret ::invoices-spec/items)
 
 (s/fdef invoices-core/subtotal
-        :args (s/cat :invoice ::invoices-spec/invoice)
+        :args (s/cat :invoice-items ::invoices-spec/items)
         :ret ::core-spec/money-val)
 
 (defn- tax-amounts-pred
