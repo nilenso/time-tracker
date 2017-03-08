@@ -29,7 +29,7 @@
   (let [user-id->zero (zipmap required-user-ids (repeat 0.00M))]
     (reduce add-hours user-id->zero (vals timers))))
 
-(defn user-hours
+(defn- user-hours
   "Generates a seq of {:id :rate :hours}.
   There will be a row for every user in `users`."
   [users timers user-id->rate]
