@@ -34,11 +34,11 @@
                                                "target/test2junit")}
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
              :default [:base :system :user :provided :dev :dev-environ]
-             :uberjar {:aot :all}}
+             :uberjar {:aot [#"time-tracker.*"]}}
 
   :aliases {"test"       ["with-profile" "+test-environ" "test"]
             "test2junit" ["with-profile" "+test-environ" "test2junit"]
             "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
-  :monkeypatch-clojure-test false)
-
+  :monkeypatch-clojure-test false
+  :uberjar-exclusions [#"dev.*"])
