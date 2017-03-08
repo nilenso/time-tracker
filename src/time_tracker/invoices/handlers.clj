@@ -21,9 +21,9 @@
        (util/normalize-entities)))
 
 (defn- get-timers-to-invoice
-  [connection start end projects]
+  [connection start end invoice-project?]
   (->> (timers-db/retrieve-between connection start end)
-       (filter #(projects (:project-id %)))
+       (filter #(invoice-project? (:project-id %)))
        (util/normalize-entities)))
 
 (defn- coerce-rates-map
