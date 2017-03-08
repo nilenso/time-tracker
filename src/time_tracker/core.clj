@@ -25,21 +25,6 @@
        (log/info {:event ::server-stop})
        (teardown!)))))
 
-(defonce server-stop-fn (atom nil))
-
-(defn repl-start-server! []
-  (let [stop-fn (start-server!)]
-    (swap! server-stop-fn (constantly stop-fn))))
-
-(defn repl-stop-server! []
-  (when @server-stop-fn
-    (@server-stop-fn)
-    (reset! server-stop-fn nil)))
-
-(defn repl-restart-server! []
-  (repl-stop-server!)
-  (repl-start-server!))
-
 (defn- start-server-as-gid!
   "Starts the server and ensures that requests are always
   authenticated as `google-id`. Useful for repl testing.
