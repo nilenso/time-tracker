@@ -139,7 +139,7 @@
 
 (defn- tax-amounts-pred
   [{:keys [args ret]}]
-  (= (into {} (:tax-rates args))
+  (= (into {} (apply merge (map #(hash-map (:tax-name %) (:tax-percentage %)) (:tax-rates args))))
      (zipmap (map :name ret)
              (map :percentage ret))))
 

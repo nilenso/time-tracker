@@ -6,9 +6,11 @@
             [time-tracker.util :as util]))
 
 (s/def ::hours (core-spec/positive-bigdec 2))
-(s/def ::rate ::core-spec/money-val)
 
-(s/def ::user-id->rate (s/map-of ::users-spec/id ::rate))
+(s/def ::rate ::core-spec/money-val)
+(s/def ::user-id ::users-spec/id)
+(s/def ::user-id->rate-map (s/keys :req-un [::user-id ::rate]))
+(s/def ::user-id->rate (s/coll-of ::user-id->rate-map))
 
 (s/def ::user-hours-row
   (s/keys :req-un [::users-spec/id ::hours ::rate]))
@@ -37,9 +39,9 @@
 (s/def ::notes ::core-spec/non-empty-string)
 
 (s/def ::tax-percentage (core-spec/positive-bigdec 2 0.01M 99.99M))
-
-(s/def ::tax-rates (s/nilable (s/and (s/map-of ::core-spec/non-empty-string
-                                               ::tax-percentage)
+(s/def ::tax-name ::core-spec/non-empty-string)
+(s/def ::tax-rate-map (s/keys :req-un [::tax-name ::tax-percentage]))
+(s/def ::tax-rates (s/nilable (s/and (s/coll-of ::tax-rate-map)
                                      #(>= (count %) 1))))
 
 (s/def ::currency #{:usd :inr})
