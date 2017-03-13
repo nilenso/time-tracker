@@ -32,9 +32,10 @@
 (defn- user-hours
   "Generates a seq of {:id :rate :hours}.
   There will be a row for every user in `users`."
-  [users timers user-id->rate]
+  [users timers user-id->rate-vector]
   (let [user-ids       (keys users)
-        user-id->hours (build-user-id->hours user-ids timers)]
+        user-id->hours (build-user-id->hours user-ids timers)
+        user-id->rate (apply merge (map #(hash-map (:user-id %) (:rate %)) user-id->rate-vector))]
     (for [user-id user-ids]
       {:id    user-id
        :rate  (user-id->rate user-id)
@@ -75,11 +76,11 @@
 
 (defn- tax-amounts
   [taxes subtotal-amount]
-  (for [[tax-name percentage] taxes]
+  (for [{:keys [tax-name tax-percentage]} taxes]
     {:name       tax-name
-     :amount     (-> (* subtotal-amount (util/divide-money percentage 100.00M))
+     :amount     (-> (* subtotal-amount (util/divide-money tax-percentage 100.00M))
                      (util/round-to-two-places))
-     :percentage percentage}))
+     :percentage tax-percentage}))
 
 (defn- grand-total
   [subtotal-amount tax-maps]

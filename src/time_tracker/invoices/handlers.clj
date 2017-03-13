@@ -26,33 +26,24 @@
        (filter #(invoice-project? (:project-id %)))
        (util/normalize-entities)))
 
-(defn- coerce-rates-map
-  [raw-rates-map]
-  (try
-    (->> (util/transform-keys raw-rates-map util/parse-int)
-         (fmap util/round-to-two-places))
-    (catch java.lang.NumberFormatException _
-      (util/raise-validation-error
-        {:failure "Coercion failed for generate-invoice"}))))
+(defn- bigdecify-rates
+  [raw-rates-vector]
+  (map #(update % :rate  util/round-to-two-places) raw-rates-vector))
 
-(defn- coerce-taxes-map
-  [raw-taxes-map]
-  (try
-    (->> (util/transform-keys raw-taxes-map name)
-         (fmap util/round-to-two-places)
-         not-empty)
-    (catch java.lang.NumberFormatException _
-      (util/raise-validation-error
-        {:failure "Coercion failed for generate-invoice"}))))
+(defn- bigdecify-taxes
+  "Converts tax-percentage to bigdec and returns nil if argument is nil."
+  [raw-taxes-vector]
+  (->> raw-taxes-vector
+       (map #(update % :tax-percentage util/round-to-two-places))
+       not-empty))
 
 (defn- coerce-and-validate-generate-invoice-body
   [request-body]
   (let [coerced-body (-> request-body
-                         (update :user-id->rate coerce-rates-map)
-                         (update :tax-rates coerce-taxes-map)
+                         (update :user-id->rate bigdecify-rates)
+                         (update :tax-rates bigdecify-taxes)
                          (update :currency keyword))]
-    (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params)
-    coerced-body))
+    (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params) coerced-body))
 
 (defn- id->name
   [normalized-entities]
