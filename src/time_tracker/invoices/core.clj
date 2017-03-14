@@ -35,7 +35,7 @@
   [users timers user-id->rate-vector]
   (let [user-ids       (keys users)
         user-id->hours (build-user-id->hours user-ids timers)
-        user-id->rate (apply merge (map #(hash-map (:user-id %) (:rate %)) user-id->rate-vector))]
+        user-id->rate (into {} (map #(hash-map (:user-id %) (:rate %)) user-id->rate-vector))]
     (for [user-id user-ids]
       {:id    user-id
        :rate  (user-id->rate user-id)

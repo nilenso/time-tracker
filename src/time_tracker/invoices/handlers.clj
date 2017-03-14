@@ -38,6 +38,7 @@
        not-empty))
 
 (defn- coerce-and-validate-generate-invoice-body
+  "Coerces rates and tax percentages to bigdec and currency strings to keywords, and validates data."
   [request-body]
   ;; Validate the un-coerced data
   (util/validate-spec request-body ::handlers-spec/generate-invoice-params-raw)
