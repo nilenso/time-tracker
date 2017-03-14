@@ -47,7 +47,7 @@
             (log/error {:event   ::nil-response
                         :request loggable-request})
             web-util/error-internal-server-error))
-        (catch Exception ex
+        (catch Throwable ex
           (log/error ex {:event   ::unhandled-exception
                          :request loggable-request})
           web-util/error-internal-server-error)))))
