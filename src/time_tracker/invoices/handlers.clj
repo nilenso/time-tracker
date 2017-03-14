@@ -39,11 +39,14 @@
 
 (defn- coerce-and-validate-generate-invoice-body
   [request-body]
+  ;; Validate the un-coerced data
+  (util/validate-spec request-body ::handlers-spec/generate-invoice-params-raw)
   (let [coerced-body (-> request-body
                          (update :user-id->rate bigdecify-rates)
                          (update :tax-rates bigdecify-taxes)
                          (update :currency keyword))]
-    (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params) coerced-body))
+    (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params-coerced)
+    coerced-body))
 
 (defn- id->name
   [normalized-entities]
@@ -64,12 +67,14 @@
   [{:keys [body]} connection]
   (let [{:keys [start end client] :as validated-body}
         (coerce-and-validate-generate-invoice-body body)
-        projects (get-client-projects connection client)
-        users    (util/normalize-entities (users-db/retrieve-all connection))
-        timers   (get-timers-to-invoice connection start end projects)]
+        projects     (get-client-projects connection client)
+        users        (util/normalize-entities (users-db/retrieve-all connection))
+        timers       (get-timers-to-invoice connection start end projects)
+        invoice-data (merge validated-body
+                            {:users  users
+                             :timers timers})]
+    (util/validate-spec invoice-data ::handlers-spec/invoice-data)
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (pdf-invoice (merge validated-body
-                          {:users  users
-                           :timers timers})))))
+      (pdf-invoice invoice-data))))
