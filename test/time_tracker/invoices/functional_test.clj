@@ -59,46 +59,101 @@
         [ws-chan socket]      (test-helpers/make-ws-connection "gid1")
         created-timer         (create-timer-over-ws ws-chan socket
                                                     project-id current-time
-                                                    3600)
-        data                  {:start (- current-time (* 60 60 24))
-                               :end current-time
-                               :address "baz"
-                               :notes "quux"
-                               :user-id->rate (zipmap user-ids
-                                                      [12 21])
-                               :utc-offset 330
-                               :currency :inr}]
+                                                    3600)]
     (try
       (testing "Existing client"
-        (let [{:keys [status]} (test-helpers/http-request-raw
+        (let [data             {:client "foo"
+                                :start (- current-time (* 60 60 24))
+                                :end current-time
+                                :address "baz"
+                                :notes "quux"
+                                :user-id->rate (vec (for [user-id user-ids]
+                                                      {:user-id user-id
+                                                       :rate    5}))
+                                :utc-offset 330
+                                :currency :inr
+                                :tax-rates nil}
+              {:keys [status]} (test-helpers/http-request-raw
                                  :post
                                  invoice-url
                                  "gid1"
-                                 (assoc data :client "foo"))]
+                                 data)]
           (is (= 200 status))))
 
       (testing "Another client with no timers"
-        (let [{:keys [status body]} (test-helpers/http-request-raw
+        (let [data                  {:client "bar"
+                                     :start (- current-time (* 60 60 24))
+                                     :end current-time
+                                     :address "baz"
+                                     :notes "quux"
+                                     :user-id->rate (vec (for [user-id user-ids]
+                                                           {:user-id user-id
+                                                            :rate    5}))
+                                     :utc-offset 330
+                                     :currency :inr
+                                     :tax-rates nil}
+              {:keys [status body]} (test-helpers/http-request-raw
                                       :post
                                       invoice-url
                                       "gid1"
-                                      (assoc data :client "bar"))]
+                                      data)]
           (is (= 200 status))))
-      
+
       (testing "Client does not exist"
-        (let [{:keys [status body]} (test-helpers/http-request-raw
-                                      :post
-                                      invoice-url
-                                      "gid1"
-                                      (assoc data :client "quux"))]
+        (let [data                  {:client "quux"
+                                     :start (- current-time (* 60 60 24))
+                                     :end current-time
+                                     :address "baz"
+                                     :notes "quux"
+                                     :user-id->rate (vec (for [user-id user-ids]
+                                                           {:user-id user-id
+                                                            :rate    5}))
+                                     :utc-offset 330
+                                     :currency :inr
+                                     :tax-rates nil}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                     :post
+                                     invoice-url
+                                     "gid1"
+                                     data)]
           (is (= 404 status))))
 
       (testing "Invalid args"
-        (let [{:keys [status body]} (test-helpers/http-request-raw
+        (let [data                  {:client "foo"
+                                     :start (- current-time (* 60 60 24))
+                                     :end current-time
+                                     :address "baz"
+                                     :notes "quux"
+                                     :user-id->rate (vec (for [user-id user-ids]
+                                                           {:user-id user-id
+                                                            :rate    5}))
+                                     :utc-offset "midget"
+                                     :currency :inr
+                                     :tax-rates nil}
+              {:keys [status body]} (test-helpers/http-request-raw
                                       :post
                                       invoice-url
                                       "gid1"
-                                      (assoc data :utc-offset "midget"))]
+                                      data)]
+          (is (= 400 status))))
+
+      (testing "Insufficient user rates"
+        (let [user-id (first user-ids)
+              data    {:client "foo"
+                       :start (- current-time (* 60 60 24))
+                       :end current-time
+                       :address "baz"
+                       :notes "quux"
+                       :user-id->rate [{:user-id user-id
+                                        :rate    3}]
+                       :utc-offset 330
+                       :currency :inr
+                       :tax-rates nil}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                      :post
+                                      invoice-url
+                                      "gid1"
+                                      data)]
           (is (= 400 status))))
 
       (finally (ws/close socket)))))
