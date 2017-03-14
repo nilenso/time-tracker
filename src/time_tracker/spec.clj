@@ -56,3 +56,14 @@
                 (partial positive-bigdec-range-gen num-places lower-bound upper-bound))))
 
 (s/def ::money-val (positive-bigdec 2))
+
+(defn normalized-pred
+  [entity-map]
+  (every? (fn [[k v]] (= k (:id v))) entity-map))
+
+(defn normalized-entities-spec
+  [entity-spec min-count]
+  (s/with-gen (s/and (s/map-of ::id entity-spec :min-count min-count)
+                     normalized-pred)
+    (fn [] (gen/fmap util/normalize-entities
+                     (gen/list (s/gen entity-spec))))))

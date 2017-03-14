@@ -11,19 +11,8 @@
 (s/def ::user-id->hours
   (s/map-of ::users-spec/id ::invoices-spec/hours))
 
-(defn normalized-pred
-  [entity-map]
-  (every? (fn [[k v]] (= k (:id v))) entity-map))
-
-(defn normalized-entities-spec
-  [entity-spec]
-  (s/with-gen (s/and (s/map-of ::core-spec/id entity-spec :min-count 1)
-                     normalized-pred)
-    (fn [] (gen/fmap util/normalize-entities
-                     (gen/list (s/gen entity-spec))))))
-
-(s/def ::users (normalized-entities-spec ::users-spec/user))
-(s/def ::timers (normalized-entities-spec ::timers-spec/timer))
+(s/def ::users (users-spec/normalized-users-spec 1))
+(s/def ::timers (timers-spec/normalized-timers-spec 0))
 
 (s/def ::add-hours-args (s/cat :user-id->hours ::user-id->hours
                              :timer ::timers-spec/timer))
@@ -96,9 +85,9 @@
         :fn build-user-id->hours-pred)
 
 (defn- user-id->rate-gen [users]
-  (gen/bind (gen/vector (s/gen ::invoices-spec/rate) (count users))
-            (fn [rates]
-              (gen/return (zipmap (keys users) rates)))))
+  (gen/return
+   (vec (for [[user-id user] users]
+          {:user-id user-id :rate (gen/generate (s/gen ::invoices-spec/rate))}))))
 
 (defn- user-amounts-args-gen []
   (gen/bind (users-timers-gen)

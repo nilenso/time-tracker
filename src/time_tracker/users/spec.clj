@@ -9,3 +9,7 @@
 
 (s/def ::user
   (s/keys :req-un [::id ::google-id ::name ::role]))
+
+(defn normalized-users-spec
+  [min-count]
+  (core-spec/normalized-entities-spec ::user min-count))

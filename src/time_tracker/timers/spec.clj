@@ -15,3 +15,7 @@
 
 (s/def ::timer
   (s/keys :req-un [::id ::project-id ::app-user-id ::started-time ::duration ::time-created ::notes]))
+
+(defn normalized-timers-spec
+  [min-count]
+  (core-spec/normalized-entities-spec ::timer min-count))
