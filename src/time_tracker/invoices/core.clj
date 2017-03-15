@@ -6,7 +6,8 @@
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [clojure.spec :as s]
-            [time-tracker.invoices.spec :as invoices-spec]))
+            [time-tracker.invoices.spec :as invoices-spec]
+            [time-tracker.spec :as core-spec]))
 
 (defn- seconds->hours
   [seconds]
@@ -69,10 +70,11 @@
 
 (defn- subtotal
   [invoice-items]
+  {:pre  [(s/valid? ::invoices-spec/items invoice-items)]
+   :post [(s/valid? ::core-spec/money-val %)]}
   (->> invoice-items
        (map :amount)
-       (apply +)
-       (util/round-to-two-places)))
+       (apply +)))
 
 (defn- tax-amounts
   [taxes subtotal-amount]
@@ -84,8 +86,10 @@
 
 (defn- grand-total
   [subtotal-amount tax-maps]
-  (-> (apply + subtotal-amount (map :amount tax-maps))
-      (util/round-to-two-places)))
+  {:pre  [(s/valid? ::core-spec/money-val subtotal-amount)
+          (s/valid? ::invoices-spec/tax-amounts tax-maps)]
+   :post [(s/valid? ::core-spec/money-val %)]}
+  (-> (apply + subtotal-amount (map :amount tax-maps))))
 
 (defn printable-invoice
   [{:keys [tax-rates start end utc-offset] :as invoice} user-id->name]
@@ -98,6 +102,7 @@
         to-date         (-> (util/epoch->clj-time end utc-offset)
                             (time/minus (time/days 1))
                             (util/to-epoch-seconds))]
+    (def *gt-output amount-due)
     (merge (select-keys invoice [:client :address :currency :utc-offset :notes])
            {:items items
             :subtotal subtotal-amount
