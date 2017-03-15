@@ -19,7 +19,7 @@
                                         (middleware/wrap-validator
                                          ::pubsub-spec/create-and-start-timer-args))}
 
-          {"start-timer"            (-> commands/start-timer!
+          {"start-timer"            (-> commands/start-timer-now!
                                         (middleware/wrap-owns-timer)
                                         (middleware/wrap-validator ::pubsub-spec/start-timer-args))
            "stop-timer"             (-> commands/stop-timer!
