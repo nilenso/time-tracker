@@ -23,7 +23,8 @@
     (let [url "http://localhost:8000/api/users/"
           {:keys [status body]} (test-helpers/http-request :get url "gid1")]
       (is (= 200 status))
-      (is (= #{"gid1" "gid2"}
+      (is (= #{{"name" "sandy", "google-id" "gid1", "role" "admin"}
+               {"name" "shaaz", "google-id" "gid2", "role" "user"}}
              (->> body
-                  (map #(get % "google-id"))
+                  (map #(select-keys % ["name ""google-id" "role"]))
                   (set)))))))
