@@ -26,5 +26,5 @@
       (is (= #{{"name" "sandy", "google-id" "gid1", "role" "admin"}
                {"name" "shaaz", "google-id" "gid2", "role" "user"}}
              (->> body
-                  (map #(select-keys % ["name ""google-id" "role"]))
+                  (map #(select-keys % ["name" "google-id" "role"]))
                   (set)))))))
