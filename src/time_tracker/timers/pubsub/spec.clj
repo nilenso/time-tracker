@@ -10,19 +10,17 @@
 (s/def ::stop-time ::core-spec/epoch)
 (s/def ::notes ::timers-spec/notes)
 
-(s/def ::start-timer-args
-  (s/keys :req-un [::timer-id ::started-time]))
+(s/def ::start-timer-now-args
+  (s/keys :req-un [::timer-id]))
 
-(s/def ::stop-timer-args
-  (s/keys :req-un [::timer-id ::stop-time]))
+(s/def ::stop-timer-now-args
+  (s/keys :req-un [::timer-id]))
 
 (s/def ::delete-timer-args
   (s/keys :req-un [::timer-id]))
 
-(s/def ::create-and-start-timer-args
-  (s/keys :req-un [::timers-spec/project-id ::started-time ::created-time ::notes]))
+(s/def ::create-and-start-timer-now-args
+  (s/keys :req-un [::timers-spec/project-id ::created-time ::notes]))
 
 (s/def ::update-timer-args
   (s/keys :req-un [::timer-id ::timers-spec/duration ::current-time ::notes]))
-
-

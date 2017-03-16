@@ -14,10 +14,10 @@
 ;; Every message pushed from the server should have a :type field, and other args
 ;; as necessary.
 
-(defn stop-timer!
-  [channel google-id connection {:keys [timer-id stop-time] :as args}]
+(defn stop-timer-now!
+  [channel google-id connection {:keys [timer-id] :as args}]
   (if-let [stopped-timer (timers-db/stop!
-                          connection timer-id stop-time)]
+                          connection timer-id (util/current-epoch-seconds))]
     (io/broadcast-state-change! google-id stopped-timer :update)
     (io/send-error! channel "Could not stop timer")))
 
@@ -31,9 +31,8 @@
               timers-to-stop (filter #(not= (:id %) timer-id)
                                      started-timers)]
           (doseq [timer timers-to-stop]
-            (stop-timer! channel google-id connection
-                         {:timer-id  (:id timer)
-                          :stop-time started-time}))))
+            (stop-timer-now! channel google-id connection
+                             {:timer-id  (:id timer)}))))
     (io/send-error! channel "Could not start timer")))
 
 (defn create-and-start-timer-now!

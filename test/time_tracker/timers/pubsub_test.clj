@@ -63,7 +63,7 @@
           (is (= (:id timer1) (:id stop-response)))
           (is (not (nil? :started-time )))
           (is (nil? (:started-time stop-response)))))
-      
+
       (finally (ws/close socket)))))
 
 (deftest stop-timer-command-test
@@ -80,7 +80,6 @@
                                                   "gid2"
                                                   current-time
                                                   "")
-        stop-time              (+ current-time 7)
         [response-chan socket] (test-helpers/make-ws-connection "gid1")]
     (timers-db/start! (db/connection) (:id timer1) current-time)
     (timers-db/start! (db/connection) (:id timer2) current-time)
@@ -88,18 +87,14 @@
       (testing "Owned timer"
         (ws/send-msg socket (json/encode
                              {:command   "stop-timer"
-                              :timer-id  (:id timer1)
-                              :stop-time stop-time}))
+                              :timer-id  (:id timer1)}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (s/valid? ::timers-spec/duration (:duration command-response)))
-          (is (= 7
-                 (:duration command-response)))))
+          (is (s/valid? ::timers-spec/duration (:duration command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode
                              {:command   "stop-timer"
-                              :timer-id  (:id timer2)
-                              :stop-time stop-time}))
+                              :timer-id  (:id timer2)}))
         (let [command-response (test-helpers/try-take!! response-chan)]
           (is (:error command-response))))
       (finally (ws/close socket)))))
@@ -143,7 +138,7 @@
                               :timer-id  (:id timer2)}))
         (let [command-response (test-helpers/try-take!! response-chan)]
           (is (:error command-response))))
-      
+
       (finally (ws/close socket)))))
 
 (deftest create-and-start-timer-command-test
@@ -205,7 +200,7 @@
                                 :notes        "robin hood in reverse"}))
           (let [command-response (test-helpers/try-take!! response-chan)]
             (is (:error command-response))))
-      
+
       (finally (ws/close socket)))))
 
 (deftest update-timer-command-test
@@ -264,7 +259,7 @@
                              {:command "ping"}))
         (let [response (test-helpers/try-take!! response-chan)]
           (is (= "pong" (:type response)))))
-      
+
       (finally (ws/close socket)))))
 
 
@@ -295,7 +290,7 @@
                          (async/timeout 100) ::not-received)]
           (is (= ::not-received
                  result3))))
-      
+
       (finally
         (ws/close socket1)
         (ws/close socket2)
