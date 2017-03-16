@@ -28,8 +28,8 @@
            "delete-timer"           (-> commands/delete-timer!
                                         (middleware/wrap-owns-timer)
                                         (middleware/wrap-validator ::pubsub-spec/delete-timer-args))
-           "update-timer"           (-> commands/update-timer!
+           "update-timer"           (-> commands/update-timer-now!
                                         (middleware/wrap-owns-timer)
                                         (middleware/wrap-validator
-                                         ::pubsub-spec/update-timer-args))
+                                         ::pubsub-spec/update-timer-now-args))
            "ping"                   commands/receive-ping!})))

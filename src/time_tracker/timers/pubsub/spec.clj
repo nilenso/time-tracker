@@ -4,9 +4,7 @@
             [time-tracker.timers.spec :as timers-spec]))
 
 (s/def ::timer-id ::timers-spec/id)
-(s/def ::started-time ::timers-spec/started-time-not-nilable)
 (s/def ::created-time ::timers-spec/time-created)
-(s/def ::current-time ::core-spec/epoch)
 (s/def ::stop-time ::core-spec/epoch)
 (s/def ::notes ::timers-spec/notes)
 
@@ -22,5 +20,5 @@
 (s/def ::create-and-start-timer-now-args
   (s/keys :req-un [::timers-spec/project-id ::created-time ::notes]))
 
-(s/def ::update-timer-args
-  (s/keys :req-un [::timer-id ::timers-spec/duration ::current-time ::notes]))
+(s/def ::update-timer-now-args
+  (s/keys :req-un [::timer-id ::timers-spec/duration ::notes]))

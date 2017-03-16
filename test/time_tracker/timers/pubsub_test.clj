@@ -217,20 +217,17 @@
                                                   "gid2"
                                                   current-time
                                                   "wool heater")
-        [response-chan socket] (test-helpers/make-ws-connection "gid1")
-        update-time            (+ current-time 17)]
+        [response-chan socket] (test-helpers/make-ws-connection "gid1")]
     (try
       (testing "Owned timer"
         (timers-db/start! (db/connection) (:id timer1) current-time)
         (ws/send-msg socket (json/encode
                              {:command      "update-timer"
                               :timer-id     (:id timer1)
-                              :current-time update-time
                               :duration     37
                               :notes        "brotherhood of the snake"}))
         (let [command-response (test-helpers/try-take!! response-chan)]
           (is (= (:id timer1) (:id command-response)))
-          (is (= update-time (:started-time command-response)))
           (is (= 37
                  (:duration command-response)))
           (is (= "brotherhood of the snake"
@@ -242,7 +239,6 @@
         (ws/send-msg socket (json/encode
                              {:command      "update-timer"
                               :timer-id     (:id timer2)
-                              :current-time update-time
                               :duration     37
                               :notes        "baz"}))
         (let [command-response (test-helpers/try-take!! response-chan)]

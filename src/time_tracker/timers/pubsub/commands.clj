@@ -51,13 +51,13 @@
                        :id   timer-id})
     (io/send-error! channel "Could not delete timer")))
 
-(defn update-timer!
-  [channel google-id connection {:keys [timer-id duration current-time notes] :as args}]
+(defn update-timer-now!
+  [channel google-id connection {:keys [timer-id duration notes] :as args}]
   (if-let [updated-timer
            (timers-db/update! connection
                                        timer-id
                                        duration
-                                       current-time
+                                       (util/current-epoch-seconds)
                                        notes)]
     (io/broadcast-state-change! google-id updated-timer :update)
     (io/send-error! channel "Could not update duration")))
