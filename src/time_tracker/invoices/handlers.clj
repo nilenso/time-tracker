@@ -56,10 +56,9 @@
 (defn pdf-invoice
   [{:keys [users] :as invoice-data}]
   (let [invoice            (invoices-core/invoice invoice-data)
-        user-id->name      (names-by-id users)
-        printable-invoice  (invoices-core/printable-invoice invoice user-id->name)
+        printable-invoice  (invoices-core/printable-invoice invoice (names-by-id users))
         pdf-stream         (ring-io/piped-input-stream
-                                (partial invoices-core/generate-pdf printable-invoice))]
+                            (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 

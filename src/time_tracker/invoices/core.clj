@@ -61,9 +61,9 @@
   (str (currency-symbols currency " ") amount))
 
 (defn- invoice-items
-  [{:keys [user-hours currency]} user-id->name]
+  [{:keys [user-hours currency]} names-by-id]
   (for [{:keys [id hours rate]} user-hours]
-    {:name   (user-id->name id)
+    {:name   (names-by-id id)
      :hours  hours
      :rate   rate
      :amount (util/round-to-two-places (* hours rate))}))
@@ -92,8 +92,8 @@
   (-> (apply + subtotal-amount (map :amount tax-maps))))
 
 (defn printable-invoice
-  [{:keys [tax-rates start end utc-offset] :as invoice} user-id->name]
-  (let [items           (invoice-items invoice user-id->name)
+  [{:keys [tax-rates start end utc-offset] :as invoice} names-by-id]
+  (let [items           (invoice-items invoice names-by-id)
         subtotal-amount (subtotal items)
         taxes           (tax-amounts tax-rates subtotal-amount)
         amount-due      (grand-total subtotal-amount taxes)

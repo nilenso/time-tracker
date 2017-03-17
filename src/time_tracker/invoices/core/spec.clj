@@ -114,12 +114,12 @@
         :ret ::invoices-spec/user-hours
         :fn user-amounts-pred)
 
-(s/def ::user-id->name (s/fspec :args (s/cat :id ::users-spec/id)
-                                :ret ::users-spec/name))
+(s/def ::names-by-id (s/fspec :args (s/cat :id ::users-spec/id)
+                              :ret ::users-spec/name))
 
 (s/fdef invoices-core/invoice-items
         :args (s/cat :invoice ::invoices-spec/invoice
-                     :user-id->name ::user-id->name)
+                     :names-by-id ::names-by-id)
         :ret ::invoices-spec/items)
 
 (s/fdef invoices-core/subtotal
@@ -145,5 +145,5 @@
 
 (s/fdef invoices-core/printable-invoice
         :args (s/cat :invoice ::invoices-spec/invoice
-                     :user-id->name ::user-id->name)
+                     :names-by-id ::names-by-id)
         :ret ::invoices-spec/printable-invoice)
