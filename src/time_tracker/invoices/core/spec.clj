@@ -128,9 +128,9 @@
 
 (defn- tax-amounts-pred
   [{:keys [args ret]}]
-  (= (into {} (apply merge (map #(hash-map (:tax-name %) (:tax-percentage %)) (:tax-rates args))))
-     (zipmap (map :name ret)
-             (map :percentage ret))))
+  (= (into {} (map (juxt :tax-name :tax-percentage) (:tax-rates args)))
+     (zipmap  (map :name ret)
+              (map :percentage ret))))
 
 (s/fdef invoices-core/tax-amounts
         :args (s/cat :tax-rates ::invoices-spec/tax-rates

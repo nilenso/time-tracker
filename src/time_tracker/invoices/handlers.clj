@@ -49,18 +49,17 @@
     (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params-coerced)
     coerced-body))
 
-(defn- id->name
+(defn- names-by-id
   [normalized-entities]
   (fmap :name normalized-entities))
 
 (defn pdf-invoice
   [{:keys [users] :as invoice-data}]
-  (let [invoice       (invoices-core/invoice invoice-data)
-        user-id->name (id->name users)
-        pdf-stream    (ring-io/piped-input-stream
-                        (partial invoices-core/printable-invoice->pdf
-                                 (invoices-core/printable-invoice invoice
-                                                                  user-id->name)))]
+  (let [invoice            (invoices-core/invoice invoice-data)
+        user-id->name      (names-by-id users)
+        printable-invoice  (invoices-core/printable-invoice invoice user-id->name)
+        pdf-stream         (ring-io/piped-input-stream
+                                (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 

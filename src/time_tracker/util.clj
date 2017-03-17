@@ -1,10 +1,9 @@
 (ns time-tracker.util
   (:require [clj-time.core :as time]
-            [clj-time.coerce]
+            [clj-time.coerce :as time-coerce]
             [environ.core :as environ]
             [clojure.walk :as walk]
-            [clojure.spec :as s]
-            [clj-time.core :as clj-time]))
+            [clojure.spec :as s]))
 
 (defn statement-success?
   [result]
@@ -14,7 +13,7 @@
 
 (defn to-epoch-seconds
   [time-obj]
-  (clj-time.coerce/to-epoch time-obj))
+  (time-coerce/to-epoch time-obj))
 
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))
@@ -98,11 +97,11 @@
 (defn utc-offset->clj-timezone
   "`utc-offset` should be in minutes."
   [utc-offset]
-  (clj-time/time-zone-for-offset (int (/ utc-offset 60))
+  (time/time-zone-for-offset (int (/ utc-offset 60))
                                  (rem utc-offset 60)))
 
 (defn epoch->clj-time
   "`utc-offset` should be in minutes."
   [epoch utc-offset]
   (-> (clj-time.coerce/from-long (* 1000 (long epoch)))
-      (clj-time/to-time-zone (utc-offset->clj-timezone utc-offset))))
+      (time/to-time-zone (utc-offset->clj-timezone utc-offset))))

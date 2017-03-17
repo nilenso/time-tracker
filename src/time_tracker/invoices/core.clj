@@ -36,7 +36,7 @@
   [users timers user-id->rate-vector]
   (let [user-ids       (keys users)
         user-id->hours (build-user-id->hours user-ids timers)
-        user-id->rate (into {} (map #(hash-map (:user-id %) (:rate %)) user-id->rate-vector))]
+        user-id->rate  (into {} (map (juxt :user-id :rate) user-id->rate-vector))]
     (for [user-id user-ids]
       {:id    user-id
        :rate  (user-id->rate user-id)
@@ -53,12 +53,12 @@
 
 ;; TODO: Map these to their symbols and render ₹ properly
 (def currency-symbols
-  {:usd "USD "
-   :inr "INR "})
+  {:usd "USD"
+   :inr "INR"})
 
 (defn- money-str
   [currency amount]
-  (str (currency-symbols currency) amount))
+  (str (currency-symbols currency " ") amount))
 
 (defn- invoice-items
   [{:keys [user-hours currency]} user-id->name]
@@ -120,7 +120,7 @@
                          (util/utc-offset->clj-timezone utc-offset))
                        (util/epoch->clj-time date-epoch utc-offset)))
 
-(defn printable-invoice->pdf
+(defn generate-pdf
   "Generates a PDF from a printable invoice."
   [{:keys [utc-offset currency] :as printable-invoice} out]
   {:pre [(seq (:items printable-invoice))]}
