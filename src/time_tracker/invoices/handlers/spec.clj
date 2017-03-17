@@ -6,8 +6,8 @@
             [time-tracker.timers.spec :as timers-spec]))
 
 (s/def ::rate number?)
-(s/def ::user-id->rate-map-raw (s/keys :req-un [::invoices-spec/user-id ::rate]))
-(s/def ::user-id->rate (s/coll-of ::user-id->rate-map-raw))
+(s/def ::user-rate-map (s/keys :req-un [::invoices-spec/user-id ::rate]))
+(s/def ::user-rates (s/coll-of ::user-rate-map))
 
 (s/def ::tax-percentage number?)
 (s/def ::tax-rate-map-raw (s/keys :req-un [::invoices-spec/tax-name ::tax-percentage]))
@@ -19,7 +19,7 @@
   (s/merge (s/keys :req-un [::invoices-spec/client
                             ::invoices-spec/address
                             ::invoices-spec/notes
-                            ::user-id->rate
+                            ::user-rates
                             ::tax-rates
                             ::currency
                             ::core-spec/utc-offset])
@@ -29,15 +29,15 @@
   (s/merge (s/keys :req-un [::invoices-spec/client
                             ::invoices-spec/address
                             ::invoices-spec/notes
-                            ::invoices-spec/user-id->rate
+                            ::invoices-spec/user-rates
                             ::invoices-spec/tax-rates
                             ::invoices-spec/currency
                             ::core-spec/utc-offset])
            ::invoices-spec/date-range))
 
 (defn- invoice-data-pred
-  [{:keys [user-id->rate users] :as invoice-data}]
-  (let [rate-user-ids  (set (map :user-id user-id->rate))
+  [{:keys [user-rates users] :as invoice-data}]
+  (let [rate-user-ids  (set (map :user-id user-rates))
         users-user-ids (set (keys users))]
     (= rate-user-ids users-user-ids)))
 

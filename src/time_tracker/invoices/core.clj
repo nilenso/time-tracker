@@ -33,23 +33,23 @@
 (defn- user-hours
   "Generates a seq of {:id :rate :hours}.
   There will be a row for every user in `users`."
-  [users timers user-id->rate-vector]
-  (let [user-ids       (keys users)
-        user-id->hours (build-user-id->hours user-ids timers)
-        user-id->rate  (into {} (map (juxt :user-id :rate) user-id->rate-vector))]
+  [users timers user-rates]
+  (let [user-ids     (keys users)
+        hours-by-id  (build-user-id->hours user-ids timers)
+        rates-by-id  (into {} (map (juxt :user-id :rate) user-rates))]
     (for [user-id user-ids]
       {:id    user-id
-       :rate  (user-id->rate user-id)
-       :hours (user-id->hours user-id)})))
+       :rate  (rates-by-id user-id)
+       :hours (hours-by-id user-id)})))
 
 (defn invoice
   "Constructs an invoice"
-  [{:keys [users timers user-id->rate] :as invoice-params}]
+  [{:keys [users timers user-rates] :as invoice-params}]
   {:pre  [(seq users)]
    :post [(s/valid? ::invoices-spec/invoice %)]}
   (merge (select-keys invoice-params [:start :end :client :address
                                       :notes :tax-rates :currency :utc-offset])
-         {:user-hours (user-hours users timers user-id->rate)}))
+         {:user-hours (user-hours users timers user-rates)}))
 
 ;; TODO: Map these to their symbols and render ₹ properly
 (def currency-symbols

@@ -9,16 +9,16 @@
 
 (s/def ::rate ::core-spec/money-val)
 (s/def ::user-id ::users-spec/id)
-(s/def ::user-id->rate-map (s/keys :req-un [::user-id ::rate]))
+(s/def ::user-rate-map (s/keys :req-un [::user-id ::rate]))
 
-(defn- user-id->rate-pred
-  [user-id->rate]
-  (let [ids        (mapv :user-id user-id->rate)
+(defn- user-rates-pred
+  [user-rates]
+  (let [ids        (mapv :user-id user-rates)
         unique-ids (set ids)]
     (= (count ids) (count unique-ids))))
 
-(s/def ::user-id->rate (s/and (s/coll-of ::user-id->rate-map :min-count 1)
-                              user-id->rate-pred))
+(s/def ::user-rates (s/and (s/coll-of ::user-rate-map :min-count 1)
+                           user-rates-pred))
 
 (s/def ::user-hours-row
   (s/keys :req-un [::users-spec/id ::hours ::rate]))

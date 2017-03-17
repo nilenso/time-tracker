@@ -67,9 +67,9 @@
                                 :end current-time
                                 :address "baz"
                                 :notes "quux"
-                                :user-id->rate (vec (for [user-id user-ids]
-                                                      {:user-id user-id
-                                                       :rate    5}))
+                                :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
                                 :utc-offset 330
                                 :currency :inr
                                 :tax-rates nil}
@@ -86,9 +86,9 @@
                                      :end current-time
                                      :address "baz"
                                      :notes "quux"
-                                     :user-id->rate (vec (for [user-id user-ids]
-                                                           {:user-id user-id
-                                                            :rate    5}))
+                                     :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
                                      :utc-offset 330
                                      :currency :inr
                                      :tax-rates nil}
@@ -105,9 +105,9 @@
                                      :end current-time
                                      :address "baz"
                                      :notes "quux"
-                                     :user-id->rate (vec (for [user-id user-ids]
-                                                           {:user-id user-id
-                                                            :rate    5}))
+                                     :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
                                      :utc-offset 330
                                      :currency :inr
                                      :tax-rates nil}
@@ -124,9 +124,9 @@
                                      :end current-time
                                      :address "baz"
                                      :notes "quux"
-                                     :user-id->rate (vec (for [user-id user-ids]
-                                                           {:user-id user-id
-                                                            :rate    5}))
+                                     :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
                                      :utc-offset "midget"
                                      :currency :inr
                                      :tax-rates nil}
@@ -144,8 +144,8 @@
                        :end current-time
                        :address "baz"
                        :notes "quux"
-                       :user-id->rate [{:user-id user-id
-                                        :rate    3}]
+                       :user-rates [{:user-id user-id
+                                     :rate    3}]
                        :utc-offset 330
                        :currency :inr
                        :tax-rates nil}

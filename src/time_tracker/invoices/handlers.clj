@@ -43,7 +43,7 @@
   ;; Validate the un-coerced data
   (util/validate-spec request-body ::handlers-spec/generate-invoice-params-raw)
   (let [coerced-body (-> request-body
-                         (update :user-id->rate bigdecify-rates)
+                         (update :user-rates bigdecify-rates)
                          (update :tax-rates bigdecify-taxes)
                          (update :currency keyword))]
     (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params-coerced)

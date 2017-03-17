@@ -84,7 +84,7 @@
         :ret ::user-id->hours
         :fn build-user-id->hours-pred)
 
-(defn- user-id->rate-gen [users]
+(defn- user-rates-gen [users]
   (gen/return
    (vec (for [[user-id user] users]
           {:user-id user-id :rate (gen/generate (s/gen ::invoices-spec/rate))}))))
@@ -95,7 +95,7 @@
               (gen/tuple
                 (gen/return users)
                 (gen/return timers)
-                (user-id->rate-gen users)))))
+                (user-rates-gen users)))))
 
 (defn- user-amounts-pred
   [{:keys [args ret]}]
@@ -109,7 +109,7 @@
 (s/fdef invoices-core/user-hours
         :args (s/with-gen (s/cat :users ::users
                                  :timers ::timers
-                                 :user-id->rate ::invoices-spec/user-id->rate)
+                                 :user-rates ::invoices-spec/user-rates)
                           user-amounts-args-gen)
         :ret ::invoices-spec/user-hours
         :fn user-amounts-pred)
