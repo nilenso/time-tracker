@@ -102,7 +102,6 @@
         to-date         (-> (util/epoch->clj-time end utc-offset)
                             (time/minus (time/days 1))
                             (util/to-epoch-seconds))]
-    (def *gt-output amount-due)
     (merge (select-keys invoice [:client :address :currency :utc-offset :notes])
            {:items items
             :subtotal subtotal-amount
