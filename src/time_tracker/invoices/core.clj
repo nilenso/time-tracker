@@ -58,7 +58,7 @@
 
 (defn- money-str
   [currency amount]
-  (str (currency-symbols currency " ") amount))
+  (str (currency-symbols currency) " " amount))
 
 (defn- invoice-items
   [{:keys [user-hours currency]} names-by-id]
