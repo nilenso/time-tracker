@@ -15,3 +15,5 @@ pg.log
 db/
 logs/
 build.xml
+.idea/
+time-tracker.iml

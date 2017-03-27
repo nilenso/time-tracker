@@ -7,16 +7,12 @@
             [time-tracker.util :as util]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
-            [time-tracker.projects.core :as projects-core]))
+            [time-tracker.projects.core :as projects-core]
+            [clojure.algo.generic.functor :refer [fmap]]
+            [ring.util.io :as ring-io]))
 
 ;; Download invoice endpoint
-;; /download/invoice/?start=<some-epoch>&end=<some-other-epoch>
-
-(defn- coerce-and-validate-generate-invoice-params
-  [params]
-  (let [coerced-params (web-util/coerce-epoch-range-params params)]
-    (util/validate-spec coerced-params ::handlers-spec/generate-invoice-params)
-    coerced-params))
+;; POST /download/invoice/
 
 (defn- get-client-projects
   [connection client]
@@ -25,18 +21,59 @@
        (util/normalize-entities)))
 
 (defn- get-timers-to-invoice
-  [connection start end projects]
+  [connection start end invoice-project?]
   (->> (timers-db/retrieve-between connection start end)
-       (filter #(projects (:project-id %)))
+       (filter #(invoice-project? (:project-id %)))
        (util/normalize-entities)))
 
+(defn- bigdecify-rates
+  [raw-rates-vector]
+  (map #(update % :rate  util/round-to-two-places) raw-rates-vector))
+
+(defn- bigdecify-taxes
+  "Converts tax-percentage to bigdec and returns nil if argument is nil."
+  [raw-taxes-vector]
+  (->> raw-taxes-vector
+       (map #(update % :tax-percentage util/round-to-two-places))
+       not-empty))
+
+(defn- coerce-and-validate-generate-invoice-body
+  "Coerces rates and tax percentages to bigdec and currency strings to keywords, and validates data."
+  [request-body]
+  ;; Validate the un-coerced data
+  (util/validate-spec request-body ::handlers-spec/generate-invoice-params-raw)
+  (let [coerced-body (-> request-body
+                         (update :user-rates bigdecify-rates)
+                         (update :tax-rates bigdecify-taxes)
+                         (update :currency keyword))]
+    (util/validate-spec coerced-body ::handlers-spec/generate-invoice-params-coerced)
+    coerced-body))
+
+(defn- names-by-id
+  [normalized-entities]
+  (fmap :name normalized-entities))
+
+(defn pdf-invoice
+  [{:keys [users] :as invoice-data}]
+  (let [invoice            (invoices-core/invoice invoice-data)
+        printable-invoice  (invoices-core/printable-invoice invoice (names-by-id users))
+        pdf-stream         (ring-io/piped-input-stream
+                            (partial invoices-core/generate-pdf printable-invoice))]
+    (-> (res/response pdf-stream)
+        (res/content-type "application/pdf"))))
+
 (defn generate-invoice
-  [{:keys [params]} connection]
-  (let [{:keys [start end client]} (coerce-and-validate-generate-invoice-params params)
-        projects                   (get-client-projects connection client)]
-    (if (empty? projects)
+  [{:keys [body]} connection]
+  (let [{:keys [start end client] :as validated-body}
+        (coerce-and-validate-generate-invoice-body body)
+        projects     (get-client-projects connection client)
+        users        (util/normalize-entities (users-db/retrieve-all connection))
+        timers       (get-timers-to-invoice connection start end projects)
+        invoice-data (merge validated-body
+                            {:users  users
+                             :timers timers})]
+    (util/validate-spec invoice-data ::handlers-spec/invoice-data)
+    (if (or (empty? projects)
+            (empty? users))
       web-util/error-not-found
-      (let [users      (util/normalize-entities (users-db/retrieve-all connection))
-            timers     (get-timers-to-invoice connection start end projects)
-            csv-string (invoices-core/generate-csv users timers)]
-        (res/response csv-string)))))
+      (pdf-invoice invoice-data))))

@@ -21,24 +21,24 @@
                  [ring/ring-defaults "0.2.1"]
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
-
-                 [org.clojure/test.check "0.9.0"]
-                 [org.clojure/core.async "0.2.395"]
-                 [stylefruits/gniazdo "1.0.0"]]
+                 [clj-pdf "2.2.16"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
-  :profiles {:dev {:dependencies [[test2junit "1.2.2"]]
+  :profiles {:dev {:dependencies [[test2junit "1.2.2"]
+                                  [org.clojure/test.check "0.9.0"]
+                                  [org.clojure/core.async "0.2.395"]
+                                  [stylefruits/gniazdo "1.0.0"]]
                    :plugins      [[test2junit "1.2.2"]]
                    :test2junit-output-dir ~(or (System/getenv "CIRCLE_TEST_REPORTS")
                                                "target/test2junit")}
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
              :default [:base :system :user :provided :dev :dev-environ]
-             :uberjar {:aot :all}}
+             :uberjar {:aot [#"time-tracker.*"]}}
 
   :aliases {"test"       ["with-profile" "+test-environ" "test"]
             "test2junit" ["with-profile" "+test-environ" "test2junit"]
             "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
-  :monkeypatch-clojure-test false)
-
+  :monkeypatch-clojure-test false
+  :uberjar-exclusions [#"dev.*"])

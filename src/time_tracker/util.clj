@@ -1,6 +1,6 @@
 (ns time-tracker.util
   (:require [clj-time.core :as time]
-            [clj-time.coerce]
+            [clj-time.coerce :as time-coerce]
             [environ.core :as environ]
             [clojure.walk :as walk]
             [clojure.spec :as s]))
@@ -13,7 +13,7 @@
 
 (defn to-epoch-seconds
   [time-obj]
-  (clj-time.coerce/to-epoch time-obj))
+  (time-coerce/to-epoch time-obj))
 
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))
@@ -61,8 +61,47 @@
   (into {}
         (for [[k v] m] [(transform-fn k) v])))
 
+(defn raise-validation-error [data]
+  (throw (ex-info "Validation failed" (merge {:event :validation-failed}
+                                             data))))
+
 (defn validate-spec
   [value spec]
   (when-let [failure (s/explain-data spec value)]
-    (throw (ex-info "Validation failed" {:event   :validation-failed
-                                         :failure failure}))))
+    (raise-validation-error {:failure (pr-str failure)})))
+
+(defn parse-int
+  "Parses either a string or a keyword to an int"
+  [string-or-keyword]
+  (Integer/parseInt (name string-or-keyword)))
+
+(defn bigdec-places
+  "Coerces to a bigdec with `places` decimal places."
+  [number places]
+  (.setScale (bigdec number) places java.math.BigDecimal/ROUND_HALF_UP))
+
+(defn round-to-two-places
+  "Rounds a number to two decimal places."
+  [monetary-value]
+  (bigdec-places monetary-value 2))
+
+(defn divide-money
+  "Divides two bigdecs, rounding to two places.
+  Rounds the result if it is recurring."
+  [a b]
+  (.divide a b 2 java.math.BigDecimal/ROUND_HALF_UP))
+
+(defn eq-with-tolerance [a b tolerance]
+  (< (.abs (- a b)) tolerance))
+
+(defn utc-offset->clj-timezone
+  "`utc-offset` should be in minutes."
+  [utc-offset]
+  (time/time-zone-for-offset (int (/ utc-offset 60))
+                                 (rem utc-offset 60)))
+
+(defn epoch->clj-time
+  "`utc-offset` should be in minutes."
+  [epoch utc-offset]
+  (-> (clj-time.coerce/from-long (* 1000 (long epoch)))
+      (time/to-time-zone (utc-offset->clj-timezone utc-offset))))

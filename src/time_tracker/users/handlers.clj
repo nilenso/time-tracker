@@ -11,3 +11,9 @@
                                            (:sub credentials))]
     (res/response user-profile)
     web-util/error-not-found))
+
+;; /users/
+
+(defn list-all
+  [request connection]
+  (res/response (users-db/retrieve-all connection)))

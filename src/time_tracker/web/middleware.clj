@@ -22,17 +22,18 @@
   [:server-port :server-name :remote-addr :uri :query-string :scheme
    :headers :request-method :body :params])
 
-;; Define a custom JSON encoder for the AsyncChannel
 (add-encoder AsyncChannel encode-str)
+(add-encoder java.io.InputStream encode-str)
 
 (defn wrap-log-request-response
   [handler]
   (fn [request]
     (let [response (handler request)]
       (log/debug {:event    ::request-response
-                  :request  (select-keys request
-                                         standard-ring-request-keys)
-                  :response response})
+                  :request  (select-keys request standard-ring-request-keys)
+                  :response (if (instance? java.io.InputStream (:body response))
+                              (assoc response :body-type :input-stream)
+                              response)})
       response)))
 
 (defn wrap-error-logging
@@ -46,7 +47,7 @@
             (log/error {:event   ::nil-response
                         :request loggable-request})
             web-util/error-internal-server-error))
-        (catch Exception ex
+        (catch Throwable ex
           (log/error ex {:event   ::unhandled-exception
                          :request loggable-request})
           web-util/error-internal-server-error)))))
