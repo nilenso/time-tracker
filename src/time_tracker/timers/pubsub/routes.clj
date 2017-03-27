@@ -14,22 +14,22 @@
 (def command-map
   (wrap-middlewares
    [middleware/wrap-exception middleware/wrap-transaction]
-   (merge {"create-and-start-timer" (-> commands/create-and-start-timer!
+   (merge {"create-and-start-timer" (-> commands/create-and-start-timer-now!
                                         ;;(middleware/wrap-can-create-timer)
                                         (middleware/wrap-validator
-                                         ::pubsub-spec/create-and-start-timer-args))}
+                                         ::pubsub-spec/create-and-start-timer-now-args))}
 
-          {"start-timer"            (-> commands/start-timer!
+          {"start-timer"            (-> commands/start-timer-now!
                                         (middleware/wrap-owns-timer)
-                                        (middleware/wrap-validator ::pubsub-spec/start-timer-args))
-           "stop-timer"             (-> commands/stop-timer!
+                                        (middleware/wrap-validator ::pubsub-spec/start-timer-now-args))
+           "stop-timer"             (-> commands/stop-timer-now!
                                         (middleware/wrap-owns-timer)
-                                        (middleware/wrap-validator ::pubsub-spec/stop-timer-args))
+                                        (middleware/wrap-validator ::pubsub-spec/stop-timer-now-args))
            "delete-timer"           (-> commands/delete-timer!
                                         (middleware/wrap-owns-timer)
                                         (middleware/wrap-validator ::pubsub-spec/delete-timer-args))
-           "update-timer"           (-> commands/update-timer!
+           "update-timer"           (-> commands/update-timer-now!
                                         (middleware/wrap-owns-timer)
                                         (middleware/wrap-validator
-                                         ::pubsub-spec/update-timer-args))
+                                         ::pubsub-spec/update-timer-now-args))
            "ping"                   commands/receive-ping!})))
