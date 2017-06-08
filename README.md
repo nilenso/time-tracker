@@ -2,6 +2,66 @@
 
 Be nilenso's time tracking tool.
 
+## Dev installation
+1. Set up database
+* Install Postgres
+* Create the databases, time_tracker and time_tracker_test.
+You should not need to make any changes to pg_hba.conf, 
+for the local development the defaults should suffice.
+
+2. Set up backend
+* Clone https://github.com/nilenso/time-tracker
+* Copy the provided time-tracker/profiles.clj.sample to time-tracker/profiles.clj
+* The only change you should need to make here is provide your own Google Client Id.
+Google Client Id is required because we use Google for SSO.
+(TODO: Insert Google link for creating this)
+* Run "lein deps" followed by __lein migrate__.
+* Start the server with __lein run__. This serves the application at port 8000
+
+3. Set up frontend
+* Clone https://github.com/nilenso/time-tracker-web
+* Change the Google client Id in time-tracker-web/config/webpack.config.dev.js 
+to the one you created in 2.
+* Start the application with __npm start__. This serves the application at port 3000.
+
+4. Set up Nginx
+* Install Nginx. Modify its configuration
+* so that it starts up at port 80 from its default 8080
+* proxies requests to http://localhost to http://localhost:3000
+To do this, put the following in nginx.conf server block
+```
+	location / {
+		# Proxy to frontend
+		proxy_pass http://127.0.0.1:3000;
+	}
+``` 
+* api requests are proxied to the backend started from 1.
+To do this, put the following in nginx.conf Server block
+```
+	location /api/timers/ws-connect/ {
+		# Websockets tunneling
+		proxy_pass http://127.0.0.1:8000;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "Upgrade";
+	}
+
+	location /api/ {
+		# Proxy to backend
+		proxy_pass http://127.0.0.1:8000;
+	}
+
+	location /download/ {
+		# Proxy to backend
+		proxy_pass http://127.0.0.1:8000;
+	}
+```
+Reload Nginx.
+
+5. Verify everything
+Navigating http://localhost:3000 should open up a Google Authorization page.
+Choose your SSO id to move on to the TimeTracker home page.
+
 ## Production Installation
 Please use Ubuntu 16.04 LTS.
 
