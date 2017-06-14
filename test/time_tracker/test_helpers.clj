@@ -6,7 +6,14 @@
             [gniazdo.core :as ws]
             [clojure.test :as test]
             [clojure.spec.test :as stest]
-            [time-tracker.util :as util]))
+            [time-tracker.util :as util]
+            [clojure.string :as str]))
+
+(def test-port (Integer/parseInt (util/from-config :port)))
+(def test-host (str/join ["http://localhost:" test-port "/"]))
+(def test-host-ws (str/join ["ws://localhost:" test-port "/"]))
+(def test-api (str/join [test-host "api/"]))
+(def test-ws-connect-url (str/join [test-host-ws "api/timers/ws-connect/"]))
 
 (defn http-request-raw
   "Makes a HTTP request. Does not process the body."
@@ -38,7 +45,7 @@
   "Opens a connection and completes the auth handshake."
   [google-id]
   (let [response-chan (chan 5)
-        socket        (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+        socket        (ws/connect test-ws-connect-url
                                   :on-receive #(put! response-chan
                                                      (json/decode % keyword)))]
     (ws/send-msg socket (json/encode

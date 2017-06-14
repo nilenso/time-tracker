@@ -1,5 +1,6 @@
 (ns time-tracker.users.functional-test
   (:require [clojure.test :refer :all]
+            [clojure.string :as str]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.test-helpers :as test-helpers]
@@ -8,9 +9,10 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
+(def users-api (str/join [test-helpers/test-api "users/"]))
 
 (deftest retrieve-self-user-details-test
-  (let [url                   "http://localhost:8000/api/users/me/"
+  (let [url                   (str/join [users-api "me/"])
         {:keys [status body]} (test-helpers/http-request :get url "gid1")]
     (is (= 200 status))
     (is (= "gid1" (get body "google-id")))
@@ -20,7 +22,7 @@
   (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                ["shaaz" "gid2" "user"])
   (testing "All the users in the database should appear in the response"
-    (let [url "http://localhost:8000/api/users/"
+    (let [url users-api
           {:keys [status body]} (test-helpers/http-request :get url "gid1")]
       (is (= 200 status))
       (is (= #{{"name" "sandy", "google-id" "gid1", "role" "admin"}

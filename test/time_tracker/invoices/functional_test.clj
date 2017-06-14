@@ -9,11 +9,11 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.string :as str]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
-
 
 (defn- create-timer-over-ws
   [ws-chan socket project-id current-time duration]
@@ -43,9 +43,9 @@
 
 
 (deftest download-invoice-test
-  (let [project-url           "http://localhost:8000/api/projects/"
-        invoice-url           "http://localhost:8000/download/invoice/"
-        users-url             "http://localhost:8000/api/users/"
+  (let [project-url           (str/join [test-helpers/test-api "projects/"])
+        invoice-url           (str/join [test-helpers/test-host "download/invoice/"])
+        users-url             (str/join [test-helpers/test-api "users/"])
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
         _                     (test-helpers/http-request :post project-url "gid1"

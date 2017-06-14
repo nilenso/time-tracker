@@ -1,6 +1,7 @@
 (ns time-tracker.timers.pubsub-test
   (:require [clojure.test :refer :all]
             [clojure.core.async :refer [chan alt!! put!] :as async]
+            [clojure.string :as str]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
@@ -15,8 +16,6 @@
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
-
-(def connect-url "ws://localhost:8000/api/timers/ws-connect/")
 
 (deftest start-timer-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]

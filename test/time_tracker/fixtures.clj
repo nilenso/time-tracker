@@ -1,11 +1,14 @@
 (ns time-tracker.fixtures
   (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
             [time-tracker.migration :refer [migrate-db]]
             [time-tracker.db :as db]
             [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
+            [time-tracker.test-helpers :as test-helpers]
             [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
-            [time-tracker.core :as core])
+            [time-tracker.core :as core]
+            [time-tracker.util :as util])
   (:use org.httpkit.server))
 
 (defn init! [f]
@@ -25,7 +28,7 @@
 (defn serve-app [f]
   (with-redefs [auth/token->credentials
                 fake-token->credentials]
-    (let [stop-fn (run-server (app) {:port 8000})]
+    (let [stop-fn (run-server (app) {:port test-helpers/test-port})]
       (f)
       (stop-fn :timeout 100))))
 
