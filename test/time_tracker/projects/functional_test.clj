@@ -98,4 +98,9 @@
     (testing "Pleb user"
       (let [{:keys [status body]} (helpers/http-request :post url "gid2"
                                                         {"name" "javascript is the best"})]
-        (is (= 403 status))))))
+        (is (= 403 status))))
+
+    (testing "Can not create a project with empty name"
+      (let [{:keys [status body]} (helpers/http-request :post url "gid1"
+                                                        {"name" ""})]
+        (is (= 400 status))))))
