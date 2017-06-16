@@ -26,7 +26,8 @@
 ;; clojure.core/update
 (defn modify
   [{:keys [route-params body credentials]} connection]
-  ;; TODO: Validate input JSON
+  ;; Validate input JSON
+  (util/validate-spec body ::projects-spec/project-input)
   (let [google-id  (:sub credentials)
         project-id (Integer/parseInt (:id route-params))]
     (if (projects.db/has-project-permissions?

@@ -42,7 +42,11 @@
 
     (testing "Unauthorized"
       (let [{:keys [status]} (helpers/http-request :put url "gid2" {"name" "bar"})]
-        (is (= status 403))))))
+        (is (= status 403))))
+
+    (testing "Can not set project name as empty"
+      (let [{:keys [status]} (helpers/http-request :put url "gid1" {"name" ""})]
+        (is (= status 400))))))
 
 
 (deftest delete-single-project-test
