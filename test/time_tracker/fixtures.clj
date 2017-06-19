@@ -10,7 +10,8 @@
 
 (defn init! [f]
   (core/init!)
-  (f))
+  (f)
+  (core/teardown!))
 
 (defn destroy-db []
   (jdbc/with-db-transaction [conn (db/connection)]
