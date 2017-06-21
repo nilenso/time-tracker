@@ -40,8 +40,7 @@
                               :timer-id     (:id timer1)
                               :started-time current-time}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (= (:id timer1) (:id command-response)))
-          (is (= current-time (:started-time command-response)))))
+          (is (= (:id timer1) (:id command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode
