@@ -1,6 +1,6 @@
 (ns time-tracker.projects.functional-test
   (:require [clojure.test :refer :all]
-            [clojure.string :as str]
+            [clojure.string :as s]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [time-tracker.fixtures :as fixtures]
@@ -13,8 +13,8 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def project-api-format (str/join [(helpers/settings :api-root) "projects/%s/"]))
-(def projects-api (str/join [(helpers/settings :api-root) "projects/"]))
+(def project-api-format (s/join [(helpers/settings :api-root) "projects/%s/"]))
+(def projects-api (s/join [(helpers/settings :api-root) "projects/"]))
 
 (deftest retrieve-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})

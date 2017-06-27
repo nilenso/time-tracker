@@ -1,6 +1,6 @@
 (ns time-tracker.timers.rest-test
   (:require [clojure.test :refer :all]
-            [clojure.string :as str]
+            [clojure.string :as s]
             [cheshire.core :as json]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
@@ -12,7 +12,7 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def timers-api (str/join [(helpers/settings :api-root) "timers/"]))
+(def timers-api (s/join [(helpers/settings :api-root) "timers/"]))
 
 (deftest list-all-owned-timers-test
   (let [gen-projects   (projects-helpers/populate-data! {"gid1" ["foo"]

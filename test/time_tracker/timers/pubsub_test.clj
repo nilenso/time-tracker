@@ -1,7 +1,6 @@
 (ns time-tracker.timers.pubsub-test
   (:require [clojure.test :refer :all]
             [clojure.core.async :refer [chan alt!! put!] :as async]
-            [clojure.string :as str]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
@@ -11,7 +10,7 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.spec :as s]
+            [clojure.spec :as sp]
             [time-tracker.timers.spec :as timers-spec]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
@@ -88,7 +87,7 @@
                              {:command   "stop-timer"
                               :timer-id  (:id timer1)}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (s/valid? ::timers-spec/duration (:duration command-response)))))
+          (is (sp/valid? ::timers-spec/duration (:duration command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode

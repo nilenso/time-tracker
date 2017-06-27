@@ -1,6 +1,6 @@
 (ns time-tracker.users.functional-test
   (:require [clojure.test :refer :all]
-            [clojure.string :as str]
+            [clojure.string :as s]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
             [time-tracker.test-helpers :as test-helpers]
@@ -9,10 +9,10 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def users-api (str/join [(test-helpers/settings :api-root) "users/"]))
+(def users-api (s/join [(test-helpers/settings :api-root) "users/"]))
 
 (deftest retrieve-self-user-details-test
-  (let [url                   (str/join [users-api "me/"])
+  (let [url                   (s/join [users-api "me/"])
         {:keys [status body]} (test-helpers/http-request :get url "gid1")]
     (is (= 200 status))
     (is (= "gid1" (get body "google-id")))
