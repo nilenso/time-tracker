@@ -9,11 +9,15 @@
             [time-tracker.util :as util]
             [clojure.string :as str]))
 
-(def test-port (Integer/parseInt (util/from-config :port)))
-(def test-host (str/join ["http://localhost:" test-port "/"]))
-(def test-host-ws (str/join ["ws://localhost:" test-port "/"]))
-(def test-api (str/join [test-host "api/"]))
-(def test-ws-connect-url (str/join [test-host-ws "api/timers/ws-connect/"]))
+(defn settings
+  "Reads a profile and returns a specific setting"
+  [setting]
+  (let [port (Integer/parseInt (util/from-config :port))
+        host (str/join ["http://localhost:" port "/"])
+        host-ws (str/join ["ws://localhost:" port "/"])
+        ws-url (str/join [host-ws "api/timers/ws-connect/"])
+        api-root (str/join [host "api/"])]
+    (setting {:port port :host host :host-ws host-ws :ws-url ws-url :api-root api-root})))
 
 (defn http-request-raw
   "Makes a HTTP request. Does not process the body."
@@ -45,7 +49,7 @@
   "Opens a connection and completes the auth handshake."
   [google-id]
   (let [response-chan (chan 5)
-        socket        (ws/connect test-ws-connect-url
+        socket        (ws/connect (settings :ws-url)
                                   :on-receive #(put! response-chan
                                                      (json/decode % keyword)))]
     (ws/send-msg socket (json/encode

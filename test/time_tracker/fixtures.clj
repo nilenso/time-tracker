@@ -28,7 +28,7 @@
 (defn serve-app [f]
   (with-redefs [auth/token->credentials
                 fake-token->credentials]
-    (let [stop-fn (run-server (app) {:port test-helpers/test-port})]
+    (let [stop-fn (run-server (app) {:port (test-helpers/settings :port)})]
       (f)
       (stop-fn :timeout 100))))
 

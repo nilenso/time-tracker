@@ -13,8 +13,8 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def project-api-format (str/join [helpers/test-api "projects/%s/"]))
-(def projects-api (str/join [helpers/test-api "projects/"]))
+(def project-api-format (str/join [(helpers/settings :api-root) "projects/%s/"]))
+(def projects-api (str/join [(helpers/settings :api-root) "projects/"]))
 
 (deftest retrieve-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})

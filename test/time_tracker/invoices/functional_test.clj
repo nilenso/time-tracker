@@ -43,9 +43,9 @@
 
 
 (deftest download-invoice-test
-  (let [project-url           (str/join [test-helpers/test-api "projects/"])
-        invoice-url           (str/join [test-helpers/test-host "download/invoice/"])
-        users-url             (str/join [test-helpers/test-api "users/"])
+  (let [project-url           (str/join [(test-helpers/settings :api-root) "projects/"])
+        invoice-url           (str/join [(test-helpers/settings :host) "download/invoice/"])
+        users-url             (str/join [(test-helpers/settings :api-root) "users/"])
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
         _                     (test-helpers/http-request :post project-url "gid1"

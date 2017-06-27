@@ -12,7 +12,7 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def timers-api (str/join [helpers/test-api "timers/"]))
+(def timers-api (str/join [(helpers/settings :api-root) "timers/"]))
 
 (deftest list-all-owned-timers-test
   (let [gen-projects   (projects-helpers/populate-data! {"gid1" ["foo"]

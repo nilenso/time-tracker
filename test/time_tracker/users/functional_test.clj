@@ -9,7 +9,7 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def users-api (str/join [test-helpers/test-api "users/"]))
+(def users-api (str/join [(test-helpers/settings :api-root) "users/"]))
 
 (deftest retrieve-self-user-details-test
   (let [url                   (str/join [users-api "me/"])
