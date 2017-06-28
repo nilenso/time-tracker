@@ -9,10 +9,12 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-(def users-api (s/join [(test-helpers/settings :api-root) "users/"]))
+(defn- users-api
+  []
+  (s/join [(test-helpers/settings :api-root) "users/"]))
 
 (deftest retrieve-self-user-details-test
-  (let [url                   (s/join [users-api "me/"])
+  (let [url                   (s/join [(users-api) "me/"])
         {:keys [status body]} (test-helpers/http-request :get url "gid1")]
     (is (= 200 status))
     (is (= "gid1" (get body "google-id")))
@@ -22,7 +24,7 @@
   (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                ["shaaz" "gid2" "user"])
   (testing "All the users in the database should appear in the response"
-    (let [url users-api
+    (let [url (users-api)
           {:keys [status body]} (test-helpers/http-request :get url "gid1")]
       (is (= 200 status))
       (is (= #{{"name" "sandy", "google-id" "gid1", "role" "admin"}
