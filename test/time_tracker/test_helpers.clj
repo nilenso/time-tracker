@@ -30,9 +30,7 @@
 
 (defn try-take!!
   [channel]
-  (alt!!
-    channel              ([value] value)
-    (async/timeout 10000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
+  (async/<!! channel))
 
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
