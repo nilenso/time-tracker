@@ -38,8 +38,7 @@
                               :timer-id     (:id timer1)
                               :started-time current-time}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (= (:id timer1) (:id command-response)))
-          (is (= current-time (:started-time command-response)))))
+          (is (= (:id timer1) (:id command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode
@@ -158,8 +157,6 @@
                  (:project-id create-response)))
           (is (= "create" (:type create-response)))
           (is (nil? (:started-time create-response)))
-          (is (= current-time
-                 (:started-time start-response)))
           (is (= "astro zombies"
                  (:notes create-response)
                  (:notes start-response)))
@@ -181,8 +178,6 @@
             (is (nil? (:started-time create-response)))
             (is (= created-time
                    (:time-created create-response)))
-            (is (= current-time
-                   (:started-time start-response)))
             (is (= "against the power that exists"
                    (:notes start-response)
                    (:notes create-response)))
@@ -273,7 +268,6 @@
       (let [result1 (test-helpers/try-take!! response1)
             result2 (test-helpers/try-take!! response2)]
         (is (= timer-id (:id result1)))
-        (is (= current-time (:started-time result2)))
 
         (testing "All clients with the same gid receive the broadcast"
           (is (= result1 result2))))
