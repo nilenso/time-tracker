@@ -13,4 +13,4 @@ machine:
     NUM_TESTS: 1000
 test:
   override:
-    - lein test2junit
+    - lein test2junit time-tracker.timers.pubsub-test
