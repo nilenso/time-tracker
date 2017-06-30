@@ -13,4 +13,4 @@ machine:
     NUM_TESTS: 1000
 test:
   override:
-    - lein test2junit time-tracker.invoices.functional-test time-tracker.timers.pubsub-test
+    - lein test2junit
