@@ -35,16 +35,22 @@
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
+
   (let [response-chan (chan 5)
-        socket        (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                                  :on-receive #(put! response-chan
-                                                     (json/decode % keyword)))]
-    (ws/send-msg socket (json/encode
+        result (promise)
+        conn (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+                                  :on-receive #(put! response-chan (json/decode % keyword))
+                                  :on-error (fn on-error [ex] (deliver result ex)))]
+    (ws/send-msg conn (json/encode
                          {:command "authenticate"
                           :token   (json/encode {:sub google-id})}))
+
+    (if (deref result 5 nil)
+      (throw (ex-info "WS Connection could not be created!" {:error @result}))) 
+
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
-      [response-chan socket]
+      [response-chan conn]
       (throw (ex-info "Authentication failed" {})))))
 
 (defn- num-tests-from-config []
