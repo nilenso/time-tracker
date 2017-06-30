@@ -13,4 +13,7 @@ machine:
     NUM_TESTS: 1000
 test:
   override:
-    - lein test time-tracker.timers.pubsub-test
+    - lein test2junit time-tracker.timers.pubsub-test
+dependencies:
+  post:
+    - rm -r ~/.m2/repository
