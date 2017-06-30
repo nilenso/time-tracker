@@ -37,7 +37,7 @@
   []
   (let [dup (chan 1)]
     (async/go-loop []
-      (log/info (str "Read " (async/<! dup) " from doplicate channel"))
+      (log/info (str "Read " (async/<! dup) " from duplicate channel"))
       (recur))
     dup))
 
