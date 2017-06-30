@@ -5,6 +5,7 @@
             [clojure.core.async :refer [chan alt!! put!] :as async]
             [gniazdo.core :as ws]
             [clojure.test :as test]
+            [time-tracker.logging :as log]
             [clojure.spec.test :as stest]
             [time-tracker.util :as util]))
 
@@ -32,21 +33,30 @@
   [channel]
   (async/<!! channel))
 
+(defn read-dup
+  []
+  (let [dup (chan 1)]
+    (async/go-loop []
+      (log/info (str "Read " (async/<! dup) " from doplicate channel"))
+      (recur))
+    dup))
+
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
 
   (let [response-chan (chan 5)
-        result (promise)
+        dup-chan (read-dup)
         conn (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                                  :on-receive #(put! response-chan (json/decode % keyword))
-                                  :on-error (fn on-error [ex] (deliver result ex)))]
+                         :on-receive #(doseq [c [response-chan dup-chan]]
+                                       (put! c (json/decode % keyword)))
+                         :on-error (fn on-error [ex] (put! dup-chan ex))
+                         :on-connect (fn on-connect [_]  (put! dup-chan "We got connected!"))
+                         :on-close (fn on-close [_] (put! dup-chan "Connection closed!")))]
+    
     (ws/send-msg conn (json/encode
                          {:command "authenticate"
-                          :token   (json/encode {:sub google-id})}))
-
-    (if (deref result 5 nil)
-      (throw (ex-info "WS Connection could not be created!" {:error @result}))) 
+                          :token   (json/encode {:sub google-id})})) 
 
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
