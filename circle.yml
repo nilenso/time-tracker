@@ -16,4 +16,4 @@ test:
     - lein test2junit time-tracker.timers.pubsub-test
 dependencies:
   post:
-    - rm -r ~/.m2/repository
+    - rm -r ~/.m2
