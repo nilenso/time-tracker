@@ -54,6 +54,7 @@
                                       :remote-address remote-address
                                       :status         status})
                            (pubsub-state/remove-channel! channel)))
+      (Thread/sleep 1000)
       (http-kit/on-receive channel (fn [data]
                                      (try
                                        (log/debug {:event ::received-data
