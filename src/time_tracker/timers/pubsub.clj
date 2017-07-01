@@ -21,7 +21,7 @@
 (defn dispatch-command!
   "Calls the appropriate timer command."
   [channel command-data]
-  (log/debug (merge {:event ::received-data} command-data))
+
   (try
     (if-let [google-id (get @state/channel->google-id channel)]
       (if-let [command-fn (command-map (get command-data :command))]
