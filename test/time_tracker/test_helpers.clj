@@ -14,11 +14,11 @@
   ([method url google-id] (http-request-raw method url google-id nil))
   ([method url google-id body] (http-request-raw method url google-id body "Agent Smith"))
   ([method url google-id body name]
-   (let [params   (merge {:url url
-                          :method method
+   (let [params   (merge {:url     url
+                          :method  method
                           :headers (merge (auth.helpers/fake-login-headers google-id name)
                                           {"Content-Type" "application/json"})
-                          :as :text}
+                          :as      :text}
                          (if body {:body (json/encode body)}))
          response @(http/request params)]
      response)))
@@ -31,32 +31,31 @@
 
 (defn try-take!!
   [channel]
-  (async/<!! channel))
-
-(defn read-dup
-  []
-  (let [dup (chan 1)]
-    (async/go-loop []
-      (log/info (str "Read " (async/<! dup) " from duplicate channel"))
-      (recur))
-    dup))
+  (alt!!
+    channel ([value] value)
+    (async/timeout 10000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
 
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
 
   (let [response-chan (chan 5)
-        dup-chan (read-dup)
-        conn (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                         :on-receive #(doseq [c [response-chan dup-chan]]
-                                       (put! c (json/decode % keyword)))
-                         :on-error (fn on-error [ex] (put! dup-chan ex))
-                         :on-connect (fn on-connect [_]  (put! dup-chan "We got connected!"))
-                         :on-close (fn on-close [_] (put! dup-chan "Connection closed!")))]
-    
+        conn          (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+                                  :on-receive (fn [data]
+                                                (log/debug {:event ::received-ws-data
+                                                            :data  data})
+                                                (put! response-chan (json/decode data keyword)))
+                                  :on-error (fn on-error [ex]
+                                              (log/error ex {:event ::ws-error}))
+                                  :on-connect (fn on-connect [_]
+                                                (log/debug {:event ::established-ws-connection}))
+                                  :on-close (fn on-close [status]
+                                              (log/debug {:event  ::closed-ws-connection
+                                                          :status status})))]
+
     (ws/send-msg conn (json/encode
-                         {:command "authenticate"
-                          :token   (json/encode {:sub google-id})})) 
+                        {:command "authenticate"
+                         :token   (json/encode {:sub google-id})}))
 
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
