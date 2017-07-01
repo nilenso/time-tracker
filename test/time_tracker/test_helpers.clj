@@ -57,6 +57,7 @@
     (ws/send-msg conn (json/encode
                         {:command "authenticate"
                          :token   (json/encode {:sub google-id})}))
+    (log/debug {:event ::sent-authentication-message})
 
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
