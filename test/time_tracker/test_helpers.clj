@@ -49,9 +49,10 @@
                                               (log/error ex {:event ::ws-error}))
                                   :on-connect (fn on-connect [_]
                                                 (log/debug {:event ::established-ws-connection}))
-                                  :on-close (fn on-close [status]
-                                              (log/debug {:event  ::closed-ws-connection
-                                                          :status status})))]
+                                  :on-close (fn on-close [status desc]
+                                              (log/debug {:event       ::closed-ws-connection
+                                                          :status      status
+                                                          :description desc})))]
 
     (ws/send-msg conn (json/encode
                         {:command "authenticate"
