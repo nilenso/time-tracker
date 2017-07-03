@@ -55,5 +55,11 @@
                                       :status         status})
                            (pubsub-state/remove-channel! channel)))
       (http-kit/on-receive channel (fn [data]
-                                     (pubsub/dispatch-command! channel
-                                                               (json/decode data keyword)))))))
+                                     (try
+                                       (log/debug {:event ::received-data
+                                                   :data  data})
+                                       (pubsub/dispatch-command! channel
+                                                                 (json/decode data keyword))
+                                       (catch Throwable e
+                                         (log/error e {:error ::websockets-error
+                                                       :data data}))))))))
