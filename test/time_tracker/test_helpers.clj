@@ -33,34 +33,28 @@
   [channel]
   (async/<!! channel))
 
-(defn read-dup
-  []
-  (let [dup (chan 1)]
-    (async/go-loop []
-      (log/info (str "Read " (async/<! dup) " from duplicate channel"))
-      (recur))
-    dup))
-
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
 
   (let [response-chan (chan 5)
-        dup-chan (read-dup)
-        conn (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                         :on-receive #(doseq [c [response-chan dup-chan]]
-                                       (put! c (json/decode % keyword)))
-                         :on-error (fn on-error [ex] (put! dup-chan ex))
-                         :on-connect (fn on-connect [_]  (put! dup-chan "We got connected!"))
-                         :on-close (fn on-close [_] (put! dup-chan "Connection closed!")))]
+        conn (promise)]
     
-    (ws/send-msg conn (json/encode
-                         {:command "authenticate"
-                          :token   (json/encode {:sub google-id})})) 
+    (deliver conn
+             (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+                         :on-receive (fn on-receive [data]
+                                       (log/debug "Connection established")
+                                       (put! response-chan (json/decode data keyword)))
+                         :on-error (fn on-error [ex] (log/error ex "Error in connecting"))
+                         :on-connect (fn on-connect [_]
+                                       (ws/send-msg @conn (json/encode
+                                                           {:command "authenticate"
+                                                            :token   (json/encode {:sub google-id})})))
+                         :on-close (fn on-close [code, reason] (str "Connection closed with code" code " and reason " reason))))
 
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
-      [response-chan conn]
+      [response-chan @conn]
       (throw (ex-info "Authentication failed" {})))))
 
 (defn- num-tests-from-config []
