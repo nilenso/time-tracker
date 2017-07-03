@@ -6,6 +6,7 @@
             [gniazdo.core :as ws]
             [clojure.test :as test]
             [clojure.spec.test :as stest]
+            [time-tracker.logging :as log]
             [time-tracker.util :as util]))
 
 (defn http-request-raw
@@ -30,21 +31,38 @@
 
 (defn try-take!!
   [channel]
-  (async/<!! channel))
+  (alt!!
+    channel ([value] value)
+    (async/timeout 10000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
 
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
   (let [response-chan (chan 5)
-        socket        (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                                  :on-receive #(put! response-chan
-                                                     (json/decode % keyword)))]
-    (ws/send-msg socket (json/encode
-                         {:command "authenticate"
-                          :token   (json/encode {:sub google-id})}))
+        socket        (promise)]
+
+    (deliver socket (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+                                :on-receive (fn [data]
+                                              (log/debug {:event ::received-ws-data
+                                                          :data  data})
+                                              (put! response-chan (json/decode data keyword)))
+                                :on-close (fn on-close [status desc]
+                                            (log/debug {:event       ::closed-ws-connection
+                                                        :status      status
+                                                        :description desc})) 
+                                :on-error (fn [ex]
+                                            (log/error ex {:event ::ws-error}))
+                                :on-connect (fn [_]
+                                              (log/debug {:event ::established-ws-connection})
+                                              (ws/send-msg @socket
+                                                           (json/encode
+                                                            {:command "authenticate"
+                                                             :token   (json/encode {:sub google-id})}))
+                                              (log/debug {:event ::sent-authentication-message}))))
+    
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
-      [response-chan socket]
+      [response-chan @socket]
       (throw (ex-info "Authentication failed" {})))))
 
 (defn- num-tests-from-config []
