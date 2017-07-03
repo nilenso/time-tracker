@@ -5,6 +5,7 @@
             [clojure.core.async :refer [chan alt!! put!] :as async]
             [gniazdo.core :as ws]
             [clojure.test :as test]
+            [time-tracker.logging :as log]
             [clojure.spec.test :as stest]
             [time-tracker.util :as util]))
 
@@ -35,16 +36,25 @@
 (defn make-ws-connection
   "Opens a connection and completes the auth handshake."
   [google-id]
+
   (let [response-chan (chan 5)
-        socket        (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
-                                  :on-receive #(put! response-chan
-                                                     (json/decode % keyword)))]
-    (ws/send-msg socket (json/encode
-                         {:command "authenticate"
-                          :token   (json/encode {:sub google-id})}))
+        conn (promise)]
+    
+    (deliver conn
+             (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+                         :on-receive (fn on-receive [data]
+                                       (log/debug "Connection established")
+                                       (put! response-chan (json/decode data keyword)))
+                         :on-error (fn on-error [ex] (log/error ex "Error in connecting"))
+                         :on-connect (fn on-connect [_]
+                                       (ws/send-msg @conn (json/encode
+                                                           {:command "authenticate"
+                                                            :token   (json/encode {:sub google-id})})))
+                         :on-close (fn on-close [code, reason] (str "Connection closed with code" code " and reason " reason))))
+
     (if (= "success"
            (:auth-status (try-take!! response-chan)))
-      [response-chan socket]
+      [response-chan @conn]
       (throw (ex-info "Authentication failed" {})))))
 
 (defn- num-tests-from-config []
