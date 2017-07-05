@@ -45,6 +45,5 @@
 (s/def ::timers (timers-spec/normalized-timers-spec 0))
 
 (s/def ::invoice-data
-  (s/and (s/merge ::generate-invoice-params-coerced
-                  (s/keys :req-un [::users-spec/users ::timers-spec/timers]))
-         invoice-data-pred))
+  (s/merge ::generate-invoice-params-coerced
+           (s/keys :req-un [::users-spec/users ::timers-spec/timers])))
