@@ -35,16 +35,9 @@
                             ::core-spec/utc-offset])
            ::invoices-spec/date-range))
 
-(defn- invoice-data-pred
-  [{:keys [user-rates users] :as invoice-data}]
-  (let [rate-user-ids  (set (map :user-id user-rates))
-        users-user-ids (set (keys users))]
-    (= rate-user-ids users-user-ids)))
-
 (s/def ::users (users-spec/normalized-users-spec 1))
 (s/def ::timers (timers-spec/normalized-timers-spec 0))
 
 (s/def ::invoice-data
-  (s/and (s/merge ::generate-invoice-params-coerced
-                  (s/keys :req-un [::users-spec/users ::timers-spec/timers]))
-         invoice-data-pred))
+  (s/merge ::generate-invoice-params-coerced
+           (s/keys :req-un [::users-spec/users ::timers-spec/timers])))

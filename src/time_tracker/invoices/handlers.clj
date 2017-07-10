@@ -67,12 +67,16 @@
   (let [{:keys [start end client] :as validated-body}
         (coerce-and-validate-generate-invoice-body body)
         projects     (get-client-projects connection client)
-        users        (util/normalize-entities (users-db/retrieve-all connection))
         timers       (get-timers-to-invoice connection start end projects)
+        timer-users  (map :app-user-id (vals timers)) ;; coll of keys of users who are in the timers
+        all-users    (util/normalize-entities (users-db/retrieve-all connection))
+        users        (select-keys all-users timer-users)
         invoice-data (merge validated-body
                             {:users  users
                              :timers timers})]
+
     (util/validate-spec invoice-data ::handlers-spec/invoice-data)
+
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
