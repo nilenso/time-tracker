@@ -2,7 +2,9 @@
   (:require [ring.util.response :as res]
             [time-tracker.auth.core :refer [wrap-google-authenticated]]
             [time-tracker.projects.db :as projects.db]
-            [time-tracker.web.util :as web-util]))
+            [time-tracker.web.util :as web-util]
+            [time-tracker.projects.spec :as projects-spec]
+            [time-tracker.util :as util]))
 
 ;; Single project endpoint --------------------------------------------------
 ;; /projects/<id>/
@@ -24,7 +26,8 @@
 ;; clojure.core/update
 (defn modify
   [{:keys [route-params body credentials]} connection]
-  ;; TODO: Validate input JSON
+  ;; Validate input JSON
+  (util/validate-spec body ::projects-spec/project-input)
   (let [google-id  (:sub credentials)
         project-id (Integer/parseInt (:id route-params))]
     (if (projects.db/has-project-permissions?
@@ -61,7 +64,8 @@
 
 (defn create
   [{:keys [credentials body]} connection]
-  ;; TODO: Validate input JSON
+  ;; Validate input JSON
+  (util/validate-spec body ::projects-spec/project-input)
   (let [google-id (:sub credentials)]
     (if (projects.db/has-user-role?
          google-id connection ["admin"])
