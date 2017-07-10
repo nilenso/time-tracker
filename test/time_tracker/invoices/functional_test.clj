@@ -14,7 +14,6 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
-
 (defn- create-timer-over-ws
   [ws-chan socket project-id current-time duration]
   (ws/send-msg socket (json/encode
@@ -64,8 +63,8 @@
       (testing "Existing client"
         (let [data             {:client "foo"
                                 :start (- current-time (* 60 60 24))
-                                :end current-time
-                                :address "baz"
+                                :end (+ current-time (* 60 60 24))
+                                :address "goo"
                                 :notes "quux"
                                 :user-rates (vec (for [user-id user-ids]
                                                    {:user-id user-id
@@ -83,7 +82,7 @@
       (testing "Another client with no timers"
         (let [data                  {:client "bar"
                                      :start (- current-time (* 60 60 24))
-                                     :end current-time
+                                     :end (+ current-time (* 60 60 24))
                                      :address "baz"
                                      :notes "quux"
                                      :user-rates (vec (for [user-id user-ids]
@@ -97,7 +96,7 @@
                                       invoice-url
                                       "gid1"
                                       data)]
-          (is (= 200 status))))
+          (is (= 404 status))))
 
       (testing "Client does not exist"
         (let [data                  {:client "quux"
@@ -137,15 +136,15 @@
                                       data)]
           (is (= 400 status))))
 
-      (testing "Insufficient user rates"
+      (testing "Missing user rates"
         (let [user-id (first user-ids)
               data    {:client "foo"
                        :start (- current-time (* 60 60 24))
-                       :end current-time
+                       :end (+ current-time (* 60 60 24))
                        :address "baz"
                        :notes "quux"
                        :user-rates [{:user-id user-id
-                                     :rate    3}]
+                                     :rate    nil}]
                        :utc-offset 330
                        :currency :inr
                        :tax-rates nil}
