@@ -3,8 +3,10 @@
             [time-tracker.users.db :as users-db]
             [time-tracker.projects.db :as projects-db]
             [time-tracker.timers.db :as timers-db]
+            [time-tracker.invoices.db :as invoices-db]
             [time-tracker.invoices.core :as invoices-core]
             [time-tracker.util :as util]
+            [time-tracker.logging :as log]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
             [time-tracker.projects.core :as projects-core]
@@ -53,10 +55,14 @@
   [normalized-entities]
   (fmap :name normalized-entities))
 
-(defn pdf-invoice
+(defn- printable-invoice
   [{:keys [users] :as invoice-data}]
-  (let [invoice            (invoices-core/invoice invoice-data)
-        printable-invoice  (invoices-core/printable-invoice invoice (names-by-id users))
+  (let [invoice            (invoices-core/invoice invoice-data)]
+    (invoices-core/printable-invoice invoice (names-by-id users))))
+
+(defn- print-invoice
+  [invoice-data]
+  (let [printable-invoice  (printable-invoice invoice-data)
         pdf-stream         (ring-io/piped-input-stream
                             (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
@@ -80,4 +86,25 @@
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (pdf-invoice invoice-data))))
+      (print-invoice invoice-data))))
+
+(defn create-invoice
+  [{:keys [body]} connection]
+  (let [{:keys [start end client] :as validated-body}
+        (coerce-and-validate-generate-invoice-body body)
+        projects     (get-client-projects connection client)
+        timers       (get-timers-to-invoice connection start end projects)
+        timer-users  (map :app-user-id (vals timers)) ;; coll of keys of users who are in the timers
+        all-users    (util/normalize-entities (users-db/retrieve-all connection))
+        users        (select-keys all-users timer-users)
+        invoice-data (merge validated-body
+                            {:users  users
+                             :timers timers})]
+    (util/validate-spec invoice-data ::handlers-spec/invoice-data)
+    (if (or (empty? projects)
+            (empty? users))
+      web-util/error-not-found
+      (do
+        (invoices-db/create! connection
+                             (printable-invoice invoice-data))
+        (print-invoice invoice-data)))))

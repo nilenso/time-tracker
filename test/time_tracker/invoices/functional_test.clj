@@ -156,3 +156,64 @@
           (is (= 400 status))))
 
       (finally (ws/close socket)))))
+
+(deftest create-and-download-invoice-test
+  (let [project-url           "http://localhost:8000/api/projects/"
+        invoice-url           "http://localhost:8000/download/create/"
+        users-url             "http://localhost:8000/api/users/"
+        _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
+                                                           ["quux" "gid2" "admin"])
+        _                     (test-helpers/http-request :post project-url "gid1"
+                                                         {:name "bar|baz"})
+        {users-body :body}    (test-helpers/http-request :get users-url "gid1")
+        user-ids              (set (map #(get % "id") users-body))
+        {:keys [status body]} (test-helpers/http-request :post project-url "gid1"
+                                                         {:name "foo|goo"})
+        project-id            (get body "id")
+        current-time          (util/current-epoch-seconds)
+        [ws-chan socket]      (test-helpers/make-ws-connection "gid1")
+        created-timer         (create-timer-over-ws ws-chan socket
+                                                    project-id current-time
+                                                    3600)]
+    (try
+      (testing "Existing client"
+        (let [data             {:client "foo"
+                                :start (- current-time (* 60 60 24))
+                                :end (+ current-time (* 60 60 24))
+                                :address "baz"
+                                :notes "quux"
+                                :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
+                                :utc-offset 330
+                                :currency :inr
+                                :tax-rates nil}
+              {:keys [status]} (test-helpers/http-request-raw
+                                 :post
+                                 invoice-url
+                                 "gid1"
+                                 data)]
+          (is (= 200 status))))
+
+      (testing "Another client with no timers"
+        (let [data                  {:client "bar"
+                                     :start (- current-time (* 60 60 24))
+                                     :end (+ current-time (* 60 60 24))
+                                     :address "baz"
+                                     :notes "quux"
+                                     :user-rates (vec (for [user-id user-ids]
+                                                   {:user-id user-id
+                                                    :rate    5}))
+                                     :utc-offset 330
+                                     :currency :inr
+                                     :tax-rates nil}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                      :post
+                                      invoice-url
+                                      "gid1"
+                                      data)]
+          (is (= 404 status))))
+
+      (finally (ws/close socket)))))
+
+
