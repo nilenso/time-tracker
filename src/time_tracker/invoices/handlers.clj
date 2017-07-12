@@ -13,9 +13,6 @@
             [clojure.algo.generic.functor :refer [fmap]]
             [ring.util.io :as ring-io]))
 
-;; Download invoice endpoint
-;; POST /download/invoice/
-
 (defn- get-client-projects
   [connection client]
   (->> (projects-db/retrieve-all connection)
@@ -68,27 +65,9 @@
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
-(defn generate-invoice
-  [{:keys [body]} connection]
-  (let [{:keys [start end client] :as validated-body}
-        (coerce-and-validate-generate-invoice-body body)
-        projects     (get-client-projects connection client)
-        timers       (get-timers-to-invoice connection start end projects)
-        timer-users  (map :app-user-id (vals timers)) ;; coll of keys of users who are in the timers
-        all-users    (util/normalize-entities (users-db/retrieve-all connection))
-        users        (select-keys all-users timer-users)
-        invoice-data (merge validated-body
-                            {:users  users
-                             :timers timers})]
-
-    (util/validate-spec invoice-data ::handlers-spec/invoice-data)
-
-    (if (or (empty? projects)
-            (empty? users))
-      web-util/error-not-found
-      (print-invoice invoice-data))))
-
-(defn create-invoice
+;; Download invoice endpoint
+;; POST /api/invoices/
+(defn create
   [{:keys [body]} connection]
   (let [{:keys [start end client] :as validated-body}
         (coerce-and-validate-generate-invoice-body body)
