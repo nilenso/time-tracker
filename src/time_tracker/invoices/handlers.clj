@@ -3,16 +3,15 @@
             [time-tracker.users.db :as users-db]
             [time-tracker.projects.db :as projects-db]
             [time-tracker.timers.db :as timers-db]
+            [time-tracker.invoices.db :as invoices-db]
             [time-tracker.invoices.core :as invoices-core]
             [time-tracker.util :as util]
+            [time-tracker.logging :as log]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
             [time-tracker.projects.core :as projects-core]
             [clojure.algo.generic.functor :refer [fmap]]
             [ring.util.io :as ring-io]))
-
-;; Download invoice endpoint
-;; POST /download/invoice/
 
 (defn- get-client-projects
   [connection client]
@@ -53,16 +52,22 @@
   [normalized-entities]
   (fmap :name normalized-entities))
 
-(defn pdf-invoice
+(defn- printable-invoice
   [{:keys [users] :as invoice-data}]
-  (let [invoice            (invoices-core/invoice invoice-data)
-        printable-invoice  (invoices-core/printable-invoice invoice (names-by-id users))
+  (let [invoice            (invoices-core/invoice invoice-data)]
+    (invoices-core/printable-invoice invoice (names-by-id users))))
+
+(defn- print-invoice
+  [invoice-data]
+  (let [printable-invoice  (printable-invoice invoice-data)
         pdf-stream         (ring-io/piped-input-stream
                             (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
-(defn generate-invoice
+;; Download invoice endpoint
+;; POST /api/invoices/
+(defn create
   [{:keys [body]} connection]
   (let [{:keys [start end client] :as validated-body}
         (coerce-and-validate-generate-invoice-body body)
@@ -74,10 +79,11 @@
         invoice-data (merge validated-body
                             {:users  users
                              :timers timers})]
-
     (util/validate-spec invoice-data ::handlers-spec/invoice-data)
-
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (pdf-invoice invoice-data))))
+      (do
+        (invoices-db/create! connection
+                             (printable-invoice invoice-data))
+        (print-invoice invoice-data)))))

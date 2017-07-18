@@ -40,10 +40,9 @@
           update-response (test-helpers/try-take!! ws-chan)]
       (dissoc update-response :type))))
 
-
-(deftest download-invoice-test
+(deftest create-and-download-invoice-test
   (let [project-url           "http://localhost:8000/api/projects/"
-        invoice-url           "http://localhost:8000/download/invoice/"
+        invoice-url           "http://localhost:8000/api/invoices/"
         users-url             "http://localhost:8000/api/users/"
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
@@ -64,7 +63,7 @@
         (let [data             {:client "foo"
                                 :start (- current-time (* 60 60 24))
                                 :end (+ current-time (* 60 60 24))
-                                :address "goo"
+                                :address "baz"
                                 :notes "quux"
                                 :user-rates (vec (for [user-id user-ids]
                                                    {:user-id user-id
@@ -98,61 +97,6 @@
                                       data)]
           (is (= 404 status))))
 
-      (testing "Client does not exist"
-        (let [data                  {:client "quux"
-                                     :start (- current-time (* 60 60 24))
-                                     :end current-time
-                                     :address "baz"
-                                     :notes "quux"
-                                     :user-rates (vec (for [user-id user-ids]
-                                                   {:user-id user-id
-                                                    :rate    5}))
-                                     :utc-offset 330
-                                     :currency :inr
-                                     :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                     :post
-                                     invoice-url
-                                     "gid1"
-                                     data)]
-          (is (= 404 status))))
-
-      (testing "Invalid args"
-        (let [data                  {:client "foo"
-                                     :start (- current-time (* 60 60 24))
-                                     :end current-time
-                                     :address "baz"
-                                     :notes "quux"
-                                     :user-rates (vec (for [user-id user-ids]
-                                                   {:user-id user-id
-                                                    :rate    5}))
-                                     :utc-offset "midget"
-                                     :currency :inr
-                                     :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                      :post
-                                      invoice-url
-                                      "gid1"
-                                      data)]
-          (is (= 400 status))))
-
-      (testing "Missing user rates"
-        (let [user-id (first user-ids)
-              data    {:client "foo"
-                       :start (- current-time (* 60 60 24))
-                       :end (+ current-time (* 60 60 24))
-                       :address "baz"
-                       :notes "quux"
-                       :user-rates [{:user-id user-id
-                                     :rate    nil}]
-                       :utc-offset 330
-                       :currency :inr
-                       :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                      :post
-                                      invoice-url
-                                      "gid1"
-                                      data)]
-          (is (= 400 status))))
-
       (finally (ws/close socket)))))
+
+
