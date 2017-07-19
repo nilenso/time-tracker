@@ -1,5 +1,8 @@
 (ns time-tracker.invoices.db
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [yesql.core :refer [defqueries]]))
+
+(defqueries "time_tracker/invoices/sql/db.sql")
 
 (defn create!
   [connection invoice]
@@ -16,3 +19,8 @@
                         "to_date" (:to-date invoice)
                         "tax_amounts" (pr-str (:tax-amounts invoice)),
                         "paid" false})))
+
+(defn retrieve-all
+  "Retrieves a list of all the invoices. No authroization checks yet."
+  [connection]
+  (retrieve-all-invoices-query {} {:connection connection}))

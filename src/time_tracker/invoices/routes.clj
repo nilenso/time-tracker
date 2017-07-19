@@ -3,4 +3,6 @@
             [time-tracker.invoices.handlers :as handlers]))
 
 (defn routes []
-  { ""        (with-rest-middleware { :post handlers/create})})
+  { ""        (with-rest-middleware
+                {:post handlers/create
+                 :get handlers/list-all})})

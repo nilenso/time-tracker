@@ -65,7 +65,7 @@
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
-;; Download invoice endpoint
+;; Endpoint for saving and downloading an invoice
 ;; POST /api/invoices/
 (defn create
   [{:keys [body]} connection]
@@ -87,3 +87,10 @@
         (invoices-db/create! connection
                              (printable-invoice invoice-data))
         (print-invoice invoice-data)))))
+
+;; Endpoint for retrieving all invoices
+;; GET /api/invoices/
+(defn list-all
+  "Retrieves all invoices"
+  [request connection]
+  (res/response (invoices-db/retrieve-all connection)))
