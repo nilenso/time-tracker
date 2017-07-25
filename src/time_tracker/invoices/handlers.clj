@@ -94,3 +94,16 @@
   "Retrieves all invoices"
   [request connection]
   (res/response (invoices-db/retrieve-all connection)))
+
+;; Endpoint for retrieving a single invoice
+;; GET /api/invoices/<id>/
+(defn retrieve
+  [request connection]
+  (let [invoice-id (Integer/parseInt (:id (:route-params request)))]
+    (if-let [invoice (invoices-db/retrieve
+                      connection
+                      invoice-id)]
+      (do
+        (log/debug {:event "invoice-received" :data invoice})
+        (res/response invoice))
+      web-util/error-not-found)))

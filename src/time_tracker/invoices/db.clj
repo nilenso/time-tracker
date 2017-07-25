@@ -24,3 +24,9 @@
   "Retrieves a list of all the invoices. No authroization checks yet."
   [connection]
   (retrieve-all-invoices-query {} {:connection connection}))
+
+(defn retrieve
+  "Retrieves a specific invoice. No authorization checks yet."
+  [connection invoice-id]
+  (first (retrieve-invoice-query {:invoice_id invoice-id}
+                         {:connection connection})))
