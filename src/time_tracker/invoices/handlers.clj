@@ -5,6 +5,7 @@
             [time-tracker.timers.db :as timers-db]
             [time-tracker.invoices.db :as invoices-db]
             [time-tracker.invoices.core :as invoices-core]
+            [time-tracker.invoices.spec :as invoices-spec]
             [time-tracker.util :as util]
             [time-tracker.logging :as log]
             [time-tracker.web.util :as web-util]
@@ -107,3 +108,21 @@
         (log/debug {:event "invoice-received" :data invoice})
         (res/response invoice))
       web-util/error-not-found)))
+
+;; Endpoint for updating a single invoice.
+;; PUT /api/invoices/<id>
+;; Calling this handler 'update' would shadow
+;; clojure.core/update
+(defn modify
+  [{:keys [route-params body]} connection]
+  ;; Validate input JSON
+  ;; should have only {paid: true}
+  ;; as user can only update an unpaid invoice to paid. 
+  (util/validate-spec body ::invoices-spec/invoice-paid)
+  (let [invoice-id (Integer/parseInt (:id route-params))]
+    (if-let [updated-invoice (invoices-db/update!
+                                connection
+                                invoice-id
+                                body)]
+        (res/response updated-invoice)
+        web-util/error-not-found)))

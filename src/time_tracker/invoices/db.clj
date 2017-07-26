@@ -1,5 +1,6 @@
 (ns time-tracker.invoices.db
   (:require [clojure.java.jdbc :as jdbc]
+            [time-tracker.util :refer [statement-success?]]
             [yesql.core :refer [defqueries]]))
 
 (defqueries "time_tracker/invoices/sql/db.sql")
@@ -21,12 +22,23 @@
                         "paid" false})))
 
 (defn retrieve-all
-  "Retrieves a list of all the invoices. No authroization checks yet."
+  "Retrieves a list of all the invoices."
   [connection]
   (retrieve-all-invoices-query {} {:connection connection}))
 
 (defn retrieve
-  "Retrieves a specific invoice. No authorization checks yet."
+  "Retrieves a specific invoice."
   [connection invoice-id]
   (first (retrieve-invoice-query {:invoice_id invoice-id}
-                         {:connection connection})))
+                                 {:connection connection})))
+
+(defn update!
+  "Updates an invoice and returns the updated invoice."
+  [connection invoice-id {:keys [paid]}]
+  ;; The Postgres RETURNING clause doesn't work,
+  ;; so using two queries for now
+  (when (statement-success?
+         (update-invoice-query! {:paid       paid
+                                 :invoice_id invoice-id}
+                                {:connection connection}))
+    (jdbc/get-by-id connection "invoice" invoice-id)))

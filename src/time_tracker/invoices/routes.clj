@@ -7,4 +7,7 @@
                 {:post handlers/create
                  :get handlers/list-all})
    [:id "/"] (with-rest-middleware
-               {:get handlers/retrieve})})
+               {:get handlers/retrieve
+                :put handlers/modify})})
+
+

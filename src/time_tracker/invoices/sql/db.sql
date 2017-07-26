@@ -6,3 +6,9 @@ SELECT invoice.* FROM invoice;
 -- Retrieves an invoice
 SELECT invoice.* FROM invoice
 WHERE invoice.id = :invoice_id;
+
+-- name: update-invoice-query!
+-- Updates an invoice.
+UPDATE invoice 
+SET paid = :paid 
+WHERE invoice.id = :invoice_id;
