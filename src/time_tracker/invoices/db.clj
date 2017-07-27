@@ -32,8 +32,8 @@
   (first (retrieve-invoice-query {:invoice_id invoice-id}
                                  {:connection connection})))
 
-(defn update!
-  "Updates an invoice and returns the updated invoice."
+(defn mark-invoice-paid!
+  "Sets an invoice as paid and returns the updated invoice."
   [connection invoice-id {:keys [paid]}]
   ;; The Postgres RETURNING clause doesn't work,
   ;; so using two queries for now

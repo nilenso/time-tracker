@@ -120,7 +120,7 @@
   ;; as user can only update an unpaid invoice to paid. 
   (util/validate-spec body ::invoices-spec/invoice-paid)
   (let [invoice-id (Integer/parseInt (:id route-params))]
-    (if-let [updated-invoice (invoices-db/update!
+    (if-let [updated-invoice (invoices-db/mark-invoice-paid!
                                 connection
                                 invoice-id
                                 body)]
