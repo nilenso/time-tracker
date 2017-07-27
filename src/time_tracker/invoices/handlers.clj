@@ -121,9 +121,9 @@
   (util/validate-spec body ::invoices-spec/invoice-paid)
   (let [invoice-id (Integer/parseInt (:id route-params))
         paid (select-keys body [:paid])]
-    (if-let [updated-invoice (invoices-db/mark-invoice-paid!
+    (if-let [paid-invoice (invoices-db/mark-invoice-paid!
                                 connection
                                 invoice-id
                                 paid)]
-        (res/response updated-invoice)
+        (res/response paid-invoice)
         web-util/error-not-found)))
