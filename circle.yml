@@ -7,9 +7,9 @@ machine:
     CP_MAX_IDLE_TIME: 10800
     TEST_DB_USERNAME: ubuntu
     GOOGLE_CLIENT_ID: 128416141127-mp9b2fsq6e8bt1r3lva6cot1kdqnlof9.apps.googleusercontent.com
-    APP_LOG_LEVEL: error
+    APP_LOG_LEVEL: debug
     ALLOWED_HOSTED_DOMAIN: "*"
-    LOG_FILE_PREFIX: "time-tracker.log"
+    LOG_FILE_PREFIX: "logs/time-tracker.log"
     NUM_TESTS: 1000
 test:
   override:

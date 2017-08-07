@@ -6,6 +6,7 @@
             [gniazdo.core :as ws]
             [clojure.test :as test]
             [clojure.spec.test :as stest]
+            [time-tracker.logging :as log]
             [time-tracker.util :as util]
             [clojure.string :as str]))
 
@@ -42,7 +43,7 @@
 (defn try-take!!
   [channel]
   (alt!!
-    channel              ([value] value)
+    channel ([value] value)
     (async/timeout 10000) (throw (ex-info "Take from channel timed out" {:channel channel}))))
 
 (defn make-ws-connection
@@ -50,15 +51,38 @@
   [google-id]
   (let [response-chan (chan 5)
         socket        (ws/connect (settings :ws-url)
-                                  :on-receive #(put! response-chan
-                                                     (json/decode % keyword)))]
-    (ws/send-msg socket (json/encode
+                                :on-receive (fn on-receive
+                                              [data]
+                                              (log/debug {:event ::received-ws-data
+                                                          :data  data})
+                                              (put! response-chan (json/decode data keyword)))
+                                :on-close (fn on-close
+                                            [status desc]
+                                            (log/debug {:event       ::closed-ws-connection
+                                                        :status      status
+                                                        :description desc})) 
+                                :on-error (fn on-error
+                                            [ex]
+                                            (log/error ex {:event ::ws-error}))
+                                :on-connect (fn on-connect
+                                              [_]
+                                              (log/debug {:event ::established-ws-connection})))]
+
+    ;; Waiting for an initial "ready" message from the server so that
+    ;; we can send subsequent messages to it without worrying about them
+    ;; getting dropped.
+    ;; https://github.com/http-kit/http-kit/issues/318
+    (if (= "ready" (:type (try-take!! response-chan)))
+      (do
+        (ws/send-msg socket (json/encode
                          {:command "authenticate"
                           :token   (json/encode {:sub google-id})}))
-    (if (= "success"
-           (:auth-status (try-take!! response-chan)))
-      [response-chan socket]
-      (throw (ex-info "Authentication failed" {})))))
+        (if (= "success"
+               (:auth-status (try-take!! response-chan)))
+          [response-chan socket]
+          (throw (ex-info "Authentication failed" {}))))
+      (throw (ex-info "Server not ready" {})))
+    ))
 
 (defn- num-tests-from-config []
   (Integer/parseInt (util/from-config :num-tests)))

@@ -21,12 +21,14 @@
 (defn dispatch-command!
   "Calls the appropriate timer command."
   [channel command-data]
-  (log/debug (merge {:event ::received-data} command-data))
-  (if-let [google-id (get @state/channel->google-id channel)]
-    (if-let [command-fn (command-map (get command-data :command))]
-      (command-fn channel google-id (dissoc command-data :command))
-      (io/send-data! channel {:error "Invalid command"}))
-    (when-not (authenticate-channel! channel command-data)
-      (io/send-data! channel {:error "Authentication failure"})
-      (log/info {:event ::authentication-failure})
-      (httpkit/close channel))))
+  (try
+    (if-let [google-id (get @state/channel->google-id channel)]
+      (if-let [command-fn (command-map (get command-data :command))]
+        (command-fn channel google-id (dissoc command-data :command))
+        (io/send-data! channel {:error "Invalid command"}))
+      (when-not (authenticate-channel! channel command-data)
+        (io/send-data! channel {:error "Authentication failure"})
+        (log/info {:event ::authentication-failure})
+        (httpkit/close channel)))
+  (catch Throwable e
+    (log/error e {:error ::dispatch-error :data command-data}))))

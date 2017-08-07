@@ -8,6 +8,6 @@
 (defn routes []
   ["/" [["api/"      {"projects/" (projects/routes)
                       "timers/"   (timers/routes)
-                      "users/"    (users/routes)}]
-        ["download/" (invoices/routes)]
+                      "users/"    (users/routes)
+                      "invoices/" (invoices/routes)}]
         [true   (fn [_] web-util/error-not-found)]]])

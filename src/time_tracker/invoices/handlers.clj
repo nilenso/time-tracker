@@ -3,16 +3,16 @@
             [time-tracker.users.db :as users-db]
             [time-tracker.projects.db :as projects-db]
             [time-tracker.timers.db :as timers-db]
+            [time-tracker.invoices.db :as invoices-db]
             [time-tracker.invoices.core :as invoices-core]
+            [time-tracker.invoices.spec :as invoices-spec]
             [time-tracker.util :as util]
+            [time-tracker.logging :as log]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
             [time-tracker.projects.core :as projects-core]
             [clojure.algo.generic.functor :refer [fmap]]
             [ring.util.io :as ring-io]))
-
-;; Download invoice endpoint
-;; POST /download/invoice/
 
 (defn- get-client-projects
   [connection client]
@@ -53,22 +53,30 @@
   [normalized-entities]
   (fmap :name normalized-entities))
 
-(defn pdf-invoice
+(defn- printable-invoice
   [{:keys [users] :as invoice-data}]
-  (let [invoice            (invoices-core/invoice invoice-data)
-        printable-invoice  (invoices-core/printable-invoice invoice (names-by-id users))
+  (let [invoice            (invoices-core/invoice invoice-data)]
+    (invoices-core/printable-invoice invoice (names-by-id users))))
+
+(defn- print-invoice
+  [invoice-data]
+  (let [printable-invoice  (printable-invoice invoice-data)
         pdf-stream         (ring-io/piped-input-stream
                             (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
-(defn generate-invoice
+;; Endpoint for saving and downloading an invoice
+;; POST /api/invoices/
+(defn create
   [{:keys [body]} connection]
   (let [{:keys [start end client] :as validated-body}
         (coerce-and-validate-generate-invoice-body body)
         projects     (get-client-projects connection client)
-        users        (util/normalize-entities (users-db/retrieve-all connection))
         timers       (get-timers-to-invoice connection start end projects)
+        timer-users  (map :app-user-id (vals timers)) ;; coll of keys of users who are in the timers
+        all-users    (util/normalize-entities (users-db/retrieve-all connection))
+        users        (select-keys all-users timer-users)
         invoice-data (merge validated-body
                             {:users  users
                              :timers timers})]
@@ -76,4 +84,46 @@
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (pdf-invoice invoice-data))))
+      (do
+        (invoices-db/create! connection
+                             (printable-invoice invoice-data))
+        (print-invoice invoice-data)))))
+
+;; Endpoint for retrieving all invoices
+;; GET /api/invoices/
+(defn list-all
+  "Retrieves all invoices"
+  [request connection]
+  (res/response (invoices-db/retrieve-all connection)))
+
+;; Endpoint for retrieving a single invoice
+;; GET /api/invoices/<id>/
+(defn retrieve
+  [request connection]
+  (let [invoice-id (Integer/parseInt (:id (:route-params request)))]
+    (if-let [invoice (invoices-db/retrieve
+                      connection
+                      invoice-id)]
+      (do
+        (log/debug {:event "invoice-received" :data invoice})
+        (res/response invoice))
+      web-util/error-not-found)))
+
+;; Endpoint for updating a single invoice.
+;; PUT /api/invoices/<id>
+;; Calling this handler 'update' would shadow
+;; clojure.core/update
+(defn modify
+  [{:keys [route-params body]} connection]
+  ;; Validate input JSON
+  ;; should have only {paid: true}
+  ;; as user can only update an unpaid invoice to paid. 
+  (util/validate-spec body ::invoices-spec/invoice-paid)
+  (let [invoice-id (Integer/parseInt (:id route-params))
+        paid (select-keys body [:paid])]
+    (if-let [paid-invoice (invoices-db/mark-invoice-paid!
+                                connection
+                                invoice-id
+                                paid)]
+        (res/response paid-invoice)
+        web-util/error-not-found)))

@@ -50,7 +50,11 @@
 
     (testing "Unauthorized"
       (let [{:keys [status]} (helpers/http-request :put url "gid2" {"name" "bar"})]
-        (is (= status 403))))))
+        (is (= status 403))))
+
+    (testing "Can not set project name as empty"
+      (let [{:keys [status]} (helpers/http-request :put url "gid1" {"name" ""})]
+        (is (= status 400))))))
 
 
 (deftest delete-single-project-test
@@ -106,4 +110,9 @@
     (testing "Pleb user"
       (let [{:keys [status body]} (helpers/http-request :post url "gid2"
                                                         {"name" "javascript is the best"})]
-        (is (= 403 status))))))
+        (is (= 403 status))))
+
+    (testing "Can not create a project with empty name"
+      (let [{:keys [status body]} (helpers/http-request :post url "gid1"
+                                                        {"name" ""})]
+        (is (= 400 status))))))

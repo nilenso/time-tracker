@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.test-helpers :as test-helpers]
+            [time-tracker.invoices.test-helpers :as invoices-helpers]
             [time-tracker.projects.test-helpers :as projects-helpers]
             [time-tracker.users.test-helpers :as users-helpers]
             [time-tracker.db :as db]
@@ -40,10 +41,9 @@
           update-response (test-helpers/try-take!! ws-chan)]
       (dissoc update-response :type))))
 
-
-(deftest download-invoice-test
+(deftest create-and-download-invoice-test
   (let [project-url           (s/join [(test-helpers/settings :api-root) "projects/"])
-        invoice-url           (s/join [(test-helpers/settings :host) "download/invoice/"])
+        invoice-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
         users-url             (s/join [(test-helpers/settings :api-root) "users/"])
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
@@ -63,7 +63,7 @@
       (testing "Existing client"
         (let [data             {:client "foo"
                                 :start (- current-time (* 60 60 24))
-                                :end current-time
+                                :end (+ current-time (* 60 60 24))
                                 :address "baz"
                                 :notes "quux"
                                 :user-rates (vec (for [user-id user-ids]
@@ -82,7 +82,7 @@
       (testing "Another client with no timers"
         (let [data                  {:client "bar"
                                      :start (- current-time (* 60 60 24))
-                                     :end current-time
+                                     :end (+ current-time (* 60 60 24))
                                      :address "baz"
                                      :notes "quux"
                                      :user-rates (vec (for [user-id user-ids]
@@ -96,63 +96,55 @@
                                       invoice-url
                                       "gid1"
                                       data)]
-          (is (= 200 status))))
-
-      (testing "Client does not exist"
-        (let [data                  {:client "quux"
-                                     :start (- current-time (* 60 60 24))
-                                     :end current-time
-                                     :address "baz"
-                                     :notes "quux"
-                                     :user-rates (vec (for [user-id user-ids]
-                                                   {:user-id user-id
-                                                    :rate    5}))
-                                     :utc-offset 330
-                                     :currency :inr
-                                     :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                     :post
-                                     invoice-url
-                                     "gid1"
-                                     data)]
           (is (= 404 status))))
 
-      (testing "Invalid args"
-        (let [data                  {:client "foo"
-                                     :start (- current-time (* 60 60 24))
-                                     :end current-time
-                                     :address "baz"
-                                     :notes "quux"
-                                     :user-rates (vec (for [user-id user-ids]
-                                                   {:user-id user-id
-                                                    :rate    5}))
-                                     :utc-offset "midget"
-                                     :currency :inr
-                                     :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                      :post
-                                      invoice-url
-                                      "gid1"
-                                      data)]
-          (is (= 400 status))))
-
-      (testing "Insufficient user rates"
-        (let [user-id (first user-ids)
-              data    {:client "foo"
-                       :start (- current-time (* 60 60 24))
-                       :end current-time
-                       :address "baz"
-                       :notes "quux"
-                       :user-rates [{:user-id user-id
-                                     :rate    3}]
-                       :utc-offset 330
-                       :currency :inr
-                       :tax-rates nil}
-              {:keys [status body]} (test-helpers/http-request-raw
-                                      :post
-                                      invoice-url
-                                      "gid1"
-                                      data)]
-          (is (= 400 status))))
-
       (finally (ws/close socket)))))
+
+(deftest update-invoice-test
+  (let [invoices-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
+        unpaid-invoice-data    {:client       "MSF"
+                                :address      "Via Delorosa"
+                                :currency     "BTC"
+                                :utc_offset   0
+                                :notes        "A minimal unpaid Test invoice"
+                                :items        nil
+                                :subtotal     0.0
+                                :amount-due   11.0
+                                :from_date    0
+                                :to_date      0
+                                :tax-amounts  nil
+                                :paid         false}
+        unpaid-invoice-id      (invoices-helpers/create-invoice! unpaid-invoice-data)
+        unpaid-invoice-url     (str invoices-url unpaid-invoice-id "/")
+        paid-invoice-data      {:client       "PIH"
+                                :address      "Rue Morgue"
+                                :currency     "ETH"
+                                :utc_offset   0
+                                :notes        "A minimal paid Test invoice"
+                                :items        nil
+                                :subtotal     5.0
+                                :amount-due   9.0
+                                :from_date    0
+                                :to_date      0
+                                :tax-amounts  nil
+                                :paid         true}
+        paid-invoice-id        (invoices-helpers/create-invoice! paid-invoice-data)
+        paid-invoice-url       (str invoices-url paid-invoice-id "/")]
+    (try
+      (testing "Marking an unpaid invoice as paid"
+        (let [data             {:paid true}
+              {:keys [status]} (test-helpers/http-request-raw
+                                :put
+                                unpaid-invoice-url
+                                "gid1"
+                                data)]
+          (is (= 200 status))))
+
+      (testing "Marking a paid invoice as unpaid should fail"
+        (let [data                  {:paid false}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                     :put
+                                     paid-invoice-url
+                                     "gid1"
+                                     data)]
+          (is (= 400 status)))))))

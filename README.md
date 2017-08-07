@@ -51,10 +51,6 @@ To do this, put the following in nginx.conf Server block
 		proxy_pass http://127.0.0.1:8000;
 	}
 
-	location /download/ {
-		# Proxy to backend
-		proxy_pass http://127.0.0.1:8000;
-	}
 ```
 Reload Nginx.
 
@@ -132,11 +128,6 @@ server {
 	}
 
 	location /api/ {
-		# Proxy to backend
-		proxy_pass http://127.0.0.1:8000;
-	}
-
-	location /download/ {
 		# Proxy to backend
 		proxy_pass http://127.0.0.1:8000;
 	}

@@ -55,5 +55,15 @@
                                       :status         status})
                            (pubsub-state/remove-channel! channel)))
       (http-kit/on-receive channel (fn [data]
-                                     (pubsub/dispatch-command! channel
-                                                               (json/decode data keyword)))))))
+                                     (try
+                                       (log/debug {:event ::received-data
+                                                   :data  data})
+                                       (pubsub/dispatch-command! channel
+                                                                 (json/decode data keyword))
+                                       (catch Throwable e
+                                         (log/error e {:error ::websockets-error
+                                                       :data data})))))
+      ;; Send a "ready" message to the client to confirm
+      ;; that it can send message without them getting dropped.
+      ;; https://github.com/http-kit/http-kit/issues/318
+      (http-kit/send! channel (json/encode {:type "ready"})))))

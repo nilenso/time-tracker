@@ -110,3 +110,8 @@
 (s/def ::printable-invoice
   (s/keys :req-un [::client ::address ::currency ::notes ::from-date ::to-date
                    ::items ::subtotal ::tax-amounts ::amount-due ::core-spec/utc-offset]))
+
+(s/def ::paid (s/and boolean? true?))
+
+(s/def ::invoice-paid
+  (s/keys :req-un [::paid]))
