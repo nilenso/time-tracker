@@ -7,7 +7,18 @@
             [clojure.test :as test]
             [clojure.spec.test :as stest]
             [time-tracker.logging :as log]
-            [time-tracker.util :as util]))
+            [time-tracker.util :as util]
+            [clojure.string :as str]))
+
+(defn settings
+  "Reads a profile and returns a specific setting"
+  [setting]
+  (let [port (Integer/parseInt (util/from-config :port))
+        host (str/join ["http://localhost:" port "/"])
+        host-ws (str/join ["ws://localhost:" port "/"])
+        ws-url (str/join [host-ws "api/timers/ws-connect/"])
+        api-root (str/join [host "api/"])]
+    (setting {:port port :host host :host-ws host-ws :ws-url ws-url :api-root api-root})))
 
 (defn http-request-raw
   "Makes a HTTP request. Does not process the body."

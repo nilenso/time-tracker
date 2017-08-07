@@ -10,13 +10,11 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.spec :as s]
+            [clojure.spec :as sp]
             [time-tracker.timers.spec :as timers-spec]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
-
-(def connect-url "ws://localhost:8000/api/timers/ws-connect/")
 
 (deftest start-timer-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
@@ -88,7 +86,7 @@
                              {:command   "stop-timer"
                               :timer-id  (:id timer1)}))
         (let [command-response (test-helpers/try-take!! response-chan)]
-          (is (s/valid? ::timers-spec/duration (:duration command-response)))))
+          (is (sp/valid? ::timers-spec/duration (:duration command-response)))))
 
       (testing "Unowned timer"
         (ws/send-msg socket (json/encode

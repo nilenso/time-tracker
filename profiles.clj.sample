@@ -20,6 +20,7 @@
  
  :test-environ
  {:env
-  {:db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
+  {:port "9001"
+   :db-connection-string "jdbc:postgresql://localhost/time_tracker_test"
    :app-log-level "debug"
    :allowed-hosted-domain "*"}}}

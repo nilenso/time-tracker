@@ -1,5 +1,6 @@
 (ns time-tracker.projects.functional-test
   (:require [clojure.test :refer :all]
+            [clojure.string :as s]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [time-tracker.fixtures :as fixtures]
@@ -12,11 +13,18 @@
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
+(defn- project-api-format
+  []
+  (s/join [(helpers/settings :api-root) "projects/%s/"]))
+
+(defn- projects-api
+  []
+  (s/join [(helpers/settings :api-root) "projects/"]))
 
 (deftest retrieve-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id   (get gen-projects "foo")
-        url          (format "http://localhost:8000/api/projects/%s/" project-id)]
+        url          (format (project-api-format) project-id)]
 
     (testing "Authorized"
       (let [{:keys [status body]} (helpers/http-request :get url "gid1")
@@ -32,7 +40,7 @@
 (deftest update-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
         project-id   (get gen-projects "foo")
-        url          (format "http://localhost:8000/api/projects/%s/" project-id)] 
+        url          (format (project-api-format) project-id)] 
 
     (testing "Authorized"
       (let [{:keys [status body]} (helpers/http-request :put url "gid1" {"name" "goo"})
@@ -51,7 +59,7 @@
 
 (deftest delete-single-project-test
   (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]})
-        format-url   "http://localhost:8000/api/projects/%s/"]
+        format-url   (project-api-format)]
 
     (testing "Authorized"
       (let [project-id       (get gen-projects "foo")
@@ -90,7 +98,7 @@
 (deftest create-project-test
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
                                ["Paul Graham" "gid2" "user"])
-  (let [url "http://localhost:8000/api/projects/"]
+  (let [url (projects-api)]
 
     (testing "Admin user"
       (let [{:keys [status body]} (helpers/http-request :post url "gid1"

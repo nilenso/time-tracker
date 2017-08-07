@@ -10,7 +10,7 @@
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
-            [clojure.string :as string]))
+            [clojure.string :as s]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
@@ -42,9 +42,9 @@
       (dissoc update-response :type))))
 
 (deftest create-and-download-invoice-test
-  (let [project-url           "http://localhost:8000/api/projects/"
-        invoice-url           "http://localhost:8000/api/invoices/"
-        users-url             "http://localhost:8000/api/users/"
+  (let [project-url           (s/join [(test-helpers/settings :api-root) "projects/"])
+        invoice-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
+        users-url             (s/join [(test-helpers/settings :api-root) "users/"])
         _                     (users-helpers/create-users! ["sandy" "gid1" "admin"]
                                                            ["quux" "gid2" "admin"])
         _                     (test-helpers/http-request :post project-url "gid1"
@@ -101,7 +101,7 @@
       (finally (ws/close socket)))))
 
 (deftest update-invoice-test
-  (let [invoices-url           "http://localhost:8000/api/invoices/"
+  (let [invoices-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
         unpaid-invoice-data    {:client       "MSF"
                                 :address      "Via Delorosa"
                                 :currency     "BTC"
