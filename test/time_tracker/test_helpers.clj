@@ -50,7 +50,7 @@
   "Opens a connection and completes the auth handshake."
   [google-id]
   (let [response-chan (chan 5)
-        socket        (ws/connect "ws://localhost:8000/api/timers/ws-connect/"
+        socket        (ws/connect (settings :ws-url)
                                 :on-receive (fn on-receive
                                               [data]
                                               (log/debug {:event ::received-ws-data
