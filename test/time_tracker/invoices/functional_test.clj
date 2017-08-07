@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.test-helpers :as test-helpers]
+            [time-tracker.invoices.test-helpers :as invoices-helpers]
             [time-tracker.projects.test-helpers :as projects-helpers]
             [time-tracker.users.test-helpers :as users-helpers]
             [time-tracker.db :as db]
@@ -99,4 +100,51 @@
 
       (finally (ws/close socket)))))
 
+(deftest update-invoice-test
+  (let [invoices-url           "http://localhost:8000/api/invoices/"
+        unpaid-invoice-data    {:client       "MSF"
+                                :address      "Via Delorosa"
+                                :currency     "BTC"
+                                :utc_offset   0
+                                :notes        "A minimal unpaid Test invoice"
+                                :items        nil
+                                :subtotal     0.0
+                                :amount-due   11.0
+                                :from_date    0
+                                :to_date      0
+                                :tax-amounts  nil
+                                :paid         false}
+        unpaid-invoice-id      (invoices-helpers/create-invoice! unpaid-invoice-data)
+        unpaid-invoice-url     (str invoices-url unpaid-invoice-id "/")
+        paid-invoice-data      {:client       "PIH"
+                                :address      "Rue Morgue"
+                                :currency     "ETH"
+                                :utc_offset   0
+                                :notes        "A minimal paid Test invoice"
+                                :items        nil
+                                :subtotal     5.0
+                                :amount-due   9.0
+                                :from_date    0
+                                :to_date      0
+                                :tax-amounts  nil
+                                :paid         true}
+        paid-invoice-id        (invoices-helpers/create-invoice! paid-invoice-data)
+        paid-invoice-url       (str invoices-url paid-invoice-id "/")]
+    (try
+      (testing "Marking an unpaid invoice as paid"
+        (let [data             {:paid true}
+              {:keys [status]} (test-helpers/http-request-raw
+                                :put
+                                unpaid-invoice-url
+                                "gid1"
+                                data)]
+          (is (= 200 status))))
 
+      (testing "Marking a paid invoice as unpaid should fail"
+        (let [data                  {:paid false}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                     :put
+                                     paid-invoice-url
+                                     "gid1"
+                                     data)]
+          (is (= 400 status)))))))

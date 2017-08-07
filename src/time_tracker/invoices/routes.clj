@@ -5,4 +5,9 @@
 (defn routes []
   { ""        (with-rest-middleware
                 {:post handlers/create
-                 :get handlers/list-all})})
+                 :get handlers/list-all})
+   [:id "/"] (with-rest-middleware
+               {:get handlers/retrieve
+                :put handlers/modify})})
+
+
