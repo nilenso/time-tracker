@@ -9,6 +9,12 @@ WHERE invoice.id = :invoice_id;
 
 -- name: update-invoice-query!
 -- Updates an invoice.
-UPDATE invoice 
-SET paid = :paid 
+UPDATE invoice
+SET paid = :paid
+WHERE invoice.id = :invoice_id;
+
+-- name: update-invoice-usable-query!
+-- Updates an invoice.
+UPDATE invoice
+SET usable = :usable
 WHERE invoice.id = :invoice_id;

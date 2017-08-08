@@ -113,5 +113,7 @@
 
 (s/def ::paid (s/and boolean? true?))
 
-(s/def ::invoice-paid
-  (s/keys :req-un [::paid]))
+(s/def ::usable (s/and boolean? false?))
+
+(s/def ::invoice-update
+  (s/keys :req-un [(or ::paid ::usable)]))

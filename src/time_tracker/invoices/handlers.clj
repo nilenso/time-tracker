@@ -116,14 +116,18 @@
 (defn modify
   [{:keys [route-params body]} connection]
   ;; Validate input JSON
-  ;; should have only {paid: true}
-  ;; as user can only update an unpaid invoice to paid. 
-  (util/validate-spec body ::invoices-spec/invoice-paid)
+  ;; should have only {paid: true} or {usable: false}
+  ;; but not both
+  ;; as user can only update an unpaid invoice to paid.
+  ;; Note:- This is an XOR but we can't do that with spec?
+  (util/validate-spec body ::invoices-spec/invoice-update)
   (let [invoice-id (Integer/parseInt (:id route-params))
-        paid (select-keys body [:paid])]
-    (if-let [paid-invoice (invoices-db/mark-invoice-paid!
-                                connection
-                                invoice-id
-                                paid)]
-        (res/response paid-invoice)
-        web-util/error-not-found)))
+        [update-method update-value] (cond
+                                       (contains? body :paid) [invoices-db/mark-invoice-paid! (select-keys body [:paid])]
+                                       (contains? body :usable) [invoices-db/mark-invoice-unusable! (select-keys body [:usable])])]
+    (if-let [updated-invoice (update-method
+                               connection
+                               invoice-id
+                               update-value)]
+      (res/response updated-invoice)
+      web-util/error-not-found)))
