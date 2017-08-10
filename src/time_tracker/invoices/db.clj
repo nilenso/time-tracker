@@ -39,7 +39,7 @@
   ;; The Postgres RETURNING clause doesn't work,
   ;; so using two queries for now
   (when (statement-success?
-         (update-invoice-query! {:paid       paid
+         (update-invoice-paid-query! {:paid       paid
                                  :invoice_id invoice-id}
                                 {:connection connection}))
     (jdbc/get-by-id connection "invoice" invoice-id)))

@@ -7,7 +7,7 @@ SELECT invoice.* FROM invoice;
 SELECT invoice.* FROM invoice
 WHERE invoice.id = :invoice_id;
 
--- name: update-invoice-query!
+-- name: update-invoice-paid-query!
 -- Updates an invoice.
 UPDATE invoice
 SET paid = :paid
