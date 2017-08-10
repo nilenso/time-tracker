@@ -100,7 +100,7 @@
 
       (finally (ws/close socket)))))
 
-(deftest update-invoice-test
+(deftest update-invoice-paid-test
   (let [invoices-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
         unpaid-invoice-data    {:client       "MSF"
                                 :address      "Via Delorosa"
@@ -147,4 +147,54 @@
                                      paid-invoice-url
                                      "gid1"
                                      data)]
+          (is (= 400 status)))))))
+
+
+(deftest update-invoice-unusable-test
+  (let [invoices-url           (s/join [(test-helpers/settings :api-root) "invoices/"])
+        unusable-invoice-data    {:client       "MSF"
+                                  :address      "Via Delorosa"
+                                  :currency     "BTC"
+                                  :utc_offset   0
+                                  :notes        "A minimal unusable Test invoice"
+                                  :items        nil
+                                  :subtotal     0.0
+                                  :amount-due   11.0
+                                  :from_date    0
+                                  :to_date      0
+                                  :tax-amounts  nil
+                                  :usable       false}
+        unusable-invoice-id      (invoices-helpers/create-invoice! unusable-invoice-data)
+        unusable-invoice-url     (str invoices-url unusable-invoice-id "/")
+        usable-invoice-data      {:client       "PIH"
+                                  :address      "Rue Morgue"
+                                  :currency     "ETH"
+                                  :utc_offset   0
+                                  :notes        "A minimal usable Test invoice"
+                                  :items        nil
+                                  :subtotal     5.0
+                                  :amount-due   9.0
+                                  :from_date    0
+                                  :to_date      0
+                                  :tax-amounts  nil
+                                  :usable       true}
+        usable-invoice-id        (invoices-helpers/create-invoice! usable-invoice-data)
+        usable-invoice-url       (str invoices-url usable-invoice-id "/")]
+    (try
+      (testing "Marking a usable invoice as unusable"
+        (let [data                  {:usable false}
+              {:keys [status body]} (test-helpers/http-request-raw
+                                     :put
+                                     usable-invoice-url
+                                     "gid1"
+                                     data)]
+          (is (= 200 status))))
+
+      (testing "Marking an unusable invoice as usable"
+        (let [data             {:usable true}
+              {:keys [status]} (test-helpers/http-request-raw
+                                :put
+                                unusable-invoice-url
+                                "gid1"
+                                data)]
           (is (= 400 status)))))))

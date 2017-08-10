@@ -113,5 +113,9 @@
 
 (s/def ::paid (s/and boolean? true?))
 
-(s/def ::invoice-paid
-  (s/keys :req-un [::paid]))
+(s/def ::usable (s/and boolean? false?))
+
+;; Note: This should actually serve an XOR of the keys, but does not seem
+;; possible with spec.
+(s/def ::invoice-update
+  (s/keys :req-un [(or ::paid ::usable)]))
