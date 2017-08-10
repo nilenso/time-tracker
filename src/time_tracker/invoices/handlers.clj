@@ -115,16 +115,19 @@
 ;; clojure.core/update
 (defn modify
   [{:keys [route-params body]} connection]
-  ;; Validate input JSON
-  ;; should have only {paid: true} or {usable: false}
-  ;; but not both
-  ;; as user can only update an unpaid invoice to paid.
-  ;; Note:- This is an XOR but we can't do that with spec?
+  ;; Validate input JSON should have only {paid: true} or {usable: false} but
+  ;; not both as user can only update an unpaid invoice to paid or an usable
+  ;; invoice to unusable.
+  ;;
+  ;; NOTE: Changing to unusable can only happen for an unpaid invoice. This is
+  ;; currently handled by the frontend.
   (util/validate-spec body ::invoices-spec/invoice-update)
   (let [invoice-id (Integer/parseInt (:id route-params))
         [update-method update-value] (cond
-                                       (contains? body :paid) [invoices-db/mark-invoice-paid! (select-keys body [:paid])]
-                                       (contains? body :usable) [invoices-db/mark-invoice-unusable! (select-keys body [:usable])])]
+                                       (contains? body :paid)
+                                       [invoices-db/mark-invoice-paid! (select-keys body [:paid])]
+                                       (contains? body :usable)
+                                       [invoices-db/mark-invoice-unusable! (select-keys body [:usable])])]
     (if-let [updated-invoice (update-method
                                connection
                                invoice-id
