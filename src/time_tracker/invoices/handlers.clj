@@ -59,10 +59,9 @@
     (invoices-core/printable-invoice invoice (names-by-id users))))
 
 (defn- print-invoice
-  [invoice-data]
-  (let [printable-invoice  (printable-invoice invoice-data)
-        pdf-stream         (ring-io/piped-input-stream
-                            (partial invoices-core/generate-pdf printable-invoice))]
+  [printable-invoice]
+  (let [pdf-stream         (ring-io/piped-input-stream
+                           (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
@@ -85,9 +84,9 @@
             (empty? users))
       web-util/error-not-found
       (do
-        (invoices-db/create! connection
-                             (printable-invoice invoice-data))
-        (print-invoice invoice-data)))))
+        (let [invoice-to-print (printable-invoice invoice-data)]
+          (invoices-db/create! connection invoice-to-print)
+          (print-invoice invoice-to-print))))))
 
 ;; Endpoint for retrieving all invoices
 ;; GET /api/invoices/
