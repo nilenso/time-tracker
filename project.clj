@@ -21,7 +21,7 @@
                  [ring/ring-defaults "0.2.1"]
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
-                 [clj-pdf "2.2.16"]]
+                 [clj-pdf "2.2.29"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
