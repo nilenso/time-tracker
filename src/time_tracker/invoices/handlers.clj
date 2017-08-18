@@ -59,10 +59,9 @@
     (invoices-core/printable-invoice invoice (names-by-id users))))
 
 (defn- print-invoice
-  [invoice-data]
-  (let [printable-invoice  (printable-invoice invoice-data)
-        pdf-stream         (ring-io/piped-input-stream
-                            (partial invoices-core/generate-pdf printable-invoice))]
+  [printable-invoice]
+  (let [pdf-stream   (ring-io/piped-input-stream
+                     (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
@@ -84,10 +83,9 @@
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (do
-        (invoices-db/create! connection
-                             (printable-invoice invoice-data))
-        (print-invoice invoice-data)))))
+      (let [invoice-to-print (printable-invoice invoice-data)]
+        (invoices-db/create! connection invoice-to-print)
+        (print-invoice invoice-to-print)))))
 
 ;; Endpoint for retrieving all invoices
 ;; GET /api/invoices/
@@ -96,16 +94,32 @@
   [request connection]
   (res/response (invoices-db/retrieve-all connection)))
 
+(defn- invoice-record->invoice
+  "Converts the invoice saved in DB into a format used for PDF reports"
+  [invoice-in-db]
+  {:from-date (:from_date invoice-in-db)
+   :address (:address invoice-in-db)
+   :to-date (:to_date invoice-in-db)
+   :utc-offset (:utc_offset invoice-in-db)
+   :tax-amounts (read-string (:tax_amounts invoice-in-db))
+   :client (:client invoice-in-db)
+   :subtotal (:subtotal invoice-in-db)
+   :currency (:currency invoice-in-db)
+   :notes (:notes invoice-in-db)
+   :amount-due (:amount_due invoice-in-db)
+   :items (read-string (:items invoice-in-db))})
+
 ;; Endpoint for retrieving a single invoice
 ;; GET /api/invoices/<id>/
 (defn retrieve
   [request connection]
-  (let [invoice-id (Integer/parseInt (:id (:route-params request)))]
+  (let [invoice-id   (Integer/parseInt (:id (:route-params request)))
+        content-type (:content-type request)]
     (if-let [invoice (invoices-db/retrieve
                       connection
                       invoice-id)]
-      (do
-        (log/debug {:event "invoice-received" :data invoice})
+      (if (= "application/pdf" content-type)
+        (print-invoice (invoice-record->invoice invoice))
         (res/response invoice))
       web-util/error-not-found)))
 
