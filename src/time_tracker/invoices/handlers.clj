@@ -60,8 +60,8 @@
 
 (defn- print-invoice
   [printable-invoice]
-  (let [pdf-stream         (ring-io/piped-input-stream
-                           (partial invoices-core/generate-pdf printable-invoice))]
+  (let [pdf-stream   (ring-io/piped-input-stream
+                     (partial invoices-core/generate-pdf printable-invoice))]
     (-> (res/response pdf-stream)
         (res/content-type "application/pdf"))))
 
@@ -83,10 +83,9 @@
     (if (or (empty? projects)
             (empty? users))
       web-util/error-not-found
-      (do
-        (let [invoice-to-print (printable-invoice invoice-data)]
-          (invoices-db/create! connection invoice-to-print)
-          (print-invoice invoice-to-print))))))
+      (let [invoice-to-print (printable-invoice invoice-data)]
+        (invoices-db/create! connection invoice-to-print)
+        (print-invoice invoice-to-print)))))
 
 ;; Endpoint for retrieving all invoices
 ;; GET /api/invoices/
@@ -114,16 +113,14 @@
 ;; GET /api/invoices/<id>/
 (defn retrieve
   [request connection]
-  (let [invoice-id (Integer/parseInt (:id (:route-params request)))]
+  (let [invoice-id   (Integer/parseInt (:id (:route-params request)))
+        content-type (:content-type request)]
     (if-let [invoice (invoices-db/retrieve
                       connection
                       invoice-id)]
-      (do
-        (log/debug {:event "invoice-received" :data invoice})    
-        (let [content-type (:content-type request)]
-          (if (= "application/pdf" content-type)
-            (print-invoice (invoice-record->invoice invoice))
-            (res/response invoice))))
+      (if (= "application/pdf" content-type)
+        (print-invoice (invoice-record->invoice invoice))
+        (res/response invoice))
       web-util/error-not-found)))
 
 ;; Endpoint for updating a single invoice.
