@@ -95,6 +95,21 @@
   [request connection]
   (res/response (invoices-db/retrieve-all connection)))
 
+(defn- invoice-record->invoice
+  "Converts the invoice saved in DB into a format used for PDF reports"
+  [invoice-in-db]
+  {:from-date (:from_date invoice-in-db)
+   :address (:address invoice-in-db)
+   :to-date (:to_date invoice-in-db)
+   :utc-offset (:utc_offset invoice-in-db)
+   :tax-amounts (read-string (:tax_amounts invoice-in-db))
+   :client (:client invoice-in-db)
+   :subtotal (:subtotal invoice-in-db)
+   :currency (:currency invoice-in-db)
+   :notes (:notes invoice-in-db)
+   :amount-due (:amount_due invoice-in-db)
+   :items (read-string (:items invoice-in-db))})
+
 ;; Endpoint for retrieving a single invoice
 ;; GET /api/invoices/<id>/
 (defn retrieve
@@ -104,8 +119,11 @@
                       connection
                       invoice-id)]
       (do
-        (log/debug {:event "invoice-received" :data invoice})
-        (res/response invoice))
+        (log/debug {:event "invoice-received" :data invoice})    
+        (let [content-type (:content-type request)]
+          (if (= "application/pdf" content-type)
+            (print-invoice (invoice-record->invoice invoice))
+            (res/response invoice))))
       web-util/error-not-found)))
 
 ;; Endpoint for updating a single invoice.
