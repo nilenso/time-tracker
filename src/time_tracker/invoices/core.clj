@@ -140,12 +140,15 @@
       [:table {:width 100 :border false :cell-border false :spacing -5 :num-cols 2}
        [[:cell {:align "left" :style :bold} name]
         [:cell {:align "right":style :bold} (str "Client: " (:client printable-invoice))]]
+       ;; clj/pdf will fail to load PDFs created if fields are null
+       ;; so whichever fields can possibly be null
+       ;; should be set as an empty string
        [[:cell {:align "left"} address1]
         [:cell {:align "right"} client-address1]]
-       [[:cell {:align "left"} address2]
-        [:cell {:align "right"} client-address2]]
-       [[:cell {:align "left"} address3]
-        [:cell {:align "right"} (apply str client-rest)]]]
+       [[:cell {:align "left"} (or address2 "")]
+        [:cell {:align "right"} (or client-address2 "")]]
+       [[:cell {:align "left"} (or address3 "")]
+        [:cell {:align "right"} (apply str (or client-rest ""))]]]
 
       [:paragraph {:spacing-before 50} [:chunk {:style :bold} "Issue Date: "]
        [:chunk (date->string (-> (time/now) (clj-time.coerce/to-long) (/ 1000))
