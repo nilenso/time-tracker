@@ -134,8 +134,7 @@
                                                          #"\n")]
     (clj-pdf/pdf
      [{:font {:encoding :unicode}}
-      [:image {:xscale 0.5 :yscale 0.5}
-       (.getFile (clojure.java.io/resource (util/from-config :logo)))]
+      [:image {:xscale 0.2 :yscale 0.2} (util/from-config :logo)]
 
       ;; Nilenso + Client information
       [:table {:width 100 :border false :cell-border false :spacing -5 :num-cols 2}
