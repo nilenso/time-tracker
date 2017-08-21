@@ -16,8 +16,11 @@
    :harvest-url "https://your-company.harvestapp.com"
    :harvest-id "your-id@your-company.com"
    :harvest-pass "your-harvest-password"
+   :name "your-organization-name"
+   :logo "your-organization-logo-url"
+   :address "your-organization-address"
    }}
- 
+
  :test-environ
  {:env
   {:port "9001"

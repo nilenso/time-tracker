@@ -11,6 +11,7 @@ machine:
     ALLOWED_HOSTED_DOMAIN: "*"
     LOG_FILE_PREFIX: "logs/time-tracker.log"
     NUM_TESTS: 1000
+    LOGO: https://nilenso.com/images/nilenso_logos/nilenso_logo.png
 test:
   override:
     - lein test2junit

@@ -124,25 +124,62 @@
   "Generates a PDF from a printable invoice."
   [{:keys [utc-offset currency] :as printable-invoice} out]
   {:pre [(seq (:items printable-invoice))]}
-  (let [money (partial money-str currency)]
+  (let [money (partial money-str currency)
+        name (util/from-config :name)
+        [address1 address2 address3] (clojure.string/split
+                                      (util/from-config :address)
+                                      #"\n")
+        [client-address1 client-address2 & client-rest] (clojure.string/split
+                                                         (:address printable-invoice)
+                                                         #"\n")]
     (clj-pdf/pdf
-      [{:font {:encoding :unicode}}
-       [:paragraph "Invoice for " (date->string (:from-date printable-invoice)
-                                                utc-offset)
-        " to " (date->string (:to-date printable-invoice) utc-offset)]
-       [:paragraph "Client: " (:client printable-invoice)]
-       [:phrase "Address:"]
-       [:paragraph (:address printable-invoice)]
-       (into [:table
-              {:header ["Name" "Quantity" "Unit Price" "Amount"]}]
-             (for [{:keys [name rate hours amount]} (:items printable-invoice)]
-               [name (str hours) (money rate) (money amount)]))
-       [:paragraph "Subtotal: " (money (:subtotal printable-invoice))]
-       ;; clj-pdf throws an error when it encounters an empty sequence ಠ_ಠ
-       (not-empty
-         (for [tax-amount-map (:tax-amounts printable-invoice)]
-           [:paragraph (format-tax-amount-map tax-amount-map currency)]))
-       [:paragraph "Amount due: " (money (:amount-due printable-invoice))]
-       [:phrase "Notes:"]
-       [:paragraph (:notes printable-invoice)]]
-      out)))
+     [{:font {:encoding :unicode}}
+      [:image {:xscale 0.2 :yscale 0.2} (util/from-config :logo)]
+
+      ;; Nilenso + Client information
+      [:table {:width 100 :border false :cell-border false :spacing -5 :num-cols 2}
+       [[:cell {:align "left" :style :bold} name]
+        [:cell {:align "right":style :bold} (str "Client: " (:client printable-invoice))]]
+       [[:cell {:align "left"} address1]
+        [:cell {:align "right"} client-address1]]
+       [[:cell {:align "left"} address2]
+        [:cell {:align "right"} client-address2]]
+       [[:cell {:align "left"} address3]
+        [:cell {:align "right"} (apply str client-rest)]]]
+
+      [:paragraph {:spacing-before 50} [:chunk {:style :bold} "Issue Date: "]
+       [:chunk (date->string (-> (time/now) (clj-time.coerce/to-long) (/ 1000))
+                             utc-offset)]]
+      [:paragraph {:spacing-before 10} [:chunk {:style :bold} "Subject: "]
+       [:chunk (str "Invoice for "
+                    (:client printable-invoice)
+                    " from "
+                    (date->string (:from-date printable-invoice) utc-offset)
+                    " to "
+                    (date->string (:to-date printable-invoice) utc-offset))]]
+
+      ;; Staffing + Rates
+      (into [:table {:width 100 :border true :cell-border true :num-cols 5
+                     :widths [10 45 15 15 15]
+                     :header ["Sl No." "Description" "Quantity" "Price" "Amount"]}]
+            (map-indexed (fn [idx {:keys [name rate hours amount]}]
+                           (map (fn [val]
+                                [:cell {:background-color (if (even? idx)
+                                                            [221 221 221]
+                                                            [255 255 255])} val])
+                              [(str idx) name (str rate) (str hours) (str amount)]))
+                         (:items printable-invoice)))
+
+      ;; Total amount + Tax information
+      (conj (into [:pdf-table {:width-percent 45 :horizontal-align :right :border false}
+                   [67 33]
+                   [[:chunk {:style :bold} "Total"] (str (:subtotal printable-invoice))]]
+                  (for [{:keys [name percentage amount]} (:tax-amounts printable-invoice)]
+                    [(str name "(" (str percentage) "%): ") (str amount)]))
+            [[:chunk {:style :bold} "Total including Taxes: "]
+             (money (:amount-due printable-invoice))])
+
+      ;; Notes
+      [:paragraph {:spacing-before 60 :style :bold} "Notes:"]
+      [:paragraph (:notes printable-invoice)]]
+     out)))
