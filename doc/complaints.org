@@ -1,0 +1,5 @@
+
+* deploy not automated
+* dev setup not automated
+* Clojure logging isn't consistent
+* Clojure websocket APIs return ambiguous structures
