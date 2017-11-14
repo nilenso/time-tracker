@@ -17,24 +17,52 @@
                roles))))
 
 (defn create!
+  [connection {:keys [name address gstin pan]}]
+  (let [row {"name"    name
+             "address" address
+             "gstin"   gstin
+             "pan"     pan}]
+    (first (jdbc/insert! connection "client" row))))
+
+(defn modify!
   [connection client]
-  (first (jdbc/insert! connection "client"
-                       {"name"    (:name client)
-                        "address" (:address client)
-                        "gstin"   (:gstin client)
-                        "pan"     (:pan client)})))
+  (let [where-clause ["id = ?" (:id client)]]
+    (first (jdbc/update! connection "client" client where-clause))))
 
 (defn create-point-of-contact!
-  [connection poc]
-  (first (jdbc/insert! connection "point_of_contact"
-                       {"name"      (:name poc)
-                        "phone"     (:phone poc)
-                        "email"     (:email poc)
-                        "client_id" (:client-id poc)})))
+  [connection {:keys [name phone email client_id]}]
+  (let [row {"name"      name
+             "phone"     phone
+             "email"     email
+             "client_id" client_id}]
+    (first (jdbc/insert! connection "point_of_contact" row))))
 
 (defn create-points-of-contact!
   [connection points-of-contact]
-  (map #(create-point-of-contact! connection %) points-of-contact))
+  (doall
+   (map #(create-point-of-contact! connection %)
+      points-of-contact)))
+
+(defn retrieve-point-of-contact
+  [connection client-id]
+  (retrieve-poc-query {:client_id client-id}
+                      {:connection connection}))
+
+(defn modify-point-of-contact!
+  [connection poc]
+  (let [where-clause ["id = ?" (:id poc)]]
+    (first (jdbc/update! connection
+                         "point_of_contact"
+                         (-> poc
+                            (dissoc :id)
+                            (dissoc :client_id))
+                         where-clause))))
+
+(defn modify-points-of-contact!
+  [connection pocs]
+  (doall
+   (map #(modify-point-of-contact! connection %)
+      pocs)))
 
 (defn retrieve-all
   "Retrieves a list of ALL the clients. No authorization checks."

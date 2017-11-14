@@ -7,3 +7,7 @@ SELECT client.* from client;
 SELECT COUNT(*) FROM app_user
 WHERE google_id = :google_id
 AND role = :role::user_role
+
+-- name: retrieve-poc-query
+SELECT point_of_contact.* FROM point_of_contact
+WHERE point_of_contact.client_id = :client_id

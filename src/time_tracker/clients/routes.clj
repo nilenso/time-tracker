@@ -3,6 +3,8 @@
             [time-tracker.web.middleware :refer [with-rest-middleware]]))
 
 (defn routes []
-  {"" (with-rest-middleware
-        {:get  handlers/list-all
-         :post handlers/create})})
+  {""        (with-rest-middleware
+               {:get  handlers/list-all
+                :post handlers/create})
+   [:id "/"] (with-rest-middleware
+               {:put handlers/modify})})
