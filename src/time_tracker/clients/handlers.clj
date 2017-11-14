@@ -12,12 +12,14 @@
   [request connection]
   (let [clients (clients.db/retrieve-all-clients-query {} {:connection connection})
         clients-with-poc (doall
-                          (map (fn [client]
-                               (assoc client
-                                      :points-of-contact
-                                      (clients.db/retrieve-poc-query {:client_id (:id client)}
-                                                                     {:connection connection})))
-                             clients))]
+                          (map
+                           (fn [client]
+                             (assoc client
+                                    :points-of-contact
+                                    (clients.db/retrieve-all-points-of-contact
+                                     connection
+                                     (:id client))))
+                           clients))]
     (res/response clients-with-poc)))
 
 (defn create

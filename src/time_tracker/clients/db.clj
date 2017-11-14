@@ -43,7 +43,7 @@
    (map #(create-point-of-contact! connection %)
       points-of-contact)))
 
-(defn retrieve-point-of-contact
+(defn retrieve-all-points-of-contact
   [connection client-id]
   (retrieve-poc-query {:client_id client-id}
                       {:connection connection}))
