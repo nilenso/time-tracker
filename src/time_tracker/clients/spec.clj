@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [time-tracker.spec :as core-spec]))
 
-(s/def ::name string?)
+(s/def ::name ::core-spec/non-empty-string)
 (s/def ::address string?)
 (s/def ::gstin (s/and string? #(= 15 (count %))))
 (s/def ::pan (s/and string? #(= 10 (count %))))
