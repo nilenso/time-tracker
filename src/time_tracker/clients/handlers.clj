@@ -33,11 +33,14 @@
             client-coerced-poc (map #(assoc % :client_id id) poc)
             created-poc        (clients.db/create-points-of-contact!
                                 connection
-                                client-coerced-poc)]
+                                client-coerced-poc)
+            client-with-poc    (assoc
+                                created-client
+                                :points-of-contact
+                                created-poc)]
         (if (and created-client
                  (not (some nil? created-poc)))
-          (-> (res/response created-client)
-             (res/status 201))
+          (-> (res/response client-with-poc) (res/status 201))
           web-util/error-bad-request))
       web-util/error-forbidden)))
 
