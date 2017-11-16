@@ -17,7 +17,6 @@
 (defn start-server!
   ([] (start-server! (web-service/app)))
   ([app-handler]
-   (init!)
    (log/info {:event ::server-start})
    (let [stop-fn (httpkit/run-server app-handler
                                      {:port (Integer/parseInt (util/from-config :port))})]
@@ -28,6 +27,7 @@
 
 (defn -main
   [& args]
+  (init!)
   (condp = (first args)
     "migrate"  (migrate-db)
     "rollback" (rollback-db)
