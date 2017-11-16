@@ -1,5 +1,7 @@
 # time-tracker
 
+[![CircleCI](https://circleci.com/gh/nilenso/time-tracker/tree/master.svg?style=svg)](https://circleci.com/gh/nilenso/time-tracker/tree/master)
+
 Be nilenso's time tracking tool.
 
 ## Dev installation
