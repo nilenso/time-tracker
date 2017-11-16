@@ -1,10 +1,11 @@
 (ns time-tracker.core
   (:gen-class)
-  (:require [time-tracker.web.service :as web-service]
+  (:require [org.httpkit.server :as httpkit]
+            [time-tracker.migration :refer [migrate-db rollback-db]]
             [time-tracker.db :as db]
             [time-tracker.logging :as log]
-            [org.httpkit.server :as httpkit]
-            [time-tracker.util :as util]))
+            [time-tracker.util :as util]
+            [time-tracker.web.service :as web-service]))
 
 (defn init! []
   (log/configure-logging!)
@@ -27,4 +28,7 @@
 
 (defn -main
   [& args]
-  (start-server!))
+  (condp = (first args)
+    "migrate"  (migrate-db)
+    "rollback" (rollback-db)
+    (start-server!)))
