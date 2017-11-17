@@ -1,0 +1,14 @@
+[Unit]
+Description=time tracker
+
+[Service]
+Type=simple
+User=timetracker
+ExecStartPre=/usr/bin/java -jar /home/enso/time-tracker/time-tracker.jar migrate
+ExecStart=/usr/bin/java -jar /home/enso/time-tracker/time-tracker.jar
+EnvironmentFile=/home/timetracker/env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
