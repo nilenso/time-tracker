@@ -5,7 +5,6 @@
 - move config `def`s out of code, and into config file
 - try to move integer/parseInt higher up; biz logic shouldn't do param parsing
 - move addition of duration into applicaiton layer. more generally, move biz logic into application layer.
-- make request-response a db transaction
 
 ** standard web service stack
 - authentication
