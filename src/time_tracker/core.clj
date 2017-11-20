@@ -15,11 +15,12 @@
   (log/teardown-logging!))
 
 (defn start-server!
-  ([] (start-server! (web-service/app)))
-  ([app-handler]
+  ([port] (start-server! (web-service/app) port))
+  ([app-handler port]
    (log/info {:event ::server-start})
+   (println "Starting server on port : " port)
    (let [stop-fn (httpkit/run-server app-handler
-                                     {:port (Integer/parseInt (util/from-config :port))})]
+                                     {:port (Integer/parseInt port)})]
      (fn []
        (stop-fn)
        (log/info {:event ::server-stop})
@@ -31,4 +32,4 @@
   (condp = (first args)
     "migrate"  (migrate-db)
     "rollback" (rollback-db)
-    (start-server!)))
+    (start-server! (or (first args) (util/from-config :port)))))
