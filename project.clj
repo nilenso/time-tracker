@@ -22,6 +22,7 @@
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
                  [clj-pdf "2.2.29"]]
+  :jvm-opts ["--add-modules" "java.xml.bind"]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
@@ -35,10 +36,10 @@
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
              :default [:base :system :user :provided :dev :dev-environ]
              :uberjar {:aot [#"time-tracker.*"]}}
-
   :aliases {"test"       ["with-profile" "+test-environ" "test"]
             "test2junit" ["with-profile" "+test-environ" "test2junit"]
             "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
   :monkeypatch-clojure-test false
-  :uberjar-exclusions [#"dev.*"])
+  :uberjar-exclusions [#"dev.*"]
+  )
