@@ -18,6 +18,8 @@ A time-tracker built for education, fun and eventually profit.
   ./scripts/dev-setup.sh
   ```
 
+- `lein run $port` starts server on `$port` mentioned. By default, it is set to `8000`. Default can be set in profiles.clj as well.
+
 ### Production
 
 *Note: The following setup assumes that you're running Ubuntu.*
