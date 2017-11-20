@@ -22,7 +22,6 @@
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
                  [clj-pdf "2.2.29"]]
-  :jvm-opts ["--add-modules" "java.xml.bind"]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
   :plugins [[lein-environ "1.1.0"]]
@@ -31,6 +30,7 @@
                                   [org.clojure/core.async "0.2.395"]
                                   [stylefruits/gniazdo "1.0.0"]]
                    :plugins      [[test2junit "1.2.2"]]
+                   :jvm-opts     ["--add-modules" "java.xml.bind"]
                    :test2junit-output-dir ~(or (System/getenv "CIRCLE_TEST_REPORTS")
                                                "target/test2junit")}
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
