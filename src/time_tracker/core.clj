@@ -18,6 +18,7 @@
   ([port] (start-server! (web-service/app) port))
   ([app-handler port]
    (log/info {:event ::server-start})
+   (println "Starting server on port : " port)
    (let [stop-fn (httpkit/run-server app-handler
                                      {:port (Integer/parseInt port)})]
      (fn []
