@@ -18,6 +18,22 @@ A time-tracker built for education, fun and eventually profit.
   ./scripts/dev-setup.sh
   ```
 
+- To start a server, either run:
+
+	```bash
+	lein run
+	```
+
+or:
+
+	```bash
+	lein repl
+
+	# in the repl:
+	time-tracker.core=> (init!)
+	(start-server!)
+	```
+
 ### Production
 
 *Note: The following setup assumes that you're running Ubuntu.*
