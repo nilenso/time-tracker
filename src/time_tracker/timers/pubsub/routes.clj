@@ -14,10 +14,10 @@
 (def command-map
   (wrap-middlewares
    [middleware/wrap-exception middleware/wrap-transaction]
-   (merge {"create-and-start-timer" (-> commands/create-and-start-timer-now!
-                                        ;;(middleware/wrap-can-create-timer)
-                                        (middleware/wrap-validator
-                                         ::pubsub-spec/create-and-start-timer-now-args))}
+   (merge {"create-timer" (-> commands/create-timer!
+                              ;;(middleware/wrap-can-create-timer)
+                              (middleware/wrap-validator
+                               ::pubsub-spec/create-timer-args))}
 
           {"start-timer"            (-> commands/start-timer-now!
                                         (middleware/wrap-owns-timer)

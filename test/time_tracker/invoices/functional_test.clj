@@ -18,28 +18,12 @@
 (defn- create-timer-over-ws
   [ws-chan socket project-id current-time duration]
   (ws/send-msg socket (json/encode
-                       {:command "create-and-start-timer"
+                       {:command "create-timer"
                         :project-id project-id
                         :started-time current-time
                         :created-time current-time
-                        :notes ""}))
-
-  (let [create-response (test-helpers/try-take!! ws-chan)
-        start-response (test-helpers/try-take!! ws-chan)
-        timer-id (:id create-response)]
-    (ws/send-msg socket (json/encode
-                         {:command "stop-timer"
-                          :timer-id timer-id
-                          :stop-time current-time}))
-    (ws/send-msg socket (json/encode
-                         {:command "update-timer"
-                          :timer-id timer-id
-                          :current-time current-time
-                          :duration 3600
-                          :notes "created for testing"}))
-    (let [_               (test-helpers/try-take!! ws-chan)
-          update-response (test-helpers/try-take!! ws-chan)]
-      (dissoc update-response :type))))
+                        :notes "created for testing"
+                        :duration duration})))
 
 (deftest create-and-download-invoice-test
   (let [project-url           (s/join [(test-helpers/settings :api-root) "projects/"])

@@ -47,13 +47,16 @@
 
 (defn create!
   "Creates and returns a timer."
-  [connection project-id google-id created-time notes]
-  (-> (create-timer-query<! {:google_id    google-id
-                             :project_id   project-id
-                             :created_time created-time
-                             :notes        notes}
-                            {:connection connection})
-      (transform-timer-map)))
+  ([connection project-id google-id created-time notes]
+   (create! connection project-id google-id created-time notes 0))
+  ([connection project-id google-id created-time notes duration]
+   (-> (create-timer-query<! {:google_id    google-id
+                              :project_id   project-id
+                              :created_time created-time
+                              :notes        notes
+                              :duration     duration}
+                             {:connection connection})
+       (transform-timer-map))))
 
 (defn update!
   "Set the elapsed duration of the timer."
