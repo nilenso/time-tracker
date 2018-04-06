@@ -138,50 +138,29 @@
 
       (finally (ws/close socket)))))
 
-(deftest create-and-start-timer-command-test
+(deftest create-timer-command-test
   (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
                                                                  "gid2" ["goo"]})
         current-time           (util/current-epoch-seconds)
-        [response-chan socket] (test-helpers/make-ws-connection "gid1")]
+        [response-chan socket] (test-helpers/make-ws-connection "gid1")
+        duration 60]
     (try
       (testing "Can track time on project"
         (ws/send-msg socket (json/encode
-                             {:command      "create-and-start-timer"
+                             {:command      "create-timer"
                               :project-id   (get gen-projects "foo")
-                              :started-time current-time
                               :created-time current-time
-                              :notes        "astro zombies"}))
-        (let [create-response (test-helpers/try-take!! response-chan)
-              start-response  (test-helpers/try-take!! response-chan)]
+                              :notes        "astro zombies"
+                              :duration     duration}))
+        (let [create-response (test-helpers/try-take!! response-chan)]
           (is (= (get gen-projects "foo")
                  (:project-id create-response)))
           (is (= "create" (:type create-response)))
           (is (nil? (:started-time create-response)))
           (is (= "astro zombies"
-                 (:notes create-response)
-                 (:notes start-response)))
+                 (:notes create-response)))
+          (is (= duration (:duration create-response)))
           (timers-db/delete! (db/connection) (:id create-response))))
-
-      (testing "Can create and start a timer at different times"
-        (let [created-time (- current-time 20)]
-          (ws/send-msg socket (json/encode
-                               {:command      "create-and-start-timer"
-                                :project-id   (get gen-projects "foo")
-                                :started-time current-time
-                                :created-time created-time
-                                :notes        "against the power that exists"}))
-          (let [create-response (test-helpers/try-take!! response-chan)
-                start-response  (test-helpers/try-take!! response-chan)]
-            (is (= (get gen-projects "foo")
-                   (:project-id create-response)))
-            (is (= "create" (:type create-response)))
-            (is (nil? (:started-time create-response)))
-            (is (= created-time
-                   (:time-created create-response)))
-            (is (= "against the power that exists"
-                   (:notes start-response)
-                   (:notes create-response)))
-            (timers-db/delete! (db/connection) (:id create-response)))))
 
       (println "Part of create-and-start-timer-command-test is currently disabled!")
       #_(testing "Can't track time on project"

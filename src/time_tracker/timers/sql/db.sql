@@ -16,8 +16,8 @@ AND app_user.google_id = :google_id;
 
 -- name: create-timer-query<!
 -- Creates a timer given a google id and a project id.
-INSERT INTO timer (project_id, app_user_id, time_created, notes)
-VALUES (:project_id, (SELECT id FROM app_user WHERE google_id = :google_id), to_timestamp(:created_time), :notes);
+INSERT INTO timer (project_id, app_user_id, time_created, notes, duration)
+VALUES (:project_id, (SELECT id FROM app_user WHERE google_id = :google_id), to_timestamp(:created_time), :notes, :duration);
 
 -- name: delete-timer-query!
 -- Deletes a timer..

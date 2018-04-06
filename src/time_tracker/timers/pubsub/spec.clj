@@ -17,7 +17,7 @@
 (s/def ::delete-timer-args
   (s/keys :req-un [::timer-id]))
 
-(s/def ::create-and-start-timer-now-args
+(s/def ::create-timer-args
   (s/keys :req-un [::timers-spec/project-id ::created-time ::notes]))
 
 (s/def ::update-timer-now-args
