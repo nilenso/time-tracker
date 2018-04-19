@@ -20,7 +20,7 @@
   (first (jdbc/insert! connection "point_of_contact" poc)))
 
 (defn- populate-clients!
-  [connection google-id clients]
+  [connection clients]
   (->> (for [client clients]
          (let [client-name (:name client)
                client-id   (:id (create-client! connection client))]
@@ -32,5 +32,5 @@
     (let [create-clients (fn [client-ids [google-id clients]]
                            (let [user-id (create-user! conn google-id)]
                              (merge client-ids
-                                    (populate-clients! conn google-id clients))))]
+                                    (populate-clients! conn clients))))]
       (reduce create-clients {} test-data))))
