@@ -8,7 +8,11 @@
             [clojure.spec.test :as stest]
             [time-tracker.logging :as log]
             [time-tracker.util :as util]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [time-tracker.db :as db]
+            [time-tracker.clients.test-helpers :as clients.helpers]
+            [time-tracker.projects.test-helpers :as projects.helpers]
+            [time-tracker.tasks.test-helpers :as tasks.helpers]))
 
 (defn settings
   "Reads a profile and returns a specific setting"
@@ -96,3 +100,18 @@
                          (map stest/abbrev-result)
                          (filter :failure)
                          (map :failure))))))
+
+(defn populate-db
+  [google-id]
+  (let [client-name "FooClient"
+        client-id (:id (clients.helpers/create-client! (db/connection) {:name client-name}))
+        project-name->project-ids (projects.helpers/populate-data! {google-id ["pr1" "pr2"]}
+                                                                   client-id)
+        task-ids (map (fn [task-name project-id]
+                        (tasks.helpers/create-task! (db/connection)
+                                                    task-name
+                                                    project-id))
+                      ["task1" "task2"]
+                      (vals project-name->project-ids))]
+    {:task-ids task-ids
+     :project-name->project-ids project-name->project-ids}))

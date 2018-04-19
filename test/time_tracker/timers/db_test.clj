@@ -4,10 +4,7 @@
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
             [time-tracker.fixtures :as fixtures]
-            [time-tracker.projects.test-helpers :as projects.helpers]
-            [time-tracker.clients.test-helpers :as clients.helpers]
-            [time-tracker.tasks.test-helpers :as tasks.helpers]
-            [time-tracker.users.test-helpers :as users.helpers]
+            [time-tracker.test-helpers :refer [populate-db]]
             [time-tracker.util :as util]
             [clj-time.jdbc]
             [clj-time.coerce :as time.coerce]))
@@ -19,21 +16,6 @@
   "True if all key-value pairs in m2 are in m1."
   [m1 m2]
   (= m2 (select-keys m1 (keys m2))))
-
-(defn populate-db
-  [google-id]
-  (let [client-name "FooClient"
-        client-id (:id (clients.helpers/create-client! (db/connection) {:name client-name}))
-        project-name->project-ids (projects.helpers/populate-data! {google-id ["pr1" "pr2"]}
-                                                                   client-id)
-        task-ids (map (fn [task-name project-id]
-                        (tasks.helpers/create-task! (db/connection)
-                                                    task-name
-                                                    project-id))
-                      ["task1" "task2"]
-                      (vals project-name->project-ids))]
-    {:task-ids task-ids
-     :project-name->project-ids project-name->project-ids}))
 
 
 (deftest create-test
