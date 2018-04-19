@@ -43,11 +43,14 @@
   "In: [{google-id [list of owned projects]} client-id]
   Out: {project-name project-id}
   Fills out the database with the given test project data."
-  [test-data client-id]
-  (jdbc/with-db-transaction [conn (db/connection)]
-    (reduce (fn [project-name-ids [google-id project-names]]
-              (let [user-id (create-user! conn google-id)]
-                (merge project-name-ids
-                       (populate-projects! conn google-id project-names client-id))))
-            {}
-            test-data)))
+  ([test-data]
+   (let [client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))]
+     (populate-data! test-data client-id)))
+  ([test-data client-id]
+   (jdbc/with-db-transaction [conn (db/connection)]
+     (reduce (fn [project-name-ids [google-id project-names]]
+               (let [user-id (create-user! conn google-id)]
+                 (merge project-name-ids
+                        (populate-projects! conn google-id project-names client-id))))
+             {}
+             test-data))))

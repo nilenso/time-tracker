@@ -64,7 +64,7 @@
                                             [status desc]
                                             (log/debug {:event       ::closed-ws-connection
                                                         :status      status
-                                                        :description desc})) 
+                                                        :description desc}))
                                 :on-error (fn on-error
                                             [ex]
                                             (log/error ex {:event ::ws-error}))
@@ -105,13 +105,13 @@
   [google-id]
   (let [client-name "FooClient"
         client-id (:id (clients.helpers/create-client! (db/connection) {:name client-name}))
-        project-name->project-ids (projects.helpers/populate-data! {google-id ["pr1" "pr2"]}
-                                                                   client-id)
+        project-ids (vals (projects.helpers/populate-data! {google-id ["pr1" "pr2"]}
+                                                           client-id))
         task-ids (map (fn [task-name project-id]
                         (tasks.helpers/create-task! (db/connection)
                                                     task-name
                                                     project-id))
                       ["task1" "task2"]
-                      (vals project-name->project-ids))]
+                      project-ids)]
     {:task-ids task-ids
-     :project-name->project-ids project-name->project-ids}))
+     :project-ids project-ids}))

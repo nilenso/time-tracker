@@ -5,6 +5,7 @@
             [cheshire.core :as json]
             [time-tracker.fixtures :as fixtures]
             [time-tracker.db :as db]
+            [time-tracker.clients.test-helpers :as clients.helpers]
             [time-tracker.projects.test-helpers :as projects.helpers]
             [time-tracker.users.test-helpers :as users.helpers]
             [time-tracker.auth.core :as auth]
@@ -22,13 +23,16 @@
   (s/join [(helpers/settings :api-root) "projects/"]))
 
 (deftest retrieve-single-project-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
+  (let [client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))
+        gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]} client-id)
         project-id   (get gen-projects "foo")
         url          (format (project-api-format) project-id)]
 
     (testing "Authorized"
       (let [{:keys [status body]} (helpers/http-request :get url "gid1")
-            expected-body         {"id" project-id "name" "foo"}]
+            expected-body         {"id" project-id
+                                   "name" "foo"
+                                   "client_id" client-id}]
         (is (= status 200))
         (is (= expected-body body))))
 
@@ -38,13 +42,16 @@
 
 
 (deftest update-single-project-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]})
+  (let [client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))
+        gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]} client-id)
         project-id   (get gen-projects "foo")
-        url          (format (project-api-format) project-id)] 
+        url          (format (project-api-format) project-id)]
 
     (testing "Authorized"
       (let [{:keys [status body]} (helpers/http-request :put url "gid1" {"name" "goo"})
-            expected-body         {"id" project-id "name" "goo"}]
+            expected-body         {"id" project-id
+                                   "name" "goo"
+                                   "client_id" client-id}]
         (is (= status 200))
         (is (= expected-body body))))
 
@@ -98,21 +105,25 @@
 (deftest create-project-test
   (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
                                ["Paul Graham" "gid2" "user"])
-  (let [url (projects-api)]
+  (let [url (projects-api)
+        client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))]
 
     (testing "Admin user"
       (let [{:keys [status body]} (helpers/http-request :post url "gid1"
-                                                        {"name" "foo"})]
+                                                        {"name" "foo"
+                                                         "client-id" client-id})]
         (is (= 201 status))
         (is (= "foo"
                (get body "name")))))
 
     (testing "Pleb user"
       (let [{:keys [status body]} (helpers/http-request :post url "gid2"
-                                                        {"name" "javascript is the best"})]
+                                                        {"name" "javascript is the best"
+                                                         "client-id" client-id})]
         (is (= 403 status))))
 
     (testing "Can not create a project with empty name"
       (let [{:keys [status body]} (helpers/http-request :post url "gid1"
-                                                        {"name" ""})]
+                                                        {"name" ""
+                                                         "client-id" client-id})]
         (is (= 400 status))))))
