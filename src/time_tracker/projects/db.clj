@@ -69,7 +69,8 @@
 (defn create!
   [connection contents]
   (first (jdbc/insert! connection "project"
-                       {"name" (:name contents)})))
+                       {"name" (:name contents)
+                        "client_id" (:client-id contents)})))
 
 (defn grant-permission!
   "Grants a permission on a project to a user."
