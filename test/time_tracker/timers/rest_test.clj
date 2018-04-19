@@ -6,7 +6,7 @@
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
             [time-tracker.projects.test-helpers :as projects-helpers]
-            [time-tracker.test-helpers :as helpers]
+            [time-tracker.test-helpers :refer [populate-db] :as helpers]
             [time-tracker.util :as util]))
 
 (use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
@@ -17,35 +17,35 @@
   (s/join [(helpers/settings :api-root) "timers/"]))
 
 (deftest list-all-owned-timers-test
-  (let [gen-projects   (projects-helpers/populate-data! {"gid1" ["foo"]
-                                                         "gid2" ["goo"]})
+  (let [task-id1 (first (:task-ids (populate-db "gid1")))
+        task-id2 (first (:task-ids (populate-db "gid2")))
         url            (timers-api)
         current-time   (util/current-epoch-seconds)
         seconds-in-day (* 60 60 24)
         timer1         (timers-db/create! (db/connection)
-                                          (get gen-projects "foo")
+                                          task-id1
                                           "gid1"
                                           current-time
                                           "")
         timer2         (timers-db/create! (db/connection)
-                                          (get gen-projects "foo")
+                                          task-id1
                                           "gid1"
                                           current-time
                                           "")
         timer3         (timers-db/create! (db/connection)
-                                          (get gen-projects "goo")
+                                          task-id2
                                           "gid2"
                                           current-time
                                           "")
         ;; Create a timer yesterday.
         timer4         (timers-db/create! (db/connection)
-                                          (get gen-projects "foo")
+                                          task-id1
                                           "gid1"
                                           (- current-time seconds-in-day)
                                           "")
         ;; Create a timer in the future.
         timer5         (timers-db/create! (db/connection)
-                                          (get gen-projects "foo")
+                                          task-id1
                                           "gid1"
                                           (+ current-time seconds-in-day)
                                           "")]
