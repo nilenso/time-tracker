@@ -9,7 +9,7 @@
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
-(def timer-keys [:id :project_id :started_time :duration :time_created :notes])
+(def timer-keys [:id :task_id :started_time :duration :time_created :notes])
 
 (defn- hyphenize
   [thing]
