@@ -1,6 +1,9 @@
 (ns time-tracker.tasks.db
   (:require [clojure.java.jdbc :as jdbc]
-            [time-tracker.db :as db]))
+            [time-tracker.db :as db]
+            [yesql.core :refer [defqueries]]))
+
+(defqueries "time_tracker/tasks/sql/db.sql")
 
 (defn create!
   [connection {:keys [name project-id] :as contents}]
@@ -8,5 +11,3 @@
                        "task"
                        {:name name
                         :project_id project-id})))
-
-#_(defn )
