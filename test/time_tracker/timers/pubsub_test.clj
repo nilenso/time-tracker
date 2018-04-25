@@ -6,7 +6,7 @@
             [time-tracker.timers.db :as timers-db]
             [time-tracker.projects.test-helpers :as projects.helpers]
             [time-tracker.auth.test-helpers :as auth.test]
-            [time-tracker.test-helpers :as test-helpers]
+            [time-tracker.test-helpers :refer [populate-db] :as test-helpers]
             [time-tracker.util :as util]
             [gniazdo.core :as ws]
             [cheshire.core :as json]
@@ -17,17 +17,21 @@
 (use-fixtures :each fixtures/isolate-db)
 
 (deftest start-timer-command-test
-  (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                                 "gid2" ["goo"]})
-        project-id             (get gen-projects "foo")
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
         current-time           (util/current-epoch-seconds)
-        timer1                 (timers-db/create! (db/connection) project-id "gid1" current-time "")
+        timer1                 (timers-db/create! (db/connection)
+                                                  (first task-ids1)
+                                                  "gid1"
+                                                  current-time
+                                                  "")
         timer2                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "goo")
+                                                  (first task-ids2)
                                                   "gid2"
-                                                  current-time "")
+                                                  current-time
+                                                  "")
         timer3                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "foo")
+                                                  (first task-ids1)
                                                   "gid1"
                                                   current-time "")
         [response-chan socket] (test-helpers/make-ws-connection "gid1")]
@@ -64,16 +68,16 @@
       (finally (ws/close socket)))))
 
 (deftest stop-timer-command-test
-  (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                                 "gid2" ["goo"]})
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
         current-time           (util/current-epoch-seconds)
         timer1                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "foo")
+                                                  (first task-ids1)
                                                   "gid1"
                                                   current-time
                                                   "")
         timer2                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "goo")
+                                                  (first task-ids2)
                                                   "gid2"
                                                   current-time
                                                   "")
@@ -97,16 +101,16 @@
       (finally (ws/close socket)))))
 
 (deftest delete-timer-command-test
-  (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                                 "gid2" ["goo"]})
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
         current-time           (util/current-epoch-seconds)
         timer1                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "foo")
+                                                  (first task-ids1)
                                                   "gid1"
                                                   current-time
                                                   "")
         timer2                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "goo")
+                                                  (first task-ids2)
                                                   "gid2"
                                                   current-time
                                                   "")
@@ -139,8 +143,8 @@
       (finally (ws/close socket)))))
 
 (deftest create-timer-command-test
-  (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                                 "gid2" ["goo"]})
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
         current-time           (util/current-epoch-seconds)
         [response-chan socket] (test-helpers/make-ws-connection "gid1")
         duration 60]
@@ -148,13 +152,13 @@
       (testing "Can track time on project"
         (ws/send-msg socket (json/encode
                              {:command      "create-timer"
-                              :project-id   (get gen-projects "foo")
+                              :task-id   (first task-ids1)
                               :created-time current-time
                               :notes        "astro zombies"
                               :duration     duration}))
         (let [create-response (test-helpers/try-take!! response-chan)]
-          (is (= (get gen-projects "foo")
-                 (:project-id create-response)))
+          (is (= (first task-ids1)
+                 (:task-id create-response)))
           (is (= "create" (:type create-response)))
           (is (nil? (:started-time create-response)))
           (is (= "astro zombies"
@@ -176,16 +180,16 @@
       (finally (ws/close socket)))))
 
 (deftest update-timer-command-test
-  (let [gen-projects           (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                                 "gid2" ["goo"]})
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
         current-time           (util/current-epoch-seconds)
         timer1                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "foo")
+                                                  (first task-ids1)
                                                   "gid1"
                                                   current-time
                                                   "")
         timer2                 (timers-db/create! (db/connection)
-                                                  (get gen-projects "goo")
+                                                  (first task-ids2)
                                                   "gid2"
                                                   current-time
                                                   "wool heater")
@@ -232,10 +236,11 @@
 
 
 (deftest broadcast-test
-  (let [gen-projects        (projects.helpers/populate-data! {"gid1" ["foo"]})
-        project-id          (get gen-projects "foo")
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
+        task-id             (first task-ids1)
         current-time        (util/current-epoch-seconds)
-        {timer-id :id}      (timers-db/create! (db/connection) project-id "gid1" current-time "")
+        {timer-id :id}      (timers-db/create! (db/connection) task-id "gid1" current-time "")
         [response1 socket1] (test-helpers/make-ws-connection "gid1")
         [response2 socket2] (test-helpers/make-ws-connection "gid1")
         [response3 socket3] (test-helpers/make-ws-connection "gid2")]

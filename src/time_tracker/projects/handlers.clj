@@ -27,7 +27,7 @@
 (defn modify
   [{:keys [route-params body credentials]} connection]
   ;; Validate input JSON
-  (util/validate-spec body ::projects-spec/project-input)
+  (util/validate-spec body ::projects-spec/project-modify-input)
   (let [google-id  (:sub credentials)
         project-id (Integer/parseInt (:id route-params))]
     (if (projects.db/has-project-permissions?
@@ -65,7 +65,7 @@
 (defn create
   [{:keys [credentials body]} connection]
   ;; Validate input JSON
-  (util/validate-spec body ::projects-spec/project-input)
+  (util/validate-spec body ::projects-spec/project-create-input)
   (let [google-id (:sub credentials)]
     (if (projects.db/has-user-role?
          google-id connection ["admin"])

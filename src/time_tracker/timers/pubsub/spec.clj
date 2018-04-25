@@ -18,7 +18,7 @@
   (s/keys :req-un [::timer-id]))
 
 (s/def ::create-timer-args
-  (s/keys :req-un [::timers-spec/project-id ::created-time ::notes]))
+  (s/keys :req-un [::timers-spec/task-id ::created-time ::notes]))
 
 (s/def ::update-timer-now-args
   (s/keys :req-un [::timer-id ::timers-spec/duration ::notes]))

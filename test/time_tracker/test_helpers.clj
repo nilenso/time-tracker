@@ -8,7 +8,11 @@
             [clojure.spec.test :as stest]
             [time-tracker.logging :as log]
             [time-tracker.util :as util]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [time-tracker.db :as db]
+            [time-tracker.clients.test-helpers :as clients.helpers]
+            [time-tracker.projects.test-helpers :as projects.helpers]
+            [time-tracker.tasks.test-helpers :as tasks.helpers]))
 
 (defn settings
   "Reads a profile and returns a specific setting"
@@ -60,7 +64,7 @@
                                             [status desc]
                                             (log/debug {:event       ::closed-ws-connection
                                                         :status      status
-                                                        :description desc})) 
+                                                        :description desc}))
                                 :on-error (fn on-error
                                             [ex]
                                             (log/error ex {:event ::ws-error}))
@@ -96,3 +100,18 @@
                          (map stest/abbrev-result)
                          (filter :failure)
                          (map :failure))))))
+
+(defn populate-db
+  [google-id]
+  (let [client-name "FooClient"
+        client-id (:id (clients.helpers/create-client! (db/connection) {:name client-name}))
+        project-ids (vals (projects.helpers/populate-data! {google-id ["pr1" "pr2"]}
+                                                           client-id))
+        task-ids (map (fn [task-name project-id]
+                        (tasks.helpers/create-task! (db/connection)
+                                                    task-name
+                                                    project-id))
+                      ["task1" "task2"]
+                      project-ids)]
+    {:task-ids task-ids
+     :project-ids project-ids}))

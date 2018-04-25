@@ -9,7 +9,7 @@
 
 (defqueries "time_tracker/timers/sql/db.sql")
 
-(def timer-keys [:id :project_id :started_time :duration :time_created :notes])
+(def timer-keys [:id :task_id :started_time :duration :time_created :notes])
 
 (defn- hyphenize
   [thing]
@@ -30,10 +30,10 @@
       (util/transform-map hyphenize epochize)))
 
 (defn has-timing-access?
-  [connection google-id project-id]
+  [connection google-id task-id]
   (let [authorized-query-result (first (has-timing-access-query {:google_id  google-id
                                                                  :permission "admin"
-                                                                 :project_id project-id}
+                                                                 :task_id task-id}
                                                                 {:connection connection}))]
     (statement-success? (:count authorized-query-result))))
 
@@ -47,11 +47,11 @@
 
 (defn create!
   "Creates and returns a timer."
-  ([connection project-id google-id created-time notes]
-   (create! connection project-id google-id created-time notes 0))
-  ([connection project-id google-id created-time notes duration]
+  ([connection task-id google-id created-time notes]
+   (create! connection task-id google-id created-time notes 0))
+  ([connection task-id google-id created-time notes duration]
    (-> (create-timer-query<! {:google_id    google-id
-                              :project_id   project-id
+                              :task_id   task-id
                               :created_time created-time
                               :notes        notes
                               :duration     duration}

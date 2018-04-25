@@ -4,8 +4,7 @@
             [time-tracker.db :as db]
             [time-tracker.timers.db :as timers-db]
             [time-tracker.fixtures :as fixtures]
-            [time-tracker.projects.test-helpers :as projects.helpers]
-            [time-tracker.users.test-helpers :as users.helpers]
+            [time-tracker.test-helpers :refer [populate-db]]
             [time-tracker.util :as util]
             [clj-time.jdbc]
             [clj-time.coerce :as time.coerce]))
@@ -20,53 +19,53 @@
 
 
 (deftest create-test
-  (let [gen-projects  (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                        "gid2" ["goo"]})
-        project-id    (get gen-projects "foo")
+  (let [google-id "gid1"
+        task-ids (:task-ids (populate-db google-id))
+        task-id (first task-ids)
         current-time  (util/current-epoch-seconds)
         created-timer (timers-db/create! (db/connection)
-                                         project-id
-                                         "gid1"
+                                         task-id
+                                         google-id
                                          current-time
                                          "thunne")
         actual-timer  (timers-db/transform-timer-map
                        (first (jdbc/find-by-keys (db/connection) "timer"
-                                                 {"project_id" project-id})))]
+                                                 {"task_id" task-id})))]
     (is (some? created-timer))
     (is (some? actual-timer))
     (is (contains-map? actual-timer created-timer))))
 
 
 (deftest has-timing-access?-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})]
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))]
     (testing "You can time a project if you have admin access"
       (is (timers-db/has-timing-access? (db/connection)
                                         "gid1"
-                                        (get gen-projects "foo")))
+                                        (first task-ids1)))
       (is (timers-db/has-timing-access? (db/connection)
                                         "gid2"
-                                        (get gen-projects "goo"))))
+                                        (first task-ids2))))
 
     (testing "Cannot time a project without admin access"
       (is (not (timers-db/has-timing-access? (db/connection)
                                              "gid2"
-                                             (get gen-projects "foo"))))
+                                             (first task-ids1))))
       (is (not (timers-db/has-timing-access? (db/connection)
                                              "gid1"
-                                             (get gen-projects "goo")))))))
+                                             (first task-ids2)))))))
 
 
 (deftest owns?-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})
+  (let [task-id1 (first (:task-ids (populate-db "gid1")))
+        task-id2 (first (:task-ids (populate-db "gid2")))
         timer1 (timers-db/create! (db/connection)
-                                  (get gen-projects "foo")
+                                  task-id1
                                   "gid1"
                                   (util/current-epoch-seconds)
                                   "")
         timer2 (timers-db/create! (db/connection)
-                                  (get gen-projects "goo")
+                                  task-id2
                                   "gid2"
                                   (util/current-epoch-seconds)
                                   "")]
@@ -87,16 +86,16 @@
                                 (:id timer1)))))))
 
 (deftest update-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})
+  (let [google-id "gid1"
+        task-id (first (:task-ids (populate-db google-id)))
         timer1       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
-                                        "gid1"
+                                        task-id
+                                        google-id
                                         (util/current-epoch-seconds)
                                         "")
         timer3       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
-                                        "gid1"
+                                        task-id
+                                        google-id
                                         (util/current-epoch-seconds)
                                         "baz")]
     (testing "Not started"
@@ -137,24 +136,24 @@
 
 
 (defn- create-timers!
-  "Creates n timers for each project and returns a set of their ids."
-  [connection google-id gen-projects project-names n]
+  "Creates n timers for each task id and returns a set of their ids."
+  [connection google-id task-ids n]
   (let [current-time (util/current-epoch-seconds)]
-    (set (for [project-id (map gen-projects project-names)
+    (set (for [task-id task-ids
                _          (range n)]
            (:id (timers-db/create!
                  connection
-                 project-id
+                 task-id
                  google-id
                  current-time
                  ""))))))
 
 
 (deftest retrieve-all-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
-                                                       "gid2" ["bar" "baz"]})
-        expected1    (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 2)
-        expected2    (create-timers! (db/connection) "gid2" gen-projects ["bar" "baz"] 2)
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
+        expected1    (create-timers! (db/connection) "gid1" task-ids1 2)
+        expected2    (create-timers! (db/connection) "gid2" task-ids2 2)
         expected-ids (into expected1 expected2)
         actual (->> (timers-db/retrieve-all (db/connection))
                     (map :id)
@@ -163,17 +162,17 @@
 
 
 (deftest retrieve-between-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]})
+  (let [task-ids (:task-ids (populate-db "gid1"))
         current-time (util/current-epoch-seconds)
         recent-time  (- current-time 10)
         older-time   (- current-time 2400)
         recent-timer (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
+                                        (first task-ids)
                                         "gid1"
                                         recent-time
                                         "")
         older-timer  (timers-db/create! (db/connection)
-                                        (get gen-projects "goo")
+                                        (second task-ids)
                                         "gid1"
                                         older-time
                                         "")]
@@ -207,23 +206,24 @@
 
 
 (deftest retrieve-between-authorized-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
-                                                       "gid2" ["bar" "baz"]})
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
+
         current-time        (util/current-epoch-seconds)
         recent-time          (- current-time 10)
         older-time           (- current-time 2400)
         recent-timer         (timers-db/create! (db/connection)
-                                                (get gen-projects "foo")
+                                                (first task-ids1)
                                                 "gid1"
                                                 recent-time
                                                 "")
         older-timer          (timers-db/create! (db/connection)
-                                                (get gen-projects "goo")
+                                                (second task-ids1)
                                                 "gid1"
                                                 older-time
                                                 "")
         somebody-elses-timer (timers-db/create! (db/connection)
-                                                (get gen-projects "bar")
+                                                (first task-ids2)
                                                 "gid2"
                                                 older-time
                                                 "")]
@@ -273,10 +273,10 @@
 
 
 (deftest retrieve-authorized-timers-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
-                                                       "gid2" ["bar" "baz"]})
-        expected1    (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 2)
-        expected2    (create-timers! (db/connection) "gid2" gen-projects ["bar" "baz"] 2)
+  (let [task-ids1 (:task-ids (populate-db "gid1"))
+        task-ids2 (:task-ids (populate-db "gid2"))
+        expected1    (create-timers! (db/connection) "gid1" task-ids1 2)
+        expected2    (create-timers! (db/connection) "gid2" task-ids2 2)
         actual1      (->> (timers-db/retrieve-authorized-timers (db/connection) "gid1")
                           (map :id)
                           (set))
@@ -288,9 +288,8 @@
 
 
 (deftest retrieve-started-timers-test
-  (let [gen-projects   (projects.helpers/populate-data! {"gid1" ["foo" "goo"]
-                                                         "gid2" ["bar" "baz"]})
-        created-timers (create-timers! (db/connection) "gid1" gen-projects ["foo" "goo"] 6)
+  (let [task-ids (:task-ids (populate-db "gid1"))
+        created-timers (create-timers! (db/connection) "gid1" task-ids 6)
         current-time   (util/current-epoch-seconds)]
     ;; Start the first five timers
     (doall (map #(timers-db/start! (db/connection) % current-time)
@@ -302,22 +301,16 @@
 
 
 (deftest delete-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})
+  (let [task-id (first (:task-ids (populate-db "gid1")))
         current-time (util/current-epoch-seconds)
-        timer1       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
+        timer       (timers-db/create! (db/connection)
+                                        task-id
                                         "gid1"
-                                        current-time
-                                        "")
-        timer2       (timers-db/create! (db/connection)
-                                        (get gen-projects "goo")
-                                        "gid2"
                                         current-time
                                         "")]
 
     (testing "Owned timer"
-      (let [timer-id     (:id timer1)
+      (let [timer-id     (:id timer)
             deleted-bool (timers-db/delete! (db/connection) timer-id)
             actual-timer (jdbc/get-by-id (db/connection) "timer" timer-id)]
         (is deleted-bool)
@@ -325,20 +318,20 @@
 
 
 (deftest start-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})
+  (let [task-ids (:task-ids (populate-db "gid1"))
+        _ (populate-db "gid2") ;; populate-db also creates a user with given gid
         timer1       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
+                                        (first task-ids)
                                         "gid1"
                                         (util/current-epoch-seconds)
                                         "")
         timer2       (timers-db/create! (db/connection)
-                                        (get gen-projects "goo")
+                                        (second task-ids)
                                         "gid2"
                                         (util/current-epoch-seconds)
                                         "")
         timer3       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
+                                        (second task-ids)
                                         "gid1"
                                         (util/current-epoch-seconds)
                                         "")]
@@ -366,16 +359,16 @@
 
 
 (deftest stop-test
-  (let [gen-projects (projects.helpers/populate-data! {"gid1" ["foo"]
-                                                       "gid2" ["goo"]})
+  (let [task-ids (:task-ids (populate-db "gid1"))
+        _ (populate-db "gid2") ;; populate-db also creates a user with given gid
         current-time (util/current-epoch-seconds)
         timer1       (timers-db/create! (db/connection)
-                                        (get gen-projects "foo")
+                                        (first task-ids)
                                         "gid1"
                                         current-time
                                         "")
         timer2       (timers-db/create! (db/connection)
-                                        (get gen-projects "goo")
+                                        (second task-ids)
                                         "gid2"
                                         current-time
                                         "")]
@@ -394,7 +387,7 @@
                                 stop-time)]
         (is (= 10
                duration))))
-    
+
     (testing "Not started"
       (let [timer-id    (:id timer1)
             stop-result (timers-db/stop!
