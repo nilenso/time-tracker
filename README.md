@@ -20,19 +20,19 @@ A time-tracker built for education, fun and eventually profit.
 
 - To start a server, either run:
 
-	```bash
-	lein run
-	```
+```bash
+lein run
+```
 
 or:
 
-	```bash
-	lein repl
+```bash
+$ lein repl
 
-	# in the repl:
-	time-tracker.core=> (init!)
-	(start-server!)
-	```
+# in the repl:
+time-tracker.core=> (init!)
+(start-server!)
+```
 
 ### Production
 
