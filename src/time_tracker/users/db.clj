@@ -1,7 +1,8 @@
 (ns time-tracker.users.db
   (:require [yesql.core :refer [defqueries]]
             [time-tracker.util :as util]
-            [clojure.java.jdbc :as jdbc]))
+            [clojure.java.jdbc :as jdbc]
+            [time-tracker.util :refer [statement-success?]]))
 
 (defqueries "time_tracker/users/sql/db.sql")
 
@@ -32,3 +33,13 @@
   [connection]
   (retrieve-all-users-query {} {:connection connection
                                 :identifiers util/hyphenize}))
+
+(defn has-user-role?
+  [google-id connection roles]
+  (let [predicate (comp statement-success? :count first)]
+    (some predicate
+          (map (fn [role]
+                 (has-role-query {:google_id google-id
+                                  :role      role}
+                                 {:connection connection}))
+               roles))))
