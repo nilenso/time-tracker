@@ -39,7 +39,7 @@ AND :permission::permission = ANY (project_permission.permissions);
 
 -- name: retrieve-all-projects-query
 -- Retrieves all the projects.
-SELECT project.* from project;
+SELECT project.* from project ORDER BY project.id;;
 
 -- name: create-admin-permission-query!
 -- Creates an admin permission for the given user on the given project.

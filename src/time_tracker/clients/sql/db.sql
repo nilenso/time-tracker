@@ -1,6 +1,6 @@
 -- name: retrieve-all-clients-query
 -- Retrieves all the clients.
-SELECT client.* from client;
+SELECT client.* from client ORDER BY client.id;
 
 -- name: has-role-query
 -- Checks if a user has a particular role.
