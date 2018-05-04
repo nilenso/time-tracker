@@ -11,8 +11,8 @@ SELECT * FROM app_user;
 -- name: create-user-query<!
 -- Inserts a user in the database.
 INSERT INTO app_user
-(google_id, name)
-VALUES (:google_id, :name)
+(google_id, name, email)
+VALUES (:google_id, :name, :email)
 ON CONFLICT DO NOTHING;
 
 -- name: has-role-query

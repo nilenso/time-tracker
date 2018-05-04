@@ -103,8 +103,8 @@
 
 
 (deftest create-project-test
-  (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
-                               ["Paul Graham" "gid2" "user"])
+  (users.helpers/create-users! ["Sai Abdul" "gid1" "admin" "sai@abdul.com"]
+                               ["Paul Graham" "gid2" "user" "pg@pg.com"])
   (let [url (projects-api)
         client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))]
 

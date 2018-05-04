@@ -9,11 +9,12 @@
 (defn create!
   "Puts a user's details into the DB. The default role is 'user'.
   Does nothing if the user is already registered."
-  [connection google-id name]
+  [connection google-id name email]
   (when-let [created-user (create-user-query<! {:google_id google-id
-                                                :name      name}
+                                                :name      name
+                                                :email     email}
                                                {:connection  connection})]
-      (util/transform-keys created-user util/hyphenize)))
+    (util/transform-keys created-user util/hyphenize)))
 
 (defn registered?
   "Check if a user is in the DB"
@@ -36,7 +37,7 @@
 
 (defn has-user-role?
   [google-id connection roles]
-  (let [predicate (comp statement-success? :count first)]
+  (let [predicate (comp util/statement-success? :count first)]
     (some predicate
           (map (fn [role]
                  (has-role-query {:google_id google-id

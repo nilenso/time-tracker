@@ -4,16 +4,13 @@
             [clojure.algo.generic.functor :refer [fmap]]
             [clojure.java.jdbc :as jdbc]
             [time-tracker.db :refer [wrap-transaction]]
-            [time-tracker.users.core :refer [wrap-autoregister]]))
+            [time-tracker.web.middleware :refer [with-rest-middleware]]))
 
-(def middleware (comp wrap-auth wrap-transaction wrap-autoregister))
 
 (defn routes []
-  {[:id "/"] (fmap middleware
-                   {:get    handlers/retrieve
-                    :put    handlers/modify
-                    :delete handlers/delete})
-   ""        (fmap middleware
-                   {:get  handlers/list-all
-                    :post handlers/create})})
+  {[:id "/"] (with-rest-middleware {:get    handlers/retrieve
+                                    :put    handlers/modify
+                                    :delete handlers/delete})
+   ""        (with-rest-middleware {:get  handlers/list-all
+                                    :post handlers/create})})
 

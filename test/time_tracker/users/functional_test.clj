@@ -21,8 +21,8 @@
     (is (= "user" (get body "role")))))
 
 (deftest retrieve-all-users-test
-  (users-helpers/create-users! ["sandy" "gid1" "admin"]
-                               ["shaaz" "gid2" "user"])
+  (users-helpers/create-users! ["sandy" "gid1" "admin" "sandy@sandy.com"]
+                               ["shaaz" "gid2" "user" "shaaz@shaaz.com"])
   (testing "All the users in the database should appear in the response"
     (let [url (users-api)
           {:keys [status body]} (test-helpers/http-request :get url "gid1")]

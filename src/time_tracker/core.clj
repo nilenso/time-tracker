@@ -28,7 +28,6 @@
   (when-not (nil? @server)
     (@server :timeout 100)
     (log/info {:event ::server-stop})
-    (teardown!)
     (reset! server nil)))
 
 (defn restart-server!
