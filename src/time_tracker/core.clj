@@ -7,6 +7,8 @@
             [time-tracker.util :as util]
             [time-tracker.web.service :as web-service]))
 
+(defonce server (atom nil))
+
 (defn init! []
   (log/configure-logging!)
   (db/init-db!))
@@ -18,17 +20,26 @@
   ([] (start-server! (web-service/app)))
   ([app-handler]
    (log/info {:event ::server-start})
-   (let [stop-fn (httpkit/run-server app-handler
-                                     {:port (Integer/parseInt (util/from-config :port))})]
-     (fn []
-       (stop-fn)
-       (log/info {:event ::server-stop})
-       (teardown!)))))
+   (reset! server (httpkit/run-server app-handler
+                                      {:port (Integer/parseInt (util/from-config :port))}))))
+
+(defn stop-server!
+  []
+  (when-not (nil? @server)
+    (@server :timeout 100)
+    (log/info {:event ::server-stop})
+    (teardown!)
+    (reset! server nil)))
+
+(defn restart-server!
+  []
+  (stop-server!)
+  (start-server!))
 
 (defn -main
   [& args]
   (init!)
-  (condp = (first args)
+  (case (first args)
     "migrate"  (migrate-db)
     "rollback" (rollback-db)
     (start-server!)))
