@@ -9,7 +9,7 @@
 (s/def ::client-id ::clients-spec/id)
 
 (s/def ::project
-  (s/keys :req-un [::id ::name]))
+  (s/keys :req-un [::id ::name ::client-id]))
 
 (s/def ::project-create-input
   (s/keys :req-un [::name ::client-id]))
