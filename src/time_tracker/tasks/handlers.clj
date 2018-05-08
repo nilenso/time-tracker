@@ -11,7 +11,8 @@
 
 (defn list-all
   [request connection]
-  (let [tasks (tasks.db/retrieve-all-query {} {:connection connection})]
+  (let [tasks (tasks.db/retrieve-all-query {} {:connection connection
+                                               :identifiers util/hyphenize})]
     (res/response tasks)))
 
 (defn create
