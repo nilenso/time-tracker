@@ -4,5 +4,5 @@
 
 (defn routes []
   {""        (with-rest-middleware
-               {;; :get  handlers/list-all
+               {:get  handlers/list-all
                 :post handlers/create})})

@@ -17,3 +17,8 @@
                                             {:connection connection})
                first
                :email)))
+
+(defn retrieve-all
+  [connection]
+  (retrieve-all-invited-users-query {} {:connection connection
+                                        :identifiers util/hyphenize}))
