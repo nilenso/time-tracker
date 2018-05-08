@@ -27,26 +27,25 @@
   "Validates a JWT by calling Google's API and by checking the client ID."
   [client-ids token]
   (let [{:keys [status body]} (call-google-tokeninfo-api token)]
-    (if (and (= 200 status)
-             (some #{(:aud body)} client-ids)
-             (= "nilenso.com" (:hd body)))
+    (when (and (= 200 status)
+             (some #{(:aud body)} client-ids))
       body)))
 
 (defn token-from-headers
   "Extracts the token from a Ring header map, if present.
   See: https://jwt.io/introduction/"
   [ring-headers]
-  (if-let [header-value (get ring-headers "authorization")]
+  (when-let [header-value (get ring-headers "authorization")]
     (let [[scheme & rest] (clojure.string/split header-value #" ")
           token (clojure.string/join " " rest)]
-      (if (= "Bearer" scheme)
+      (when (= "Bearer" scheme)
         token))))
 
 (defn auth-credentials
   "Gets a map of credentials from a Ring request.
   A list of client-ids is needed to validate the JWT."
   [client-ids request]
-  (if-let [token (token-from-headers (:headers request))]
+  (when-let [token (token-from-headers (:headers request))]
     (token->credentials client-ids token)))
 
 (defn wrap-google-authenticated
