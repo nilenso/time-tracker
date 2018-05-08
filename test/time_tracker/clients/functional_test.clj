@@ -37,8 +37,8 @@
         (is (= expected actual))))))
 
 (deftest create-client-test
-  (user-helpers/create-users! ["Sai Abdul" "gid1" "admin"])
-  (user-helpers/create-users! ["Paul Graham" "gid2" "user"])
+  (user-helpers/create-users! ["Sai Abdul" "gid1" "admin" "sai@abdul.com"])
+  (user-helpers/create-users! ["Paul Graham" "gid2" "user" "pg@ycombinator.com"])
   (let [client {"name"              "Client1"
                 "address"           "High Road"
                 "gstin"             "MEDONTHAVEONE!!"
@@ -79,7 +79,7 @@
         (is (= 403 status))))))
 
 (deftest update-client-test
-  (user-helpers/create-users! ["Sai Abdul" "gid1" "admin"])
+  (user-helpers/create-users! ["Sai Abdul" "gid1" "admin" "sai@abdul.com"])
   (let [client                {"name"    "Client1"
                                "address" "High Road"
                                "gstin"   "MEDONTHAVEONE!!"

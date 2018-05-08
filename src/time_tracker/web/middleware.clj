@@ -6,7 +6,7 @@
             [time-tracker.web.util :as web-util]
             [time-tracker.logging :as log]
             [cheshire.generate :refer [add-encoder encode-str]])
-    (:import org.httpkit.server.AsyncChannel))
+  (:import org.httpkit.server.AsyncChannel))
 
 (def rest-middleware
   (comp wrap-auth wrap-transaction wrap-autoregister))

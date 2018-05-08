@@ -80,7 +80,7 @@
                (sort project-names)))))))
 
 (deftest create-test
-  (users.helpers/create-users! ["Sai Abdul" "gid1" "admin"]
+  (users.helpers/create-users! ["Sai Abdul" "gid1" "admin" "sai@sai.com"]
                                ["Paul Graham" "gid2" "user"])
   (let [client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))
         created-project (projects.db/create!

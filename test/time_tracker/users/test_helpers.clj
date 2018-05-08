@@ -10,7 +10,7 @@
   ;; yesql can run batch statements.
   (jdbc/execute! (db/connection)
                  (into [(str "INSERT INTO app_user "
-                             "(name, google_id, role) "
-                             "VALUES (?, ?, ?::user_role);")]
+                             "(name, google_id, role, email) "
+                             "VALUES (?, ?, ?::user_role, ?);")]
                        args)
                  {:multi? true}))
