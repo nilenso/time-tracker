@@ -16,5 +16,8 @@
 ;; /users/
 
 (defn list-all
-  [request connection]
-  (res/response (users-db/retrieve-all connection)))
+  [{:keys [credentials] :as request} connection]
+  (let [google-id (:sub credentials)]
+    (if (users-db/has-user-role? google-id connection ["admin"])
+      (res/response (users-db/retrieve-all connection))
+      web-util/error-forbidden)))

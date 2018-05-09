@@ -15,3 +15,8 @@ LIMIT 1;
 -- Marks invited user as registered
 UPDATE invited_user SET registered = true
 WHERE invited_user.email = :email;
+
+-- name: retrieve-all-invited-users-query
+-- Retrieve all invited users
+SELECT * FROM invited_user
+WHERE invited_user.registered = false;

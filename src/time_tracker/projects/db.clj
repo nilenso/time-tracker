@@ -2,7 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [time-tracker.db :as db]
             [yesql.core :refer [defqueries]]
-            [time-tracker.util :refer [statement-success?]]))
+            [time-tracker.util :as util :refer [statement-success?]]))
 
 (defqueries "time_tracker/projects/sql/db.sql")
 
@@ -64,7 +64,8 @@
 (defn retrieve-all
   "Retrieves a list of ALL the projects. No authorization checks."
   [connection]
-  (retrieve-all-projects-query {} {:connection connection}))
+  (retrieve-all-projects-query {} {:connection connection
+                                   :identifiers util/hyphenize}))
 
 (defn create!
   [connection contents]

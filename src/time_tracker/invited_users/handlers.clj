@@ -13,3 +13,10 @@
       (let [invited-user (invited-users-db/create! connection email (:id invited-by))]
         (res/response invited-user))
       web-util/error-forbidden)))
+
+(defn list-all
+  [{:keys [credentials]} connection]
+  (let [google-id (:sub credentials)]
+    (if (users-db/has-user-role? google-id connection ["admin"])
+      (res/response (invited-users-db/retrieve-all connection))
+      web-util/error-forbidden)))
