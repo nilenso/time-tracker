@@ -8,7 +8,7 @@
                  [org.clojure/data.csv "0.1.3"]
                  [log4j "1.2.17"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
-                 [http-kit "2.2.0"]
+                 [http-kit "2.3.0"]
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
                  [cheshire "5.6.3"]
