@@ -15,5 +15,5 @@
                                   :opt-un [::phone ::email]))
 (s/def ::points-of-contact (s/coll-of ::point-of-contact))
 
-(s/def ::client (s/keys :req-un [::name ::address ::gstin ::pan]
-                        :opt-un [::points-of-contact]))
+(s/def ::client (s/keys :req-un [::name ::address]
+                        :opt-un [::points-of-contact ::gstin ::pan]))
