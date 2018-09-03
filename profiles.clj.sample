@@ -19,6 +19,8 @@
    :name "your-organization-name"
    :logo "your-organization-logo-url"
    :address "your-organization-address"
+   :mailgun-key  "your-mailgun-api-key"
+   :mailgun-domain "your-mailgun-domain"
    }}
 
  :test-environ
