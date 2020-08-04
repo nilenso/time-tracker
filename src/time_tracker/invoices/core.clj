@@ -2,6 +2,7 @@
   (:require [time-tracker.timers.core :as timers-core]
             [clojure.algo.generic.functor :refer [fmap]]
             [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [clj-pdf.core :as clj-pdf]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
@@ -125,16 +126,16 @@
   [{:keys [utc-offset currency] :as printable-invoice} out]
   {:pre [(seq (:items printable-invoice))]}
   (let [money (partial money-str currency)
-        name (util/from-config :name)
+        name (config/get-config :name)
         [address1 address2 address3] (clojure.string/split
-                                      (util/from-config :address)
+                                      (config/get-config :address)
                                       #"\n")
         [client-address1 client-address2 & client-rest] (clojure.string/split
                                                          (:address printable-invoice)
                                                          #"\n")]
     (clj-pdf/pdf
      [{:font {:encoding :unicode}}
-      [:image {:xscale 0.2 :yscale 0.2} (util/from-config :logo)]
+      [:image {:xscale 0.2 :yscale 0.2} (config/get-config :logo)]
 
       ;; Nilenso + Client information
       [:table {:width 100 :border false :cell-border false :spacing -5 :num-cols 2}

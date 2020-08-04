@@ -2,19 +2,20 @@
   (:require [ring.util.response :as res]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
-            [time-tracker.util :refer [from-config] :as util]
+            [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [time-tracker.web.util :as web-util]))
 
 (defn- call-google-tokeninfo-api
   [token]
-  (let [{body :body :as response} @(http/get (from-config :google-tokeninfo-url)
+  (let [{body :body :as response} @(http/get (config/get-config :google-tokeninfo-url)
                                              {:as :text
                                               :query-params {"id_token" token}})]
     (assoc response :body (json/parse-string body util/hyphenize))))
 
 (defn allowed-hosted-domain?
   [domain]
-  (let [allowed-domain (from-config :allowed-hosted-domain)]
+  (let [allowed-domain (config/get-config :allowed-hosted-domain)]
     (or (= "*" allowed-domain)
         (= allowed-domain domain))))
 
@@ -57,4 +58,4 @@
       web-util/error-forbidden)))
 
 (def wrap-auth
-  #(wrap-google-authenticated % [(from-config :google-client-id)]))
+  #(wrap-google-authenticated % [(config/get-config :google-client-id)]))

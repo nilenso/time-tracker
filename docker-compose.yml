@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:12.3
+    environment:
+      POSTGRES_PASSWORD: ttdevpwd
+      POSTGRES_USER: ttdev
+    ports:
+      - 19401:5432

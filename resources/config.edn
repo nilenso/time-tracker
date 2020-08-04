@@ -1,0 +1,9 @@
+{:google-tokeninfo-url "https://www.googleapis.com/oauth2/v3/tokeninfo"
+ :cp-max-idle-time-excess-connections 1800
+ :cp-max-idle-time 10800
+ :db-connection-string "jdbc:postgresql://localhost:19401/timetracker?user=ttdev&password=ttdevpwd"
+ :google-client-id "your_google_client_id"
+ :app-log-level "debug"
+ :port 8000
+ :allowed-hosted-domain "yourgoogleappsforworkhosteddomain.com"
+ :log-file-prefix "/tmp/tt-file.log"}

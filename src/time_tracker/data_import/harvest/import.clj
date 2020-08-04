@@ -2,15 +2,16 @@
   (:require [org.httpkit.client :as http]
             [cheshire.core :as json]
             [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [time-tracker.db :as db]
             [time-tracker.projects.db :as projects-db]
             [clojure.java.jdbc :as jdbc]))
 
 (defn- get-request [url query-params]
-  (-> @(http/get (str (util/from-config :harvest-url) url)
+  (-> @(http/get (str (config/get-config :harvest-url) url)
                  {:headers {"Accept" "application/json"}
                   :as :text
-                  :basic-auth [(util/from-config :harvest-id) (util/from-config :harvest-pass)]
+                  :basic-auth [(config/get-config :harvest-id) (config/get-config :harvest-pass)]
                   :query-params query-params})
       (update-in [:body] json/decode util/hyphenize)))
 

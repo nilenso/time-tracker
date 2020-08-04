@@ -9,13 +9,8 @@ TASK="➡"
 
 
 echo "$TASK  Creating databases time_tracker and time_tracker_test."
-createdb time_tracker
-createdb time_tracker_test
-
-
-echo "$TASK Creating profiles.clj from template"
-cp profiles.clj.sample profiles.clj
-
+createdb -U ttdev -h localhost -p 19401 -W time_tracker
+createdb -U ttdev -h localhost -p 19401 -W time_tracker_test
 
 echo "$TASK  Installing Dependencies"
 lein deps

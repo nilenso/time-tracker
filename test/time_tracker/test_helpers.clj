@@ -8,6 +8,7 @@
             [clojure.spec.test :as stest]
             [time-tracker.logging :as log]
             [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [clojure.string :as str]
             [time-tracker.db :as db]
             [time-tracker.clients.test-helpers :as clients.helpers]
@@ -17,7 +18,7 @@
 (defn settings
   "Reads a profile and returns a specific setting"
   [setting]
-  (let [port (Integer/parseInt (util/from-config :port))
+  (let [port (Integer/parseInt (config/get-config :port))
         host (str/join ["http://localhost:" port "/"])
         host-ws (str/join ["ws://localhost:" port "/"])
         ws-url (str/join [host-ws "api/timers/ws-connect/"])
@@ -89,7 +90,7 @@
     ))
 
 (defn- num-tests-from-config []
-  (Integer/parseInt (util/from-config :num-tests)))
+  (Integer/parseInt (config/get-config :num-tests)))
 
 (defn assert-generative-test
   ([sym] (assert-generative-test sym {:num-tests (num-tests-from-config)}))

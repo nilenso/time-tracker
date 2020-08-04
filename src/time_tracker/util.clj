@@ -18,12 +18,6 @@
 (defn current-epoch-seconds []
   (to-epoch-seconds (time/now)))
 
-(defn from-config
-  [config-var]
-  (if-let [result (environ/env config-var)]
-    result
-    (throw (ex-info "Config var not defined" {:var config-var}))))
-
 (defn hyphenize
   [thing]
   (-> thing
