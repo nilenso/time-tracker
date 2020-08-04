@@ -17,3 +17,5 @@ logs/
 build.xml
 .idea/
 time-tracker.iml
+*~
+\#*\#
