@@ -2,14 +2,16 @@
   (:gen-class)
   (:require [org.httpkit.server :as httpkit]
             [time-tracker.migration :refer [migrate-db rollback-db]]
+            [time-tracker.cli :as cli]
+            [time-tracker.config :as config]
             [time-tracker.db :as db]
             [time-tracker.logging :as log]
-            [time-tracker.config :as config]
             [time-tracker.web.service :as web-service]))
 
 (defonce server (atom nil))
 
-(defn init! []
+(defn init! [args]
+  (cli/init! args)
   (config/init)
   (log/configure-logging!)
   (db/init-db!))
@@ -38,8 +40,13 @@
 
 (defn -main
   [& args]
-  (init!)
-  (case (first args)
-    "migrate"  (migrate-db)
-    "rollback" (rollback-db)
-    (start-server!)))
+  (init! args)
+  (let [opt (dissoc (cli/opts) :file)]
+    (if (> (count opt) 1)
+      (prn "too many opts passed")
+      (case (ffirst opt)
+        :migrate  (migrate-db)
+        :rollback (rollback-db)
+        :help (print (cli/help-message) "\n")
+        :serve (start-server!)
+        (prn "Unknown args")))))
