@@ -5,5 +5,4 @@
  :google-client-id "your_google_client_id"
  :app-log-level "debug"
  :port 8000
- :allowed-hosted-domain "yourgoogleappsforworkhosteddomain.com"
- :log-file-prefix "/tmp/tt-file.log"}
+ :allowed-hosted-domain "nilenso.com"}
