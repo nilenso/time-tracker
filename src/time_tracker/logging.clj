@@ -1,8 +1,7 @@
 (ns time-tracker.logging
   (:require [clojure.tools.logging :as log]
             [cheshire.core :as json]
-            [time-tracker.config :as config]
-            [environ.core :as environ])
+            [time-tracker.config :as config])
   (:import [org.apache.log4j Level
             Logger
             ConsoleAppender

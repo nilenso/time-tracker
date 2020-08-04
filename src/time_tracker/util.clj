@@ -1,7 +1,6 @@
 (ns time-tracker.util
   (:require [clj-time.core :as time]
             [clj-time.coerce :as time-coerce]
-            [environ.core :as environ]
             [clojure.walk :as walk]
             [clojure.spec :as s]))
 
