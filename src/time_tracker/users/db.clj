@@ -6,6 +6,15 @@
 
 (defqueries "time_tracker/users/sql/db.sql")
 
+(comment
+  ;; How to create an initial user:
+  ;; First, launch the frontend and get your Google ID from the backend logs.
+  ;; Then run this code:
+  (create! (db/connection) "your google ID" "Your Name" "your@em.ail")
+  ;; Then in psql:
+  ;; update app_user set role='admin';
+  )
+
 (defn create!
   "Puts a user's details into the DB. The default role is 'user'.
   Does nothing if the user is already registered."
