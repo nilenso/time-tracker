@@ -1,12 +1,11 @@
 (ns time-tracker.logging
   (:require [clojure.tools.logging :as log]
             [cheshire.core :as json]
-            [time-tracker.util :refer [from-config]]
+            [time-tracker.config :as config]
             [environ.core :as environ])
   (:import [org.apache.log4j Level
             Logger
             ConsoleAppender
-            RollingFileAppender
             PatternLayout]))
 
 (defmacro trace
@@ -70,13 +69,11 @@
 
 (defn configure-logging!
   ([]
-   (configure-logging! (from-config :app-log-level)))
+   (configure-logging! (config/get-config :app-log-level)))
   ([level]
    (set-root-logger-level! "error")
    (set-logger-level! "time-tracker" level)
-   (add-root-logger-appender! (RollingFileAppender. (PatternLayout. "%-5p %c: %m%n")
-                                                    (from-config :log-file-prefix)
-                                                    true))))
+   (add-root-logger-appender! (ConsoleAppender.))))
 
 (defn teardown-logging! []
   (.removeAllAppenders (Logger/getRootLogger)))

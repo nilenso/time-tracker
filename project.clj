@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/data.csv "0.1.3"]
+                 [aero "1.1.6"]
                  [log4j "1.2.17"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
                  [http-kit "2.3.0"]
@@ -25,20 +26,15 @@
                  [nilenso/mailgun "0.2.3"]]
   :main ^:skip-aot time-tracker.core
   :target-path "target/%s"
-  :plugins [[lein-environ "1.1.0"]]
-  :profiles {:dev {:dependencies [[test2junit "1.2.2"]
-                                  [org.clojure/test.check "0.9.0"]
+  :plugins []
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]
                                   [org.clojure/core.async "0.2.395"]
-                                  [stylefruits/gniazdo "1.0.0"]]
-                   :plugins      [[test2junit "1.2.2"]]
-                   :test2junit-output-dir ~(or (System/getenv "CIRCLE_TEST_REPORTS")
-                                               "target/test2junit")}
+                                  [stylefruits/gniazdo "1.0.0"]]}
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
-             :default [:base :system :user :provided :dev :dev-environ]
+             :default [:base :system :user :provided :dev]
              :uberjar {:aot [#"time-tracker.*"]}}
 
-  :aliases {"test"       ["with-profile" "+test-environ" "test"]
-            "test2junit" ["with-profile" "+test-environ" "test2junit"]
+  :aliases {"test"       ["test"]
             "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
   :monkeypatch-clojure-test false

@@ -1,7 +1,7 @@
 (ns time-tracker.timers.pubsub
   (:require [time-tracker.timers.pubsub.io :as io]
             [time-tracker.timers.pubsub.state :as state]
-            [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [time-tracker.logging :as log]
             [time-tracker.auth.core :refer [token->credentials]]
             [time-tracker.timers.pubsub.routes :refer [command-map]]
@@ -11,9 +11,9 @@
   [channel {:keys [command token]}]
   (when (= command "authenticate")
     (when-let [{google-id :sub} (token->credentials
-                                 [(util/from-config :google-client-id)]
+                                 [(config/get-config :google-client-id)]
                                  token)]
-      (do 
+      (do
         (state/add-channel! channel google-id)
         (io/send-data! channel {:auth-status "success"})
         true))))

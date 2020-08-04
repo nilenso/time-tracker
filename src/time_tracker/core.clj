@@ -4,12 +4,13 @@
             [time-tracker.migration :refer [migrate-db rollback-db]]
             [time-tracker.db :as db]
             [time-tracker.logging :as log]
-            [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [time-tracker.web.service :as web-service]))
 
 (defonce server (atom nil))
 
 (defn init! []
+  (config/init)
   (log/configure-logging!)
   (db/init-db!))
 
@@ -21,7 +22,7 @@
   ([app-handler]
    (log/info {:event ::server-start})
    (reset! server (httpkit/run-server app-handler
-                                      {:port (Integer/parseInt (util/from-config :port))}))))
+                                      {:port (config/get-config :port)}))))
 
 (defn stop-server!
   []

@@ -3,13 +3,14 @@
             [time-tracker.users.db :as users-db]
             [time-tracker.web.util :as web-util]
             [ring.util.response :as res]
-            [time-tracker.util :refer [from-config] :as util]
+            [time-tracker.util :as util]
+            [time-tracker.config :as config]
             [mailgun.mail :as mail]
             [time-tracker.logging :as log]))
 
 (defn send-email
   [email]
-  (let [creds {:key (from-config :mailgun-key) :domain (from-config :mailgun-domain)}
+  (let [creds {:key (config/get-config :mailgun-key) :domain (config/get-config :mailgun-domain)}
         content {:from    "admin@time.nilenso.com"
                  :to      email
                  :subject "You have been invited to Join Time Tracker"
