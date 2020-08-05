@@ -1,7 +1,11 @@
 {
   "name": "time-tracker-web",
   "version": "0.0.1",
-  "private": true,
+  "scripts": {
+    "start": "shadow-cljs watch app",
+    "test": "shadow-cljs compile test && node out/test.js",
+    "release": "shadow-cljs release app"
+  },
   "devDependencies": {
     "shadow-cljs": "2.10.19"
   },
