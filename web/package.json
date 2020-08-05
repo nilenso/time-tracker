@@ -1,0 +1,14 @@
+{
+  "name": "time-tracker-web",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "shadow-cljs": "2.10.19"
+  },
+  "dependencies": {
+    "highlight.js": "9.18.1",
+    "react": "16.13.0",
+    "react-dom": "16.13.0",
+    "react-highlight.js": "1.0.7"
+  }
+}
