@@ -1,10 +1,8 @@
 # time-tracker
 
-[![CircleCI](https://circleci.com/gh/nilenso/time-tracker/tree/master.svg?style=svg)](https://circleci.com/gh/nilenso/time-tracker/tree/master)
-
 A time-tracker built for education, fun and eventually profit.
 
-## Setup 
+## Setup
 
 ### Local Development
 
