@@ -1,5 +1,7 @@
 # time-tracker
 
+__🚧 Note 🚧__ We're currently in the process of restructuring the project, expect master to be broken until 12th August.
+
 A time-tracker built for education, fun and eventually profit.
 
 ## Setup
