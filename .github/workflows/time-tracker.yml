@@ -25,7 +25,7 @@ env:
   LOGO: https://nilenso.com/images/nilenso_logos/nilenso_logo.png
 
 jobs:
-  build:
+  server-build:
     services:
       postgres:
         image: postgres:12.3
@@ -44,3 +44,16 @@ jobs:
       run: lein deps
     - name: Run tests
       run: lein test
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./web
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install frontend deps
+      run: npm install
+    - name: Run frontend tests
+      run: npm test
