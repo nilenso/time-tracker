@@ -34,6 +34,8 @@ time-tracker.core=> (init!)
 (start-server!)
 ```
 
+To setup the frontend, refer to [the frontend README.](web/README.md)
+
 ### Production
 
 *Note: The following setup assumes that you're running Ubuntu.*
