@@ -12,7 +12,7 @@
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (core/init!)
+  (core/init! ["" "-s"])
   (f)
   (core/teardown!))
 

@@ -18,7 +18,7 @@
 (defn settings
   "Reads a profile and returns a specific setting"
   [setting]
-  (let [port (Integer/parseInt (config/get-config :port))
+  (let [port (config/get-config :port)
         host (str/join ["http://localhost:" port "/"])
         host-ws (str/join ["ws://localhost:" port "/"])
         ws-url (str/join [host-ws "api/timers/ws-connect/"])
@@ -90,14 +90,14 @@
     ))
 
 (defn- num-tests-from-config []
-  (Integer/parseInt (config/get-config :num-tests)))
+  (config/get-config :num-tests))
 
 (defn assert-generative-test
-  ([sym] (assert-generative-test sym {:num-tests (num-tests-from-config)}))
+  ([sym] (assert-generative-test sym {:num-tests (config/get-config :num-tests)}))
   ([sym opts]
    (test/is (empty? (->> (stest/check sym
                                       {:clojure.spec.test.check/opts
-                                       (merge {:num-tests (num-tests-from-config)} opts)})
+                                       (merge {:num-tests (config/get-config :num-tests)} opts)})
                          (map stest/abbrev-result)
                          (filter :failure)
                          (map :failure))))))
