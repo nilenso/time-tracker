@@ -34,7 +34,7 @@ jobs:
           POSTGRES_USER: tt_ci_user
           POSTGRES_PASSWORD: tt_ci_pwd
         ports:
-          - 5432:5432
+          - 19401:5432
 
     runs-on: ubuntu-latest
 
