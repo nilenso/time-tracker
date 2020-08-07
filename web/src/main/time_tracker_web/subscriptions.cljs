@@ -11,3 +11,8 @@
   (fn [db _]
     (:time-color db)))
 
+(rf/reg-sub
+  ::selected-day
+  (fn [db _]
+    (:selected-day db)))
+

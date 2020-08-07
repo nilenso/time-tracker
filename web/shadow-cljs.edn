@@ -12,11 +12,12 @@
 
  :dev-http     {8090 "public"}
 
- :builds       {:app  {:target     :browser
-                       :output-dir "public/js"
-                       :asset-path "/js"
-                       :modules    {:main {:init-fn time-tracker-web.core/run}}
-                       :dev        {:closure-defines {re-frame.trace/trace-enabled? true}}
-                       :devtools   {:preloads [day8.re-frame-10x.preload]}}
+ :builds       {:app  {:target           :browser
+                       :output-dir       "public/js"
+                       :asset-path       "/js"
+                       :modules          {:main {:init-fn time-tracker-web.core/run}}
+                       :dev              {:closure-defines {re-frame.trace/trace-enabled? true}}
+                       :devtools         {:preloads [day8.re-frame-10x.preload]}
+                       :compiler-options {:infer-externs :auto}}
                 :test {:target    :node-test
                        :output-to "out/test.js"}}}
