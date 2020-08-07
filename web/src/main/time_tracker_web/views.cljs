@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [time-tracker-web.subscriptions :as subs]
             [time-tracker-web.events :as events]
-            ["react-day-picker/DayPicker" :default DayPicker]))
+            ["react-day-picker" :as DayPicker]))
 
 (defn clock
   []
