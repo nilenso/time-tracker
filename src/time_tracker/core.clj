@@ -12,7 +12,7 @@
 
 (defn init! [args]
   (cli/init! args)
-  (config/init)
+  (config/init (:config-file (cli/opts)))
   (log/configure-logging!)
   (db/init-db!))
 
@@ -41,7 +41,7 @@
 (defn -main
   [& args]
   (init! args)
-  (let [opt (dissoc (cli/opts) :file)]
+  (let [opt (dissoc (cli/opts) :config-file)]
     (if (> (count opt) 1)
       (prn "too many opts passed")
       (case (ffirst opt)

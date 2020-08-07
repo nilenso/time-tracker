@@ -1,0 +1,9 @@
+{:google-tokeninfo-url "https://oauth2.googleapis.com/tokeninfo"
+ :cp-max-idle-time-excess-connections 1800
+ :cp-max-idle-time 10800
+ :db-connection-string "jdbc:postgresql://localhost:5432/tt_ci?user=tt_ci_user&password=tt_ci_pwd"
+ :google-client-id "your_google_client_id"
+ :app-log-level "debug"
+ :port 8000
+ :num-tests 10
+ :allowed-hosted-domain "nilenso.com"}

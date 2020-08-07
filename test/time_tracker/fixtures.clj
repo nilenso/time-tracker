@@ -12,7 +12,9 @@
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (core/init! ["" "-s"])
+  (core/init! (if-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
+                ["" "-sf" test-config]
+                ["" "-s"]))
   (f)
   (core/teardown!))
 

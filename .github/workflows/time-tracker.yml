@@ -34,9 +34,12 @@ jobs:
           POSTGRES_USER: tt_ci_user
           POSTGRES_PASSWORD: tt_ci_pwd
         ports:
-          - 19401:5432
+          - 5432:5432
 
     runs-on: ubuntu-latest
+
+    env:
+      TIME_TRACKER_TEST_CONFIG: "config/config.ci.edn"
 
     steps:
     - uses: actions/checkout@v2
