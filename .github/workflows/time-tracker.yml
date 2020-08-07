@@ -43,10 +43,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Cache lein deps
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-lein-deps
+      with:
+        path: ~/.m2
+        key: ${{ env.cache-name }}-${{ hashFiles('**/project.clj') }}
+        restore-keys: |
+          ${{ env.cache-name }}-
+
     - name: Install dependencies
       run: lein deps
+
     - name: Run tests
       run: lein test
+
   frontend-build:
     runs-on: ubuntu-latest
 
@@ -56,7 +69,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Install frontend deps
       run: yarn install
+
     - name: Run frontend tests
       run: yarn test
