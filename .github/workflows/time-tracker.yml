@@ -63,10 +63,6 @@ jobs:
   frontend-build:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ./web
-
     steps:
     - uses: actions/checkout@v2
 

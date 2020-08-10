@@ -18,7 +18,7 @@ const sassDev = function () {
     .pipe(sass().on("error", sass.logError))
     .pipe(concat("index.css"))
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest("./public/css"));
+    .pipe(gulp.dest("./resources/public/css"));
 };
 
 exports.watchSass = function () {
@@ -33,7 +33,7 @@ exports.buildSassProd = function () {
     .pipe(sass().on("error", sass.logError))
     .pipe(concat("index.css"))
     .pipe(postcss(plugins))
-    .pipe(gulp.dest("./public/css"));
+    .pipe(gulp.dest("./resources/public/css"));
 };
 
 exports.runShadow = function (cb) {
