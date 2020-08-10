@@ -19,3 +19,8 @@ build.xml
 time-tracker.iml
 *~
 \#*\#
+.shadow-cljs
+node_modules
+resources/public/css
+resources/public/js
+out

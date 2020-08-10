@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "gulp",
-    "clean": "rm -rf public/css/ && rm -rf public/js/",
+    "clean": "rm -rf resources/public/css/ && rm -rf resources/public/js/",
     "test": "shadow-cljs compile test && node out/test.js",
     "release": "yarn clean && gulp buildSassProd && shadow-cljs release app"
   },
