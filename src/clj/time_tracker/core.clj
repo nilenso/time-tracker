@@ -24,24 +24,6 @@
    (reset! server (httpkit/run-server app-handler
                                       {:port (config/get-config :port)}))))
 
-(defn stop-server!
-  []
-  (when-not (nil? @server)
-    (@server :timeout 100)
-    (log/info {:event ::server-stop})
-    (reset! server nil)))
-
-(defn restart-server!
-  []
-  (stop-server!)
-  (start-server!))
-
-(defn start-app!
-  "REPL convenience. Starts the whole app from scratch."
-  []
-  (init!)
-  (start-server!))
-
 (defn -main
   [& args]
   (cli/init! args)
