@@ -107,7 +107,7 @@ sudo nginx -s reload
 To run tests, do:
 
 ```bash
-lein test
+TIME_TRACKER_TEST_CONFIG=./config/config.test.edn lein test
 ```
 
 ## Deployment

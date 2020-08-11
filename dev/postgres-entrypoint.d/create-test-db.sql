@@ -1,3 +1,0 @@
-CREATE USER tt_test WITH PASSWORD 'tt_testpwd';
-CREATE DATABASE tt_test;
-GRANT ALL PRIVILEGES ON DATABASE tt_test TO tt_test;
