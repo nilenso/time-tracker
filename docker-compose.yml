@@ -1,9 +1,12 @@
 version: "3.8"
 services:
-  db:
+  dev_db:
     image: postgres:12.3
     environment:
-      POSTGRES_PASSWORD: ttdevpwd
-      POSTGRES_USER: ttdev
+      POSTGRES_USER: tt_dev
+      POSTGRES_DB: tt_dev
+      POSTGRES_PASSWORD: tt_devpwd
     ports:
       - 19401:5432
+    volumes:
+      - ./dev/postgres-entrypoint.d:/docker-entrypoint-initdb.d:Z
