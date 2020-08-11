@@ -25,20 +25,18 @@ Although it's not necessary for hot reloading, you should connect to the REPL fr
 ### Backend Setup
 #### Local Development
 
-- Install **Postgres**. If you're on OS X, checkout https://postgresapp.com/.
-
+- Ensure you have docker-compose installed. podman-compose will also work.
 - Install **Leiningen**. The instructions for doing so, are available at https://leiningen.org/#install.
-
-- Run the following script from the root directory:
+- Run docker compose to start dev & test dependencies from the root directory:
 
   ```bash
-  ./scripts/dev-setup.sh
+  docker-compose up -d
   ```
 
 - To start a server, either run:
 
 ```bash
-lein run
+lein run -- -sf config/config.dev.edn
 ```
 
 or:
@@ -47,7 +45,7 @@ or:
 $ lein repl
 
 # in the repl:
-time-tracker.core=> (init!)
+time-tracker.core=> (init! "config/config.dev.edn")
 (start-server!)
 ```
 
