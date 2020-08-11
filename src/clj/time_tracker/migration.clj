@@ -17,7 +17,8 @@
       (log/info {:event          ::applied-migrations
                  :ragtime-output out}))
     (catch Exception ex
-      (log/error ex {:event ::migration-failed}))))
+      (log/error ex {:event ::migration-failed})
+      (System/exit 1))))
 
 (defn rollback-db []
   (try
@@ -26,7 +27,8 @@
       (log/info {:event          ::rolled-back-migration
                  :ragtime-output out}))
     (catch Exception ex
-      (log/error ex {:event ::migration-rollback-failed}))))
+      (log/error ex {:event ::migration-rollback-failed})
+      (System/exit 1))))
 
 ;; These are called by `lein migrate` and `lein rollback`.
 
