@@ -6,14 +6,17 @@
             [time-tracker.invited-users.routes :as invited-users]
             [time-tracker.tasks.routes :as tasks]
             [time-tracker.invoices.routes :as invoices]
-            [time-tracker.web.util :as web-util]))
+            [time-tracker.web.util :as web-util]
+            [ring.util.response :as response]))
 
 (defn routes []
-  ["/" [["api/"      {"projects/"      (projects/routes)
-                      "timers/"        (timers/routes)
-                      "users/"         (users/routes)
-                      "invited-users/" (invited-users/routes)
-                      "invoices/"      (invoices/routes)
-                      "clients/"       (clients/routes)
-                      "tasks/"         (tasks/routes)}]
-        [true   (fn [_] web-util/error-not-found)]]])
+  ["/" [["" (fn [_] (-> (response/resource-response "public/index.html")
+                        (response/content-type "text/html")))]
+        ["api/" {"projects/"      (projects/routes)
+                 "timers/"        (timers/routes)
+                 "users/"         (users/routes)
+                 "invited-users/" (invited-users/routes)
+                 "invoices/"      (invoices/routes)
+                 "clients/"       (clients/routes)
+                 "tasks/"         (tasks/routes)}]
+        [true (fn [_] web-util/error-not-found)]]])

@@ -1,22 +1,18 @@
 (ns time-tracker.fixtures
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
             [time-tracker.migration :refer [migrate-db]]
             [time-tracker.db :as db]
             [time-tracker.web.service :refer [app]]
             [time-tracker.auth.core :as auth]
             [time-tracker.test-helpers :as test-helpers]
             [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
-            [time-tracker.core :as core]
-            [time-tracker.util :as util])
+            [time-tracker.core :as core])
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (core/init! (if-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
-                ["" "-sf" test-config]
-                ["" "-s"]))
-  (f)
-  (core/teardown!))
+  (core/init! (when-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
+                test-config))
+  (f))
 
 (defn destroy-db []
   (jdbc/with-db-transaction [conn (db/connection)]

@@ -10,14 +10,12 @@
 
 (defonce server (atom nil))
 
-(defn init! [args]
-  (cli/init! args)
-  (config/init (:config-file (cli/opts)))
-  (log/configure-logging!)
-  (db/init-db!))
-
-(defn teardown! []
-  (log/teardown-logging!))
+(defn init!
+  ([]
+   (init! nil))
+  ([config-file]
+   (config/init config-file)
+   (db/init-db!)))
 
 (defn start-server!
   ([] (start-server! (web-service/app)))
@@ -38,9 +36,16 @@
   (stop-server!)
   (start-server!))
 
+(defn start-app!
+  "REPL convenience. Starts the whole app from scratch."
+  []
+  (init!)
+  (start-server!))
+
 (defn -main
   [& args]
-  (init! args)
+  (cli/init! args)
+  (init! (:config-file (cli/opts)))
   (let [opt (dissoc (cli/opts) :config-file)]
     (if (> (count opt) 1)
       (prn "too many opts passed")
