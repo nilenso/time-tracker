@@ -3,10 +3,12 @@
 
 (defonce ^:private cfg (atom nil))
 
-(defn init [config]
-  (reset! cfg
-          (aero/read-config (or config
-                                (clojure.java.io/resource "config.edn")))))
+(defn init
+  ([]
+   (init (clojure.java.io/resource "config.edn")))
+  ([config]
+   (reset! cfg (aero/read-config (or config
+                                     (clojure.java.io/resource "config.edn"))))))
 
 (defn get-config
   ([] @cfg)
