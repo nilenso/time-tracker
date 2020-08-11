@@ -8,7 +8,8 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/data.csv "0.1.3"]
                  [aero "1.1.6"]
-                 [log4j "1.2.17"]
+                 [org.apache.logging.log4j/log4j-api "2.13.3"]
+                 [org.apache.logging.log4j/log4j-core "2.13.3"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
                  [http-kit "2.3.0"]
                  [bidi "2.0.11"]
@@ -35,7 +36,7 @@
              :test {:jvm-opts ["-Xms512m" "-Xmx2g"]}
              :default [:base :system :user :provided :dev]
              :uberjar {:aot [#"time-tracker.*"]}}
-
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]
   :aliases {"test"       ["test"]
             "migrate"    ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback"   ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
