@@ -16,7 +16,7 @@
     "gulp-sass": "^4.1.0",
     "gulp-sourcemaps": "^2.6.5",
     "sass": "^1.26.10",
-    "shadow-cljs": "2.10.19"
+    "shadow-cljs": "2.10.21"
   },
   "dependencies": {
     "highlight.js": "9.18.1",
