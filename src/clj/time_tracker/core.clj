@@ -13,14 +13,15 @@
 
 (defn -main
   [& args]
-  (cli/init! args)
-  (init! (:config-file (cli/opts)))
-  (let [opt (dissoc (cli/opts) :config-file)]
-    (if (> (count opt) 1)
-      (prn "too many opts passed")
-      (case (ffirst opt)
+  (let [{:keys [config-file] :as opts} (cli/parse args)]
+    (init! config-file)
+    (if-let [opts-error (cli/error-message opts)]
+      (do
+        (prn opts-error)
+        (System/exit 1))
+      (case (cli/operational-mode opts)
         :migrate  (migrate-db)
         :rollback (rollback-db)
-        :help (print (cli/help-message) "\n")
+        :help (print (cli/help-message))
         :serve (web-service/start-server!)
         (prn "Unknown args")))))

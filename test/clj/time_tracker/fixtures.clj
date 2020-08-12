@@ -10,8 +10,9 @@
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (core/init! (when-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
-                test-config))
+  (core/init! (if-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
+                test-config
+                "config/config.test.edn"))
   (f))
 
 (defn destroy-db []
