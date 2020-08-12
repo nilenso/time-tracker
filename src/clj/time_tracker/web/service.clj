@@ -10,7 +10,10 @@
             [time-tracker.web.routes :refer [routes]]
             [time-tracker.web.middleware :refer [wrap-validate
                                                  wrap-log-request-response
-                                                 wrap-error-logging]]))
+                                                 wrap-error-logging]]
+            [time-tracker.logging :as log]
+            [org.httpkit.server :as httpkit]
+            [time-tracker.config :as config]))
 
 (defn handler []
   (make-handler (routes)))
@@ -28,3 +31,15 @@
       (wrap-content-type)
       (wrap-not-modified)))
 
+(defonce server (atom nil))
+
+(defn start-server!
+  ([] (start-server! (app)))
+  ([app-handler]
+   (log/info {:event ::server-start})
+   (reset! server (httpkit/run-server app-handler
+                                      {:port (config/get-config :port)}))))
+
+(defn stop-server! []
+  (@server)
+  (reset! server nil))

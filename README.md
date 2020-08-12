@@ -13,7 +13,7 @@ You'll need:
 * Preferably a good ClojureScript editor of your choice
 
 #### Running the development build with hot reloading
-`yarn start`, then browse to `http://localhost:8090`.  
+`yarn start`, then start up the backend server (see below) and browse to http://localhost:8000/.
 Although it's not necessary for hot reloading, you should connect to the REPL from your editor. Follow the instructions at https://shadow-cljs.github.io/docs/UsersGuide.html#_editor_integration.
 
 #### Running the tests
@@ -33,20 +33,10 @@ Although it's not necessary for hot reloading, you should connect to the REPL fr
   docker-compose up -d
   ```
 
-- To start a server, either run:
+- To start a server, either run `dev.repl-utils/start-app!` from the REPL (recommended), or from the command line:
 
 ```bash
 lein run -- -sf config/config.dev.edn
-```
-
-or:
-
-```bash
-$ lein repl
-
-# in the repl:
-time-tracker.core=> (init! "config/config.dev.edn")
-(start-server!)
 ```
 
 #### Production
