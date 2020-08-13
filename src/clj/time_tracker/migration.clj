@@ -2,7 +2,7 @@
   (:require [ragtime.repl]
             [ragtime.jdbc]
             [time-tracker.config :as config]
-            [time-tracker.logging :as log]))
+            [taoensso.timbre :as log]))
 
 (defn db-spec [] {:connection-uri (config/get-config :db-connection-string)})
 

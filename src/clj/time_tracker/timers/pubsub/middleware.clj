@@ -1,6 +1,6 @@
 (ns time-tracker.timers.pubsub.middleware
   (:require [clojure.java.jdbc :as jdbc]
-            [time-tracker.logging :as log]
+            [taoensso.timbre :as log]
             [time-tracker.timers.pubsub.io :as io]
             [clojure.spec :as s]
             [time-tracker.db :as db]

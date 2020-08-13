@@ -1,7 +1,7 @@
 (ns time-tracker.timers.pubsub.io
   (:require [org.httpkit.server :refer [send!]]
             [cheshire.core :as json]
-            [time-tracker.logging :as log]
+            [taoensso.timbre :as log]
             [time-tracker.timers.pubsub.state :as state]))
 
 (defn send-data!

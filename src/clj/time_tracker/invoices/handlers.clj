@@ -7,7 +7,6 @@
             [time-tracker.invoices.core :as invoices-core]
             [time-tracker.invoices.spec :as invoices-spec]
             [time-tracker.util :as util]
-            [time-tracker.logging :as log]
             [time-tracker.web.util :as web-util]
             [time-tracker.invoices.handlers.spec :as handlers-spec]
             [time-tracker.projects.core :as projects-core]

@@ -2,7 +2,7 @@
   (:require [time-tracker.timers.pubsub.io :as io]
             [time-tracker.timers.pubsub.state :as state]
             [time-tracker.config :as config]
-            [time-tracker.logging :as log]
+            [taoensso.timbre :as log]
             [time-tracker.auth.core :refer [token->credentials]]
             [time-tracker.timers.pubsub.routes :refer [command-map]]
             [org.httpkit.server :as httpkit]))

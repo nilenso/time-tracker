@@ -1,9 +1,9 @@
 (ns time-tracker.timers.handlers
   (:require [org.httpkit.server :as http-kit]
             [ring.util.response :as res]
+            [taoensso.timbre :as log]
             [time-tracker.timers.pubsub :as pubsub]
             [time-tracker.timers.db :as timers-db]
-            [time-tracker.logging :as log]
             [cheshire.core :as json]
             [time-tracker.util :as util]
             [time-tracker.timers.pubsub.state :as pubsub-state]

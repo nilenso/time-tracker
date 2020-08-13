@@ -6,7 +6,7 @@
             [gniazdo.core :as ws]
             [clojure.test :as test]
             [clojure.spec.test :as stest]
-            [time-tracker.logging :as log]
+            [taoensso.timbre :as log]
             [time-tracker.util :as util]
             [time-tracker.config :as config]
             [clojure.string :as str]

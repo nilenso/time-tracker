@@ -6,7 +6,7 @@
             [time-tracker.util :as util]
             [time-tracker.config :as config]
             [mailgun.mail :as mail]
-            [time-tracker.logging :as log]))
+            [taoensso.timbre :as log]))
 
 (defn send-email
   [email]

@@ -7,11 +7,11 @@
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.content-type :refer [wrap-content-type]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
+            [taoensso.timbre :as log]
             [time-tracker.web.routes :refer [routes]]
             [time-tracker.web.middleware :refer [wrap-validate
                                                  wrap-log-request-response
                                                  wrap-error-logging]]
-            [time-tracker.logging :as log]
             [org.httpkit.server :as httpkit]
             [time-tracker.config :as config]))
 

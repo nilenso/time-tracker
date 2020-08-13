@@ -1,10 +1,10 @@
 (ns time-tracker.web.middleware
   (:require [clojure.algo.generic.functor :refer [fmap]]
+            [taoensso.timbre :as log]
             [time-tracker.auth.core :refer [wrap-auth]]
             [time-tracker.db :refer [wrap-transaction]]
             [time-tracker.users.core :refer [wrap-autoregister]]
             [time-tracker.web.util :as web-util]
-            [time-tracker.logging :as log]
             [cheshire.generate :refer [add-encoder encode-str]])
   (:import org.httpkit.server.AsyncChannel))
 

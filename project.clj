@@ -4,12 +4,10 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
-                 [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/data.csv "0.1.3"]
+                 [com.taoensso/timbre "4.10.0"]
                  [aero "1.1.6"]
-                 [org.apache.logging.log4j/log4j-api "2.13.3"]
-                 [org.apache.logging.log4j/log4j-core "2.13.3"]
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
                  [http-kit "2.3.0"]
                  [bidi "2.0.11"]
@@ -45,7 +43,6 @@
                                       [thheller/shadow-cljs "2.10.21"]
                                       [day8.re-frame/re-frame-10x "0.7.0"]
                                       [binaryage/devtools "1.0.2"]]}}
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]
   :aliases {"test"     ["test"]
             "migrate"  ["run" "-m" "time-tracker.migration/lein-migrate-db"]
             "rollback" ["run" "-m" "time-tracker.migration/lein-rollback-db"]}
