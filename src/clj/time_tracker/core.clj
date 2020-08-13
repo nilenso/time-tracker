@@ -1,27 +1,49 @@
 (ns time-tracker.core
   (:gen-class)
-  (:require [time-tracker.migration :refer [migrate-db rollback-db]]
+  (:require [mount.core :as mount]
+            [mount-up.core :as mu]
+            [time-tracker.migration :refer [migrate-db rollback-db]]
             [time-tracker.cli :as cli]
             [time-tracker.config :as config]
             [time-tracker.db :as db]
-            [time-tracker.web.service :as web-service]))
+            [time-tracker.web.service :as web-service]
+            [taoensso.timbre :as log]))
 
-(defn init!
-  [config-file]
-  (config/init config-file)
-  (db/init-db!))
+(defn- log-mount-action [action-map]
+  (fn [{:keys [name action]}]
+    (log/info {:event (action-map action)
+               :state name})))
+
+(defn- mount-init! [opts]
+  (mu/all-clear)
+  (mu/on-upndown :before-info
+                 (log-mount-action {:up ::state-up-pre
+                                    :down ::state-down-pre})
+                 :before)
+  (mu/on-upndown :after-info
+                 (log-mount-action {:up ::state-up-post
+                                    :down ::state-down-post})
+                 :after)
+  (mu/on-up :around-exceptions
+            (mu/try-catch
+             (fn [ex {:keys [name]}] (log/error ex {:event ::state-up-failure
+                                                    :state name
+                                                    :exception ex})))
+            :wrap-in)
+  (mount/start-with-args opts))
 
 (defn -main
   [& args]
-  (let [{:keys [config-file] :as opts} (cli/parse args)]
-    (init! config-file)
+  (let [opts (cli/parse args)]
     (if-let [opts-error (cli/error-message opts)]
       (do
-        (prn opts-error)
+        (print opts-error)
         (System/exit 1))
-      (case (cli/operational-mode opts)
-        :migrate  (migrate-db)
-        :rollback (rollback-db)
-        :help (print (cli/help-message))
-        :serve (web-service/start-server!)
-        (prn "Unknown args")))))
+      (do
+        (mount-init! opts)
+        (case (cli/operational-mode opts)
+          :migrate  (migrate-db)
+          :rollback (rollback-db)
+          :help (print (cli/help-message))
+          :serve (web-service/start-server!)
+          (print (cli/help-message)))))))

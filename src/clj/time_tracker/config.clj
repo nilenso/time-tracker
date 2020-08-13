@@ -1,15 +1,13 @@
 (ns time-tracker.config
-  (:require [aero.core :as aero]))
+  (:require [aero.core :as aero]
+            [taoensso.timbre :as log]
+            [mount.core :as mount :refer [defstate]]))
 
-(defonce ^:private cfg (atom nil))
-
-(defn init
-  ([]
-   (init (clojure.java.io/resource "config.edn")))
-  ([config]
-   (reset! cfg (aero/read-config (or config
-                                     (clojure.java.io/resource "config.edn"))))))
+(defstate config
+  :start (let [config-file (get-in (mount/args) [:options :config-file])]
+           (aero/read-config config-file))
+  :stop nil)
 
 (defn get-config
-  ([] @cfg)
-  ([key] (get @cfg key)))
+  ([] config)
+  ([key] (get config key)))

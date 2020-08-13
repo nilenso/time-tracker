@@ -1,6 +1,7 @@
 (ns time-tracker.db
   (:require [time-tracker.config :as config]
-            [clojure.java.jdbc :as jdbc])
+            [clojure.java.jdbc :as jdbc]
+            [mount.core :refer [defstate]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
 (defn- pool []
@@ -14,10 +15,9 @@
            (config/get-config :cp-max-idle-time)))]
     {:datasource datasource}))
 
-(defonce ^:private pooled-db (atom nil))
-
-(defn init-db! []
-  (reset! pooled-db (pool)))
+(defstate pooled-db
+  :start (pool)
+  :stop (.close (:datasource pooled-db)))
 
 (defn connection [] @pooled-db)
 
