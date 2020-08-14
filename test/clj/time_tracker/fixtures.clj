@@ -15,7 +15,8 @@
   (let [test-config (or (System/getenv "TIME_TRACKER_TEST_CONFIG")
                         "config/config.test.edn")]
     (mount/start-with-args {:options {:config-file test-config}})
-    (f)))
+    (f)
+    (mount/stop)))
 
 (defn destroy-db []
   (jdbc/with-db-transaction [conn (db/connection)]
