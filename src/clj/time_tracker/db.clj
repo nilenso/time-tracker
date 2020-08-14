@@ -19,7 +19,7 @@
   :start (pool)
   :stop (.close (:datasource pooled-db)))
 
-(defn connection [] @pooled-db)
+(defn connection [] pooled-db)
 
 (defn wrap-transaction
   [handler]

@@ -6,24 +6,29 @@
             [time-tracker.auth.core :as auth]
             [time-tracker.test-helpers :as test-helpers]
             [time-tracker.auth.test-helpers :refer [fake-token->credentials]]
-            [time-tracker.core :as core])
+            [time-tracker.core :as core]
+            [taoensso.timbre :as log]
+            [mount.core :as mount])
   (:use org.httpkit.server))
 
 (defn init! [f]
-  (core/init! (if-let [test-config (System/getenv "TIME_TRACKER_TEST_CONFIG")]
-                test-config
-                "config/config.test.edn"))
-  (f))
+  (let [test-config (or (System/getenv "TIME_TRACKER_TEST_CONFIG")
+                        "config/config.test.edn")]
+    (mount/start-with-args {:options {:config-file test-config}})
+    (f)))
 
 (defn destroy-db []
   (jdbc/with-db-transaction [conn (db/connection)]
     (jdbc/execute! conn "DROP SCHEMA IF EXISTS public CASCADE;")
     (jdbc/execute! conn "CREATE SCHEMA IF NOT EXISTS public;")))
 
+(def ^:private migrated (atom false))
 (defn migrate-test-db [f]
   (migrate-db)
-  (f)
-  (destroy-db))
+  (when-not @migrated
+    (Thread/sleep 1000)
+    (reset! migrated true))
+  (f))
 
 (defn serve-app [f]
   (with-redefs [auth/token->credentials
