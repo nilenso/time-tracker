@@ -13,7 +13,7 @@
             [clojure.spec :as sp]
             [time-tracker.timers.spec :as timers-spec]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (deftest start-timer-command-test

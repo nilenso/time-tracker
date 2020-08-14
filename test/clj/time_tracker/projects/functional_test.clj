@@ -11,7 +11,7 @@
             [time-tracker.auth.core :as auth]
             [time-tracker.test-helpers :as helpers]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn- project-api-format

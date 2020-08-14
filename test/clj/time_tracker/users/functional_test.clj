@@ -6,7 +6,7 @@
             [time-tracker.test-helpers :as test-helpers]
             [time-tracker.users.test-helpers :as users-helpers]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn- users-api

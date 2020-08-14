@@ -8,9 +8,8 @@
             [time-tracker.projects.test-helpers :as projects.helpers]
             [time-tracker.users.test-helpers :as users.helpers]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init!)
 (use-fixtures :each fixtures/isolate-db)
-
 
 (deftest retrieve-test
   (let [client-id (:id (clients.helpers/create-client! (db/connection) {:name "FooClient"}))

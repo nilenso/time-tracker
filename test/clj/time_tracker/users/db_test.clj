@@ -7,7 +7,7 @@
             [clojure.spec :as s]
             [time-tracker.users.spec :as users-spec]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (deftest create-test

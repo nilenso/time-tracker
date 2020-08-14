@@ -9,7 +9,7 @@
             [clj-time.jdbc]
             [clj-time.coerce :as time.coerce]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init!)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn- contains-map?

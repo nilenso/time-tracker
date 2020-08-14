@@ -8,7 +8,7 @@
    [time-tracker.test-helpers :as helpers]
    [time-tracker.users.test-helpers :as user-helpers]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn client-api-url

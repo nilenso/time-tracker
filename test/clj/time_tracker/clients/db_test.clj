@@ -7,7 +7,7 @@
    [time-tracker.db :as db]
    [time-tracker.fixtures :as fixtures]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init!)
 (use-fixtures :each fixtures/isolate-db)
 
 (deftest retrieve-test

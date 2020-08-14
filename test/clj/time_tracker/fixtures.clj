@@ -22,14 +22,6 @@
     (jdbc/execute! conn "DROP SCHEMA IF EXISTS public CASCADE;")
     (jdbc/execute! conn "CREATE SCHEMA IF NOT EXISTS public;")))
 
-(def ^:private migrated (atom false))
-(defn migrate-test-db [f]
-  (migrate-db)
-  (when-not @migrated
-    (Thread/sleep 1000)
-    (reset! migrated true))
-  (f))
-
 (defn serve-app [f]
   (with-redefs [auth/token->credentials
                 fake-token->credentials]
@@ -42,4 +34,3 @@
     (jdbc/db-set-rollback-only! conn)
     (with-redefs [db/connection (fn [] conn)]
       (f))))
-

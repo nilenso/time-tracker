@@ -12,7 +12,7 @@
             [cheshire.core :as json]
             [clojure.string :as s]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db fixtures/serve-app)
+(use-fixtures :once fixtures/init! fixtures/serve-app)
 (use-fixtures :each fixtures/isolate-db)
 
 (defn- create-timer-over-ws

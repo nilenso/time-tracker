@@ -7,7 +7,7 @@
             [time-tracker.users.db :as users-db]
             [time-tracker.invited-users.db :as invited-users-db]))
 
-(use-fixtures :once fixtures/init! fixtures/migrate-test-db)
+(use-fixtures :once fixtures/init!)
 (use-fixtures :each fixtures/isolate-db)
 
 

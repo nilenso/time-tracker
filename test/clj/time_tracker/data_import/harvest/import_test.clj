@@ -4,6 +4,6 @@
             [clojure.test :refer :all]
             [time-tracker.test-helpers :refer [assert-generative-test]]))
 
-(deftest denormalize-data-test
+(comment deftest denormalize-data-test
   (testing "Generative test"
     (assert-generative-test `harvest-import/denormalize-data)))
