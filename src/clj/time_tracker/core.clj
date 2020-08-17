@@ -4,8 +4,6 @@
             [mount-up.core :as mu]
             [time-tracker.migration :refer [migrate-db rollback-db]]
             [time-tracker.cli :as cli]
-            [time-tracker.config :as config]
-            [time-tracker.db :as db]
             [time-tracker.web.service :as web-service]
             [taoensso.timbre :as log]))
 
@@ -14,7 +12,7 @@
     (log/info {:event (action-map action)
                :state name})))
 
-(defn- mount-init! [opts]
+(defn mount-init! [opts]
   (mu/all-clear)
   (mu/on-upndown :before-info
                  (log-mount-action {:up ::state-up-pre
@@ -39,11 +37,12 @@
       (do
         (print opts-error)
         (System/exit 1))
-      (do
-        (mount-init! opts)
-        (case (cli/operational-mode opts)
-          :migrate  (migrate-db)
-          :rollback (rollback-db)
-          :help (print (cli/help-message))
-          :serve (web-service/start-server!)
-          (print (cli/help-message)))))))
+      (case (cli/operational-mode opts)
+        :migrate (do (mount-init! opts)
+                     (migrate-db))
+        :rollback (do (mount-init! opts)
+                      (rollback-db))
+        :help (print (cli/help-message opts))
+        :serve (do (mount-init! opts)
+                   (web-service/start-server!))
+        (print (cli/help-message opts))))))

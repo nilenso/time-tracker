@@ -1,6 +1,5 @@
 (ns time-tracker.config
   (:require [aero.core :as aero]
-            [taoensso.timbre :as log]
             [mount.core :as mount :refer [defstate]]))
 
 (defstate config

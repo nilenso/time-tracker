@@ -3,7 +3,7 @@
             [time-tracker.web.service :as web-service]))
 
 (defn start-app! []
-  (core/init! "config/config.dev.edn")
+  (core/mount-init! {:options {:config-file "config/config.dev.edn"}})
   (web-service/start-server!))
 
 (defn restart-server! []
