@@ -2,18 +2,12 @@
   (:require [reagent.dom]
             [re-frame.core :as rf]
             [time-tracker-web.events :as events]
-            [time-tracker-web.views :as views]))
-
-(defn dispatch-timer-event
-  []
-  (let [now (js/Date.)]
-    (rf/dispatch [::events/timer now])))
-
-(defonce do-timer (js/setInterval dispatch-timer-event 1000))
+            [time-tracker-web.views :as views]
+            [time-tracker-web.google :as google]))
 
 (defn render
   []
-  (reagent.dom/render [views/ui]
+  (reagent.dom/render [views/root]
                       (js/document.getElementById "app")))
 
 ;; This is run by shadow-cljs after every reload
@@ -25,5 +19,6 @@
 ;; Entry point
 (defn ^:export run
   []
+  (google/init-api!)
   (rf/dispatch-sync [::events/initialize])
   (render))

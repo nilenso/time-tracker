@@ -1,40 +1,41 @@
 (ns time-tracker-web.views
-  (:require [re-frame.core :as rf]
-            [clojure.string :as str]
+  (:require [reagent.core :as reagent]
+            [re-frame.core :as rf]
             [time-tracker-web.subscriptions :as subs]
-            [time-tracker-web.events :as events]
-            ["react-day-picker" :as DayPicker]))
+            [time-tracker-web.google :as google]))
 
-(defn clock
-  []
-  [:div.example-clock
-   {:style {:color @(rf/subscribe [::subs/time-color])}}
-   (-> @(rf/subscribe [::subs/time])
-       .toTimeString
-       (str/split " ")
-       first)])
+(defn- signin-button []
+  (reagent/create-class
+    {:display-name        "signin-button"
+     :component-did-mount (fn [_]
+                            (-> js/gapi
+                                .-signin2
+                                (.render "google-signin-button"
+                                         (clj->js {:onsuccess (fn [^js google-user]
+                                                                (-> google-user
+                                                                    .getAuthResponse
+                                                                    (google/process-auth-response)))
+                                                   :onfailure (fn []
+                                                                (println "Sign-in failed!"))}))))
 
-(defn color-input
-  []
-  [:div.color-input
-   "Time color: "
-   [:input {:type      "text"
-            :value     @(rf/subscribe [::subs/time-color])
-            :on-change #(rf/dispatch [::events/time-color-change (-> % .-target .-value)])}]])
+     :reagent-render      (fn []
+                            [:div {:id "google-signin-button"}])}))
 
-(defn ui
-  []
-  (let [selected-day @(rf/subscribe [::subs/selected-day])]
+(defn signin-page []
+  (if @(rf/subscribe [::subs/google-client-initialized?])
     [:div
-     [:h1 "Welcome to TT, it is now"]
-     [clock]
-     [color-input]
-     [:h2 "Here's a day picker for you"]
-     [:> DayPicker {:on-day-click  (fn [day options]
-                                     (let [{:keys [disabled]} (js->clj options :keywordize-keys true)]
-                                       (when-not disabled
-                                         (rf/dispatch [::events/selected-day-changed day]))))
-                    :selected-day  selected-day
-                    :disabled-days (clj->js {:daysOfWeek [0]})}]
-     [:h2 (str "The selected day is " (some-> selected-day
-                                              .toLocaleDateString))]]))
+     [:h3 "Welcome to TT! Please sign in"]
+     [signin-button]]
+    [:h2 "Loading..."]))
+
+(defn landing-page []
+  (let [{:keys [name email]} (google/get-local-profile)]
+    [:div
+     [:h3 "This is TT"]
+     [:p name]
+     [:p email]]))
+
+(defn root []
+  (if @(rf/subscribe [::subs/signed-in?])
+    [landing-page]
+    [signin-page]))

@@ -44,6 +44,7 @@
                                       ;; dev dependencies
                                       [org.clojure/clojure "1.10.1"] ; shadow-cljs requires clojure 1.10.1
                                       [thheller/shadow-cljs "2.10.21"]
+                                      [org.clojure/core.async "1.3.610"]
                                       [day8.re-frame/re-frame-10x "0.7.0"]
                                       [binaryage/devtools "1.0.2"]]}}
   :aliases {"test"     ["test"]

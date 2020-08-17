@@ -1,25 +1,20 @@
 (ns time-tracker-web.events
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [time-tracker-web.db :as db]))
 
 (rf/reg-event-db
   ::initialize
   (fn [_ _]
-    {:time       (js/Date.)
-     :time-color "#f88"
-     :selected-day nil}))
+    db/default-db))
 
 (rf/reg-event-db
-  ::time-color-change
-  (fn [db [_ new-color-value]]
-    (assoc db :time-color new-color-value)))
+  ::google-client-initialized
+  (fn [db _]
+    (assoc db :google-client-initialized? true)))
 
 (rf/reg-event-db
-  ::timer
-  (fn [db [_ new-time]]
-    (assoc db :time new-time)))
-
-(rf/reg-event-db
-  ::selected-day-changed
-  (fn [db [_ new-day]]
-    (assoc db :selected-day new-day)))
-
+  ::update-id-token
+  (fn [db [_ id-token]]
+    (assoc db
+           :google-id-token id-token
+           :signed-in? true)))

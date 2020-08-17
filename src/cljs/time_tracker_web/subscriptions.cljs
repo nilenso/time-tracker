@@ -2,17 +2,11 @@
   (:require [re-frame.core :as rf]))
 
 (rf/reg-sub
-  ::time
+  ::google-client-initialized?
   (fn [db _]
-    (:time db)))
+    (:google-client-initialized? db)))
 
 (rf/reg-sub
-  ::time-color
+  ::signed-in?
   (fn [db _]
-    (:time-color db)))
-
-(rf/reg-sub
-  ::selected-day
-  (fn [db _]
-    (:selected-day db)))
-
+    (:signed-in? db)))
