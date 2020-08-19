@@ -12,7 +12,7 @@
                  [org.clojure/java.jdbc "0.6.2-alpha3"]
                  [mount "0.1.16"]
                  [tolitius/mount-up "0.1.3"]
-                 [http-kit "2.3.0"]
+                 [http-kit "2.4.0"]
                  [bidi "2.0.11"]
                  [ring "1.5.0"]
                  [cheshire "5.6.3"]
