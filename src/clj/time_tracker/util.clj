@@ -50,7 +50,7 @@
            coll)))
 
 (defn transform-keys
-  [m transform-fn]
+  [transform-fn m]
   (into {}
         (for [[k v] m] [(transform-fn k) v])))
 

@@ -25,7 +25,8 @@
                  [org.clojure/algo.generic "0.1.2"]
                  [clj-time "0.12.0"]
                  [clj-pdf "2.2.29"]
-                 [nilenso/mailgun "0.2.3"]]
+                 [nilenso/mailgun "0.2.3"]
+                 [com.google.api-client/google-api-client "1.30.4"]]
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj" "test/cljc"]
   :main ^:skip-aot time-tracker.core

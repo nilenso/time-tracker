@@ -23,7 +23,7 @@
                                                 :name      name
                                                 :email     email}
                                                {:connection  connection})]
-    (util/transform-keys created-user util/hyphenize)))
+    (util/transform-keys util/hyphenize created-user)))
 
 (defn registered?
   "Check if a user is in the DB"

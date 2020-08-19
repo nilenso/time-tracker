@@ -4,7 +4,7 @@
 
 (defn fake-token->credentials
   "Fakes core/token->credentials"
-  [_ token]
+  [token]
   (let [body (json/decode token util/hyphenize)]
     body))
 

@@ -1,36 +1,25 @@
 (ns time-tracker.auth.core
-  (:require [ring.util.response :as res]
-            [org.httpkit.client :as http]
-            [cheshire.core :as json]
-            [time-tracker.util :as util]
+  (:require [time-tracker.util :as util]
             [time-tracker.config :as config]
-            [time-tracker.web.util :as web-util]))
+            [time-tracker.web.util :as web-util]
+            [mount.core :refer [defstate]])
+  (:import [com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier GoogleIdTokenVerifier$Builder]
+           [com.google.api.client.googleapis.javanet GoogleNetHttpTransport]
+           [com.google.api.client.json.jackson2 JacksonFactory]))
 
-(defn- call-google-tokeninfo-api
-  [token]
-  (let [{body :body :as response} @(http/get (config/get-config :google-tokeninfo-url)
-                                             {:as :text
-                                              :query-params {"id_token" token}})]
-    (assoc response :body (json/parse-string body util/hyphenize))))
-
-(defn allowed-hosted-domain?
-  [domain]
-  (let [allowed-domain (config/get-config :allowed-hosted-domain)]
-    (or (= "*" allowed-domain)
-        (= allowed-domain domain))))
-
-(defn validate-body
-  [client-ids token-body]
-  (and (some #{(:aud token-body)} client-ids)
-       (allowed-hosted-domain? (:hd token-body))))
+(defstate google-id-token-verifier
+  :start (-> (GoogleIdTokenVerifier$Builder. (GoogleNetHttpTransport/newTrustedTransport)
+                                             (JacksonFactory.))
+             (.setAudience [(config/get-config :google-client-id)])
+             (.build))
+  :stop nil)
 
 (defn token->credentials
-  "Validates a JWT by calling Google's API and by checking the client ID."
-  [client-ids token]
-  (let [{:keys [status body]} (call-google-tokeninfo-api token)]
-    (when (and (= 200 status)
-             (some #{(:aud body)} client-ids))
-      body)))
+  [^String token]
+  (some->> (.verify ^GoogleIdTokenVerifier google-id-token-verifier token)
+           (.getPayload)
+           (into {})
+           (util/transform-keys util/hyphenize)))
 
 (defn token-from-headers
   "Extracts the token from a Ring header map, if present.
@@ -45,15 +34,14 @@
 (defn auth-credentials
   "Gets a map of credentials from a Ring request.
   A list of client-ids is needed to validate the JWT."
-  [client-ids request]
+  [request]
   (when-let [token (token-from-headers (:headers request))]
-    (token->credentials client-ids token)))
+    (token->credentials token)))
 
 (defn wrap-auth
   "Middleware to verify Google authentication"
   [handler]
   (fn [request]
-    (let [client-ids [(config/get-config :google-client-id)]]
-      (if-let [user-information (auth-credentials client-ids request)]
-        (handler (assoc request :credentials user-information))
-        web-util/error-forbidden))))
+    (if-let [user-information (auth-credentials request)]
+      (handler (assoc request :credentials user-information))
+      web-util/error-forbidden)))

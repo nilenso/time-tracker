@@ -10,9 +10,7 @@
 (defn authenticate-channel!
   [channel {:keys [command token]}]
   (when (= command "authenticate")
-    (when-let [{google-id :sub} (token->credentials
-                                 [(config/get-config :google-client-id)]
-                                 token)]
+    (when-let [{google-id :sub} (token->credentials token)]
       (do
         (state/add-channel! channel google-id)
         (io/send-data! channel {:auth-status "success"})

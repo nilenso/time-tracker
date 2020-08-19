@@ -5,30 +5,6 @@
             [time-tracker.util :refer [map-contains?]]
             [time-tracker.config :as config]))
 
-(def bad-google-api-call (constantly {:status 400}))
-
-(defn good-google-api-call
-  [credentials]
-  (constantly {:status 200
-               :body (assoc credentials :hd "nilenso.com")}))
-
-
-(deftest token->credentials-test
-  (testing "Valid token"
-    (with-redefs [auth/call-google-tokeninfo-api
-                  (good-google-api-call {:aud "test"})]
-      (testing "Valid client id"
-        (is (= "test"
-               (:aud (auth/token->credentials ["test"] "token")))))
-
-      (testing "Invalid client id"
-        (is (nil? (auth/token->credentials ["foo" "goo"] "token"))))))
-
-  (testing "Invalid token"
-    (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call]
-      (is (nil? (auth/token->credentials ["foo" "goo"] "token"))))))
-
-
 (deftest token-from-headers-test
   (testing "Header absent"
     (is (nil? (auth/token-from-headers {"content-type" "application/json"}))))
@@ -40,22 +16,21 @@
     (is (= "token"
            (auth/token-from-headers {"authorization" "Bearer token"})))))
 
-
 (deftest auth-credentials-test
   (testing "Properly authenticated request"
-    (with-redefs [auth/call-google-tokeninfo-api
-                  (good-google-api-call {:aud "test"
-                                         :username "sandy"})]
-      (let [valid-request {:headers {"content-type" "application/json"
+    (with-redefs [auth/token->credentials (constantly {:aud      "test"
+                                                       :username "sandy"})]
+      (let [valid-request {:headers {"content-type"  "application/json"
                                      "authorization" "Bearer token"}}]
-        (is (map-contains? (auth/auth-credentials ["test" "test2"] valid-request)
-                           {:aud "test"
+        (is (map-contains? (auth/auth-credentials valid-request)
+                           {:aud      "test"
                             :username "sandy"})))))
 
   (testing "Bad request"
-    (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call]
+    (with-redefs [auth/token->credentials (constantly {:aud      "test"
+                                                       :username "sandy"})]
       (let [invalid-request {:headers {"authorization" "Digest token"}}]
-        (is (nil? (auth/auth-credentials ["test" "test2"] invalid-request)))))))
+        (is (nil? (auth/auth-credentials invalid-request)))))))
 
 (deftest wrap-auth-test
   (let [handler         (constantly
@@ -65,15 +40,15 @@
                          :username "sandy"}]
 
     (testing "Handle an authenticated request"
-      (with-redefs [auth/call-google-tokeninfo-api (good-google-api-call user-creds)
-                    config/get-config              (constantly "test")]
+      (with-redefs [auth/token->credentials (constantly user-creds)
+                    config/get-config       (constantly "test")]
         (let [valid-request {:headers {"authorization" "Bearer token"}}]
           (is (= 200
                  (:status (wrapped-handler valid-request)))))))
 
     (testing "Handle an unauthenticated request"
-      (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call
-                    config/get-config              (constantly "test")]
+      (with-redefs [auth/token->credentials (constantly nil)
+                    config/get-config       (constantly "test")]
         (let [request {:headers {"authorization" "Bearer token"}}]
           (is (= 403
                  (:status (wrapped-handler request)))))))))
