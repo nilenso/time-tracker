@@ -1,15 +1,14 @@
 (ns time-tracker-web.google
   (:require [re-frame.core :as rf]
             [time-tracker-web.events :as events]
+            [time-tracker-web.config :as config]
             [cljs.core.async :refer [go >! <!] :as async]
             [cljs.core.async.interop :refer-macros [<p!]]))
-
-(def google-client-id "your-client-id-here")
 
 (defn initialize-auth-client! []
   (-> js/gapi
       .-auth2
-      (.init (clj->js {"client_id" google-client-id}))))
+      (.init (clj->js {"client_id" config/google-client-id}))))
 
 (defn load-auth-client! []
   (let [ret (async/chan)]

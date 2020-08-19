@@ -13,7 +13,8 @@ You'll need:
 * Preferably a good ClojureScript editor of your choice
 
 #### Running the development build with hot reloading
-`yarn start`, then start up the backend server (see below) and browse to http://localhost:8000/.
+First, set `time-tracker-web.config/google-client-id` to your Google OAuth client ID.
+Then `yarn start`, and finally start up the backend server (see below) and browse to http://localhost:8000/.
 Although it's not necessary for hot reloading, you should connect to the REPL from your editor. Follow the instructions at https://shadow-cljs.github.io/docs/UsersGuide.html#_editor_integration.
 
 #### Running the tests
