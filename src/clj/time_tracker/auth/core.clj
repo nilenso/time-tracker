@@ -49,13 +49,11 @@
   (when-let [token (token-from-headers (:headers request))]
     (token->credentials client-ids token)))
 
-(defn wrap-google-authenticated
+(defn wrap-auth
   "Middleware to verify Google authentication"
-  [handler client-ids]
+  [handler]
   (fn [request]
-    (if-let [user-information (auth-credentials client-ids request)]
-      (handler (assoc request :credentials user-information))
-      web-util/error-forbidden)))
-
-(def wrap-auth
-  #(wrap-google-authenticated % [(config/get-config :google-client-id)]))
+    (let [client-ids [(config/get-config :google-client-id)]]
+      (if-let [user-information (auth-credentials client-ids request)]
+        (handler (assoc request :credentials user-information))
+        web-util/error-forbidden))))

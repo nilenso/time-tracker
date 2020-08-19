@@ -18,7 +18,7 @@
 (defn handler []
   (make-handler (routes)))
 
-(defn app []
+(def app
   (-> (handler)
       (wrap-validate)
       (wrap-log-request-response)
@@ -34,12 +34,13 @@
 (defonce server (atom nil))
 
 (defn start-server!
-  ([] (start-server! (app)))
+  ([] (start-server! app))
   ([app-handler]
    (log/info {:event ::server-start})
    (reset! server (httpkit/run-server app-handler
                                       {:port (config/get-config :port)}))))
 
 (defn stop-server! []
-  (@server)
-  (reset! server nil))
+  (when @server
+    (@server)
+    (reset! server nil)))

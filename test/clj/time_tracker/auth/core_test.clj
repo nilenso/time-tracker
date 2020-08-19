@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [time-tracker.auth.core :as auth]
             [ring.util.response :as res]
-            [time-tracker.util :refer [map-contains?]]))
+            [time-tracker.util :refer [map-contains?]]
+            [time-tracker.config :as config]))
 
 (def bad-google-api-call (constantly {:status 400}))
 
@@ -56,23 +57,23 @@
       (let [invalid-request {:headers {"authorization" "Digest token"}}]
         (is (nil? (auth/auth-credentials ["test" "test2"] invalid-request)))))))
 
+(deftest wrap-auth-test
+  (let [handler         (constantly
+                          (res/response "Here is your response. Share it with all your friends."))
+        wrapped-handler (auth/wrap-auth handler)
+        user-creds      {:aud      "test"
+                         :username "sandy"}]
 
-(deftest wrap-google-authenticated-test
-  (let [handler (fn [request]
-                  (res/response "Here is your response. Share it with all your friends."))
-        wrapped-handler (auth/wrap-google-authenticated handler ["test" "test2"])
-        user-creds {:aud "test"
-                    :username "sandy"}]
-    
     (testing "Handle an authenticated request"
-      (with-redefs [auth/call-google-tokeninfo-api
-                    (good-google-api-call user-creds)]
+      (with-redefs [auth/call-google-tokeninfo-api (good-google-api-call user-creds)
+                    config/get-config              (constantly "test")]
         (let [valid-request {:headers {"authorization" "Bearer token"}}]
           (is (= 200
                  (:status (wrapped-handler valid-request)))))))
 
     (testing "Handle an unauthenticated request"
-      (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call]
+      (with-redefs [auth/call-google-tokeninfo-api bad-google-api-call
+                    config/get-config              (constantly "test")]
         (let [request {:headers {"authorization" "Bearer token"}}]
           (is (= 403
                  (:status (wrapped-handler request)))))))))

@@ -4,8 +4,8 @@
 
 (defn start-app! []
   (core/mount-init! {:options {:config-file "config/config.dev.edn"}})
-  (web-service/start-server!))
+  (web-service/start-server! #'web-service/app))
 
 (defn restart-server! []
   (web-service/stop-server!)
-  (web-service/start-server!))
+  (web-service/start-server! #'web-service/app))

@@ -1,7 +1,5 @@
 (ns time-tracker.clients.handlers
-  (:require [clojure.java.jdbc :as jdbc]
-            [ring.util.response :as res]
-            [time-tracker.auth.core :refer [wrap-google-authenticated]]
+  (:require [ring.util.response :as res]
             [time-tracker.clients.db :as clients.db]
             [time-tracker.clients.spec :as clients-spec]
             [time-tracker.db]
