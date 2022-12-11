@@ -3678,9 +3678,9 @@ q@^1.1.2:
   integrity sha1-fjL3W0E4EpHQRhHxvxQQmsAGUdc=
 
 qs@~6.5.2:
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
-  integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
+  version "6.5.3"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.3.tgz#3aeeffc91967ef6e35c0e488ef46fb296ab76aad"
+  integrity sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==
 
 querystring-es3@^0.2.0:
   version "0.2.1"
@@ -4095,10 +4095,10 @@ shadow-cljs-jar@1.3.2:
   resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-1.3.2.tgz#97273afe1747b6a2311917c1c88d9e243c81957b"
   integrity sha512-XmeffAZHv8z7451kzeq9oKh8fh278Ak+UIOGGrapyqrFBB773xN8vMQ3O7J7TYLnb9BUwcqadKkmgaq7q6fhZg==
 
-shadow-cljs@2.10.19:
-  version "2.10.19"
-  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.10.19.tgz#907bbad10bb3af38f6a728452e3cd9c34f1166d1"
-  integrity sha512-Dzzn+Ll5okjFze5x1AYqO2qNJOalA1/NBu5pehfyO75HqYzsTK+C4+xufKto6qaMb52iM94p2sbzP+Oh8M3VIw==
+shadow-cljs@2.10.21:
+  version "2.10.21"
+  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.10.21.tgz#60ae60cf749ddfa5e1b8fcdd2ead303331443724"
+  integrity sha512-j3rVFCGftTIjl7cnv2sJn9AWISAc8gJw/Qcvkmd82p5XP1GNOenrIlIZKeSmiCcnTF9I1cwIKzWh+J/J3g6Atw==
   dependencies:
     node-libs-browser "^2.0.0"
     readline-sync "^1.4.7"
